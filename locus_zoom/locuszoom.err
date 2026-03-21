@@ -1,3 +1,8 @@
-Unknown option: gxf
-/var/spool/slurmd/job3512602/slurm_script: line 95: Rscript: command not found
-/var/spool/slurmd/job3512602/slurm_script: line 119: Rscript: command not found
+Warning messages:
+1: package ‘data.table’ was built under R version 4.4.3 
+2: package ‘ggplot2’ was built under R version 4.4.3 
+3: package ‘ggrepel’ was built under R version 4.4.3 
+4: package ‘patchwork’ was built under R version 4.4.3 
+Error in stop_if_missing(opt$rate_file, "--rate_file") : 
+  File not found: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_results/RATE_values_depruned.txt (--rate_file)
+Execution halted

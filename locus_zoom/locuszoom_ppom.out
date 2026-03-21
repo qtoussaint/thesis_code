@@ -1,0 +1,11 @@
+Found 4 cutpoint RATE file(s).
+=== Making plot for cutpoint 1 ===
+    RATE file: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_results/RATE_values_cutpoint1_depruned.txt
+=== Making plot for cutpoint 2 ===
+    RATE file: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_results/RATE_values_cutpoint2_depruned.txt
+=== Making plot for cutpoint 3 ===
+    RATE file: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_results/RATE_values_cutpoint3_depruned.txt
+=== Making plot for cutpoint 4 ===
+    RATE file: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_results/RATE_values_cutpoint4_depruned.txt
+
+Done. Plots written to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots

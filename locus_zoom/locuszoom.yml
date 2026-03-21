@@ -1,0 +1,20 @@
+name: locuszoom
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base
+  - r-optparse
+  - r-data.table
+  - r-ggplot2
+  - r-ggrepel
+  - r-patchwork
+  - r-remotes
+  - r-dbi
+  - r-rsqlite
+  - bioconductor-annotationdbi
+  - bioconductor-genomicfeatures
+  - bioconductor-genomicranges
+  - bioconductor-iranges
+  - bioconductor-s4vectors
+  - bioconductor-biocgenerics

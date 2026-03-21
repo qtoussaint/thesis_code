@@ -1,27 +1,32 @@
 #!/usr/bin/env Rscript
 # build_gff_db.R
-# One-time helper: converts a reference GFF3/GTF file to an ensembldb SQLite
+# One-time helper: converts a reference GFF3/GTF file to a TxDb SQLite
 # database for use with locuszoomr.
+#
+# Uses GenomicFeatures::makeTxDbFromGFF(), which correctly handles NCBI
+# RefSeq GFF3 files (unlike ensDbFromGff(), which requires Ensembl-style
+# attributes not present in NCBI annotations).
 #
 # Run once per species, then pass the output .sqlite to make_locuszoom_plot.R
 #
 # Usage:
 #   Rscript build_gff_db.R \
 #     --gff /path/to/reference.gff3 \
-#     --output /path/to/output_ensdb.sqlite \
+#     --output /path/to/output_txdb.sqlite \
 #     --organism "Streptococcus pneumoniae" \
 #     --genome_version "ATCC700669_v1"  # optional, e.g. reference strain name
 #
 # Examples:
-#   Rscript build_gff_db.R --gff spneu.gff3 --output spneu_ensdb.sqlite \
+#   Rscript build_gff_db.R --gff spneu.gff3 --output spneu_txdb.sqlite \
 #     --organism "Streptococcus pneumoniae" --genome_version "ATCC700669"
 #
-#   Rscript build_gff_db.R --gff mtb.gff3 --output mtb_ensdb.sqlite \
+#   Rscript build_gff_db.R --gff mtb.gff3 --output mtb_txdb.sqlite \
 #     --organism "Mycobacterium tuberculosis" --genome_version "H37Rv"
 
 suppressPackageStartupMessages({
   library(optparse)
-  library(ensembldb)
+  library(GenomicFeatures)
+  library(AnnotationDbi)
 })
 
 # ---------------------------------------------------------------------------
@@ -54,7 +59,7 @@ opt <- parse_args(OptionParser(
   usage = "%prog [options]",
   option_list = option_list,
   description = paste(
-    "Convert a reference GFF3/GTF file to an ensembldb SQLite database",
+    "Convert a reference GFF3/GTF file to a TxDb SQLite database",
     "for use with locuszoomr bacterial GWAS locus plots."
   )
 ))
@@ -75,31 +80,25 @@ if (!dir.exists(out_dir)) {
 # ---------------------------------------------------------------------------
 # Build database
 # ---------------------------------------------------------------------------
-message("Building ensembldb from: ", opt$gff)
+message("Building TxDb from: ", opt$gff)
 message("  Organism    : ", opt$organism)
 message("  Genome      : ", opt$genome_version)
 message("  Output      : ", opt$output)
 
 tryCatch({
-  db_path <- ensDbFromGff(
-    gff       = opt$gff,
-    outfile   = opt$output,
+  txdb <- makeTxDbFromGFF(
+    file      = opt$gff,
+    format    = "gff3",
     organism  = opt$organism,
-    genomeVersion = opt$genome_version,
-    version   = opt$db_version
+    dataSource = paste0("NCBI RefSeq ", opt$genome_version)
   )
-  message("Done. Database written to: ", db_path)
+  saveDb(txdb, file = opt$output)
+  message("Done. Database written to: ", opt$output)
   message("\nTo verify, load in R with:")
-  message("  library(ensembldb)")
-  message("  edb <- EnsDb('", opt$output, "')")
-  message("  genes(edb)")
+  message("  library(AnnotationDbi)")
+  message("  txdb <- loadDb('", opt$output, "')")
+  message("  genes(txdb)")
 }, error = function(e) {
   message("\nError building database: ", conditionMessage(e))
-  message(
-    "\nNote: ensDbFromGff() requires a well-formed GFF3 file with 'gene',",
-    " 'transcript', and 'exon' features.\n",
-    "If your GFF lacks transcript features, you may need to preprocess it",
-    " (e.g. with AGAT: agat_convert_sp_gxf2gxf.pl) or use a GTF instead."
-  )
   quit(status = 1)
 })
