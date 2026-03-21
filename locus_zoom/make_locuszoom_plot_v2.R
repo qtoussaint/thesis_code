@@ -480,11 +480,44 @@ if (nrow(genes_region) > 0) {
   genes_region[, ymin := y_level - gene_height]
   genes_region[, ymax := y_level + gene_height]
 
+  # Identify variants that fall within a gene's drawn coordinates
+  variant_ticks <- rbindlist(lapply(seq_len(nrow(genes_region)), function(gi) {
+    g <- genes_region[gi]
+    hits <- regional_df[BP >= g$draw_start & BP <= g$draw_end,
+                        .(BP, ld_bin, SNP)]
+    if (nrow(hits) == 0) return(NULL)
+    hits[, `:=`(tick_ymin = g$ymin, tick_ymax = g$ymax)]
+    hits
+  }))
+
   p_genes <- ggplot(genes_region) +
     geom_rect(
       aes(xmin = draw_start, xmax = draw_end,
           ymin = ymin, ymax = ymax, fill = strand),
       colour = "grey30", linewidth = 0.3
+    ) +
+    # Tick marks showing variant positions within genes, coloured by LD r²
+    {if (nrow(variant_ticks) > 0)
+      geom_segment(
+        data      = as.data.frame(variant_ticks[SNP != lead_idx]),
+        aes(x = BP, xend = BP, y = tick_ymin, yend = tick_ymax, colour = ld_bin),
+        linewidth = 0.3, alpha = 0.7, inherit.aes = FALSE
+      )
+    } +
+    {if (nrow(variant_ticks) > 0 && lead_idx %in% variant_ticks$SNP) {
+      lead_tick <- variant_ticks[SNP == lead_idx]
+      geom_segment(
+        data      = as.data.frame(lead_tick),
+        aes(x = BP, xend = BP, y = tick_ymin, yend = tick_ymax),
+        colour    = "purple", linewidth = 0.6, inherit.aes = FALSE
+      )
+    }} +
+    scale_colour_manual(
+      values   = stats::setNames(ld_colors, ld_labels),
+      name     = expression(r^2),
+      na.value = "grey60",
+      drop     = FALSE,
+      guide    = "none"
     ) +
     geom_text_repel(
       aes(x = mid, y = ymax, label = name),
