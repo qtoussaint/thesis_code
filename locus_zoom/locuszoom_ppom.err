@@ -4,45 +4,89 @@ Warning messages:
 3: package ‘ggrepel’ was built under R version 4.4.3 
 4: package ‘patchwork’ was built under R version 4.4.3 
 Loading RATE values: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_results/RATE_values_cutpoint1_depruned.txt
-  Loaded 32406 RATE values
 Loading positions: /nfs/research/jlees/jacqueline/bayesian_gwas_paper/00_data/inference/01_spn_penicillin_subclusters_K5_variant_index.csv
-Warning message:
-NAs introduced by coercion 
-Error: Mismatch: 32406 RATE values but 32407 positions.
-Execution halted
+  Loaded 32406 variant positions
+  Loaded 32406 RATE values
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/fitted_model/depruned_variant_effects.csv
+  4350 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Region: ?:283622-287622  |  Lead variant: 4521 (pos 285622)
+  111 variants in region
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_matrices/design_matrix.csv
+  (This may take a moment for large matrices...)
+  r² range: 0.006 – 1.000 (median 0.090)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  6 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/spneu_penicillin_cutpoint1.png
+Done.
 Warning messages:
 1: package ‘data.table’ was built under R version 4.4.3 
 2: package ‘ggplot2’ was built under R version 4.4.3 
 3: package ‘ggrepel’ was built under R version 4.4.3 
 4: package ‘patchwork’ was built under R version 4.4.3 
 Loading RATE values: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_results/RATE_values_cutpoint2_depruned.txt
-  Loaded 32406 RATE values
 Loading positions: /nfs/research/jlees/jacqueline/bayesian_gwas_paper/00_data/inference/01_spn_penicillin_subclusters_K5_variant_index.csv
-Warning message:
-NAs introduced by coercion 
-Error: Mismatch: 32406 RATE values but 32407 positions.
-Execution halted
+  Loaded 32406 variant positions
+  Loaded 32406 RATE values
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/fitted_model/depruned_variant_effects.csv
+  4350 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Region: ?:283622-287622  |  Lead variant: 4521 (pos 285622)
+  111 variants in region
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_matrices/design_matrix.csv
+  (This may take a moment for large matrices...)
+  r² range: 0.006 – 1.000 (median 0.090)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  6 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/spneu_penicillin_cutpoint2.png
+Done.
 Warning messages:
 1: package ‘data.table’ was built under R version 4.4.3 
 2: package ‘ggplot2’ was built under R version 4.4.3 
 3: package ‘ggrepel’ was built under R version 4.4.3 
 4: package ‘patchwork’ was built under R version 4.4.3 
 Loading RATE values: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_results/RATE_values_cutpoint3_depruned.txt
-  Loaded 32406 RATE values
 Loading positions: /nfs/research/jlees/jacqueline/bayesian_gwas_paper/00_data/inference/01_spn_penicillin_subclusters_K5_variant_index.csv
-Warning message:
-NAs introduced by coercion 
-Error: Mismatch: 32406 RATE values but 32407 positions.
-Execution halted
+  Loaded 32406 variant positions
+  Loaded 32406 RATE values
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/fitted_model/depruned_variant_effects.csv
+  4350 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Region: ?:283622-287622  |  Lead variant: 4521 (pos 285622)
+  111 variants in region
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_matrices/design_matrix.csv
+  (This may take a moment for large matrices...)
+  r² range: 0.006 – 1.000 (median 0.090)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  6 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/spneu_penicillin_cutpoint3.png
+Done.
 Warning messages:
 1: package ‘data.table’ was built under R version 4.4.3 
 2: package ‘ggplot2’ was built under R version 4.4.3 
 3: package ‘ggrepel’ was built under R version 4.4.3 
 4: package ‘patchwork’ was built under R version 4.4.3 
 Loading RATE values: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_results/RATE_values_cutpoint4_depruned.txt
-  Loaded 32406 RATE values
 Loading positions: /nfs/research/jlees/jacqueline/bayesian_gwas_paper/00_data/inference/01_spn_penicillin_subclusters_K5_variant_index.csv
-Warning message:
-NAs introduced by coercion 
-Error: Mismatch: 32406 RATE values but 32407 positions.
-Execution halted
+  Loaded 32406 variant positions
+  Loaded 32406 RATE values
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/fitted_model/depruned_variant_effects.csv
+  4350 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Region: ?:283622-287622  |  Lead variant: 4521 (pos 285622)
+  111 variants in region
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_matrices/design_matrix.csv
+  (This may take a moment for large matrices...)
+  r² range: 0.006 – 1.000 (median 0.090)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  6 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/spneu_penicillin_cutpoint4.png
+Done.

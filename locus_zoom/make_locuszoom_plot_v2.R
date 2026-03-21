@@ -238,8 +238,10 @@ message("  ", nrow(regional_df), " variants in region")
 message("Computing r² from genotype matrix: ", opt$genotype_matrix)
 message("  (This may take a moment for large matrices...)")
 
-geno_header   <- fread(opt$genotype_matrix, nrows = 0)
-all_variant_ids <- as.integer(names(geno_header))
+# No header row: column i corresponds to variant index i
+first_row       <- fread(opt$genotype_matrix, nrows = 1, header = FALSE)
+n_variants      <- ncol(first_row)
+all_variant_ids <- seq_len(n_variants)
 
 regional_ids  <- regional_df$SNP
 cols_needed   <- unique(c(lead_idx, regional_ids))
@@ -249,7 +251,7 @@ if (length(col_positions) == 0) {
   stop("No regional variant columns found in genotype matrix.")
 }
 
-geno_sub      <- fread(opt$genotype_matrix, select = col_positions)
+geno_sub      <- fread(opt$genotype_matrix, header = FALSE, select = col_positions)
 sub_ids       <- all_variant_ids[col_positions]
 names(geno_sub) <- as.character(sub_ids)
 
@@ -323,13 +325,11 @@ message("Parsing GFF3: ", opt$gff)
 gff_cols <- c("seqname", "source", "feature", "start", "end",
               "score", "strand", "frame", "attributes")
 
-# fread skips lines starting with # when comment.char="#"
 gff_raw <- fread(
-  opt$gff,
+  cmd          = paste0("grep -v '^#' ", shQuote(opt$gff)),
   sep          = "\t",
   header       = FALSE,
   col.names    = gff_cols,
-  comment.char = "#",
   showProgress = FALSE
 )
 

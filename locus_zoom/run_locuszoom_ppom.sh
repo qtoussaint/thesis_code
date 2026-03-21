@@ -89,7 +89,7 @@ for RATE_FILE in "${RATE_FILES[@]}"; do
     --genotype_matrix "$GENOTYPE_MATRIX" \
     --gff             "$GFF" \
     --lead_variant    4521 \
-    --window          250000 \
+    --window          2000 \
     --variant_effects "$VARIANT_EFFECTS" \
     --annotations     "$ANNOTATIONS" \
     --title           "S. pneumoniae GWAS — penicillin resistance (cutpoint ${CP})" \
