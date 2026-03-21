@@ -1,0 +1,6 @@
+.DS_Store
+.claude/
+.claude-cache/
+.claude.json
+.claude.lock
+claude.log
