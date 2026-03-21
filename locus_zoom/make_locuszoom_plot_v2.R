@@ -429,7 +429,7 @@ p_scatter <- ggplot(
     labels = scales::comma
   ) +
   labs(
-    y        = "RATE value",
+    y        = "relative centrality (RATE)",
     title    = plot_title,
     subtitle = paste(subtitle_parts, collapse = "  |  ")
   ) +
@@ -538,7 +538,7 @@ if (nrow(genes_region) > 0) {
       limits = c(region_start, region_end),
       expand = expansion(mult = 0.01),
       labels = scales::comma,
-      name   = paste0("Genomic position (", seqname, ")")
+      name   = "genomic position"
     ) +
     scale_y_continuous(expand = expansion(add = 0.5)) +
     theme_bw(base_size = 11) +
@@ -557,7 +557,7 @@ if (nrow(genes_region) > 0) {
     scale_x_continuous(
       limits = c(region_start, region_end),
       labels = scales::comma,
-      name   = paste0("Genomic position (", seqname, ")")
+      name   = "genomic position"
     ) +
     theme_bw(base_size = 11)
 }
