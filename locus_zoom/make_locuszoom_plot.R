@@ -406,7 +406,7 @@ plot_title <- if (!is.null(opt$title)) {
 }
 
 subtitle_parts <- c(
-  sprintf("Lead variant: index %d (pos %d)", lead_idx, lead_pos),
+  sprintf("Lead variant: position %d (index %d)", lead_pos, lead_idx),
   sprintf("n = %d variants", nrow(regional_df))
 )
 if (high_ld_frac > 0.9) {
