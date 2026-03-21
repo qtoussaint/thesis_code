@@ -423,13 +423,6 @@ p_scatter <- ggplot(
     shape  = 23, size = 3.5, fill = "purple", colour = "black",
     inherit.aes = FALSE
   ) +
-  # Significance markers (filled triangles)
-  geom_point(
-    data   = regional_df[significant == TRUE],
-    aes(x  = BP, y = RATE),
-    shape  = 17, size = 2, colour = "black", alpha = 0.6,
-    inherit.aes = FALSE
-  ) +
   scale_x_continuous(
     limits = c(region_start, region_end),
     expand = expansion(mult = 0.01),

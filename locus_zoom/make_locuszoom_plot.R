@@ -385,18 +385,6 @@ p <- locus_ggplot(
   cex       = 1.2
 )
 
-# Add significance shape aesthetic for variants where 89% CI excludes zero
-if (!is.null(sig_variants) && any(regional_df$significant)) {
-  # Overlay filled triangles for significant variants
-  sig_data <- regional_df[significant == TRUE]
-  p <- p +
-    geom_point(
-      data = as.data.frame(sig_data),
-      aes(x = BP, y = RATE),
-      shape = 17, size = 2.5, colour = "black", alpha = 0.7,
-      inherit.aes = FALSE
-    )
-}
 
 # Title
 plot_title <- if (!is.null(opt$title)) {
