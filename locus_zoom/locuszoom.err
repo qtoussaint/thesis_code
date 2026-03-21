@@ -1,0 +1,3 @@
+Unknown option: gxf
+/var/spool/slurmd/job3512602/slurm_script: line 95: Rscript: command not found
+/var/spool/slurmd/job3512602/slurm_script: line 119: Rscript: command not found

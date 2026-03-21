@@ -1,0 +1,29 @@
+Variant genome coordinates provided. Will generate Phandango plot object.
+Annotations file provided. Will add gene labels to Manhattan plots.
+Running ordered logistic model with PPOM: will implement K-level de-pruning.
+Data Path:         /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/01_spn_penicillin_subclusters_K5_3f7c4f1ce71de0.json
+Stan Model Path:   /nfs/research/jlees/jacqueline/thesis_code/test_gwas_workflow/ordinal-subcluster-standard-PPOM-association_SPNPENcutpoints.stan
+Analysis Type:     inference
+Nickname:          test_worklow
+Output Directory:  /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow
+LD Pruning:        true
+Pruning Software:  /nfs/research/jlees/jacqueline/gwas_code/ld_pruning/BacPrune-Rust/
+MAF Cutoff:        0
+Cargo Binary:      ~/.cargo/bin/cargo
+Model Type:        ppom
+Phandango Coords:  /nfs/research/jlees/jacqueline/bayesian_gwas_paper/00_data/inference/01_spn_penicillin_subclusters_K5_variant_index.csv
+Threads:           48
+cppRATE Binary:    /hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate-0.2.0/build/bin/cpprate
+Resuming pipeline: checking for completed steps...
+Completed steps (will be skipped): LD pruning, Stan model fitting, PPOM effects, cppRATE, Phandango
+Incomplete steps (will run): Gene trajectory plot, Manhattan plots
+Pipeline will start from: Gene trajectory plot
+Skipping LD pruning (already complete). Loading pruned variant list.
+LD-pruned JSON generated. Fitting Stan model.
+Skipping Stan model fitting (already complete). Loading from disk.
+Loading fitted model from: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/fitted_model/test_worklow_713a01e48ecc8.RDS
+Skipping PPOM effects computation (already complete). Loading from disk.
+Error in bmerge(i, x, leftcols, rightcols, roll, rollends, nomatch, mult,  : 
+  Incompatible join types: x.variant_id (character) and i.variant_id (integer)
+Calls: run_pipeline ... [.data.table -> bmerge -> stopf -> raise_condition -> signal
+Execution halted
