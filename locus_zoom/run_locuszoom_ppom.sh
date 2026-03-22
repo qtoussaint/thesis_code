@@ -21,7 +21,7 @@
 #   mamba install -c conda-forge r-patchwork r-ggrepel
 #################################################################################
 
-MAKE_PLOT="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/make_locuszoom_plot_v2.R"
+MAKE_PLOT="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/make_locuszoom_plot.R"
 
 # ---------------------------------------------------------------------------
 # Species / reference paths

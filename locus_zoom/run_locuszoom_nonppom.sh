@@ -11,7 +11,7 @@
 #################################################################################
 # LocusZoom-style regional association plots for bacterial GWAS
 #
-# make_locuszoom_plot_v2.R: pure ggplot2 + patchwork implementation.
+# make_locuszoom_plot.R: pure ggplot2 + patchwork implementation.
 # Reads the reference GFF3 directly — no SQLite database build step needed.
 # No Bioconductor packages required.
 #
@@ -22,7 +22,7 @@
 # conda activate gwas_pipeline   # (activate your environment if needed)
 #################################################################################
 
-MAKE_PLOT="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/make_locuszoom_plot_v2.R"
+MAKE_PLOT="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/make_locuszoom_plot.R"
 
 # ---------------------------------------------------------------------------
 # Species / reference paths

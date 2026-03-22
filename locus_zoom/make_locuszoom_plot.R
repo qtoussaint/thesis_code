@@ -1,11 +1,11 @@
 #!/usr/bin/env Rscript
-# make_locuszoom_plot_v2.R
+# make_locuszoom_plot.R
 # LocusZoom-style regional association plots for bacterial GWAS results.
 # Pure ggplot2 + patchwork implementation — no locuszoomr or Bioconductor
 # packages required. Gene track is drawn directly from the reference GFF3.
 #
 # Usage:
-#   Rscript make_locuszoom_plot_v2.R \
+#   Rscript make_locuszoom_plot.R \
 #     --rate_file        results/cppRATE_results/RATE_values.txt \
 #     --positions_file   data/variant_positions.csv \
 #     --genotype_matrix  results/cppRATE_matrices/design_matrix.csv \
