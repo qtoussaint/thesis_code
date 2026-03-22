@@ -23,7 +23,11 @@ LD-pruned JSON generated. Fitting Stan model.
 Skipping Stan model fitting (already complete). Loading from disk.
 Loading fitted model from: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/fitted_model/test_worklow_713a01e48ecc8.RDS
 Skipping PPOM effects computation (already complete). Loading from disk.
-Error in bmerge(i, x, leftcols, rightcols, roll, rollends, nomatch, mult,  : 
-  Incompatible join types: x.variant_id (character) and i.variant_id (integer)
-Calls: run_pipeline ... [.data.table -> bmerge -> stopf -> raise_condition -> signal
+Generating cppRATE input files.
+Generating coefficient matrices for different cutpoints.
+Skipping cppRATE (already complete). Loading results from disk.
+Writing Manhattan plots.
+Error in .checkTypos(e, names_x) : 
+  Column 2 is length 732 which differs from length of column 1 (0), are you attempting to order by a list column?
+Calls: run_pipeline ... <Anonymous> -> .checkTypos -> stopf -> raise_condition -> signal
 Execution halted
