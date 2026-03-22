@@ -16,8 +16,9 @@
 ## Shared functions come from utils.R.
 ############################################################
 
-script_dir <- dirname(sys.frame(1)$ofile)
-if (is.null(script_dir) || script_dir == "") script_dir <- "."
+script_args <- commandArgs(trailingOnly = FALSE)
+file_arg <- grep("--file=", script_args, value = TRUE)
+script_dir <- if (length(file_arg) > 0) dirname(normalizePath(sub("--file=", "", file_arg))) else "."
 source(file.path(script_dir, "config.R"))
 source(file.path(script_dir, "utils.R"))
 
