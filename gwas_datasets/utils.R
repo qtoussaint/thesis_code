@@ -155,7 +155,7 @@ bin_mic_auto <- function(mic_numeric,
 
   # Helper: assign bins from breakpoints
   assign_bins <- function(br) {
-    as.integer(cut(mic_numeric, breaks = br, include.lowest = FALSE))
+    as.integer(cut(mic_numeric, breaks = br, include.lowest = TRUE))
   }
 
   # 2. Initial binning
@@ -237,7 +237,7 @@ bin_mic_equalfreq <- function(mic_numeric,
                    max(dilutions[dilutions >= hi], hi * 1.01))
   breaks_full <- unique(sort(breaks_full))
 
-  assign_bins <- function(br) as.integer(cut(mic_numeric, breaks = br, include.lowest = FALSE))
+  assign_bins <- function(br) as.integer(cut(mic_numeric, breaks = br, include.lowest = TRUE))
 
   bins_before  <- assign_bins(breaks_full)
   breaks_before <- breaks_full
@@ -329,7 +329,7 @@ bin_mic_peaks <- function(mic_numeric,
                    max(dilutions[dilutions >= hi], hi * 1.01))
   breaks_full <- unique(sort(breaks_full))
 
-  assign_bins <- function(br) as.integer(cut(mic_numeric, breaks = br, include.lowest = FALSE))
+  assign_bins <- function(br) as.integer(cut(mic_numeric, breaks = br, include.lowest = TRUE))
 
   bins_before   <- assign_bins(breaks_full)
   breaks_before <- breaks_full
