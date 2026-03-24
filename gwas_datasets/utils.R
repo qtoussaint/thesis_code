@@ -193,8 +193,6 @@ bin_mic_auto <- function(mic_numeric,
   if (!is.null(hist_path)) {
     .save_bin_histogram(
       mic_numeric   = mic_numeric,
-      bins_before   = bins_before,
-      breaks_before = breaks_before,
       bins_after    = bins_after,
       breaks_after  = breaks,
       dataset_label = dataset_label,
@@ -212,40 +210,248 @@ bin_mic_auto <- function(mic_numeric,
 }
 
 
-# Internal helper: save two-panel before/after histogram
-.save_bin_histogram <- function(mic_numeric, bins_before, breaks_before,
-                                bins_after, breaks_after,
-                                dataset_label, hist_path) {
-  log2_mic <- log2(mic_numeric)
+#' Bin MIC values using equal-frequency binning constrained to the doubling-dilution grid.
+#' Finds the subset of dilution breakpoints that minimises the coefficient of variation
+#' (CV) of bin sizes, subject to every bin having >= min_bin_size samples.
+#' Brute-force over all subsets of interior dilution breakpoints; feasible because
+#' the dilution series spans at most ~10 interior points.
+#'
+#' @param mic_numeric  numeric vector of cleaned MIC values
+#' @param min_bin_size minimum samples per bin (default 30)
+#' @param dilutions    candidate breakpoints (default: MIC_STANDARD_DILUTIONS from config)
+#' @param hist_path    path to save histogram PNG (NULL = no save)
+#' @param dataset_label label used in histogram title
+#' @return list(bins, breakpoints, K, bin_counts, mic_breakpoints) — same structure as bin_mic_auto
+bin_mic_equalfreq <- function(mic_numeric,
+                               min_bin_size  = 30,
+                               dilutions     = MIC_STANDARD_DILUTIONS,
+                               hist_path     = NULL,
+                               dataset_label = "") {
 
-  make_df <- function(bins, breaks) {
-    K <- length(breaks) - 1
-    labels <- paste0("(", round(breaks[-length(breaks)], 4),
-                     ", ", round(breaks[-1], 4), "]")
-    data.frame(
-      log2_mic = log2_mic,
-      bin      = factor(bins, levels = 1:K, labels = labels[1:K])
+  # 1. Same initial breakpoints as bin_mic_auto (restrict to observed range)
+  lo <- min(mic_numeric, na.rm = TRUE)
+  hi <- max(mic_numeric, na.rm = TRUE)
+  breaks_full <- dilutions[dilutions < hi]
+  breaks_full <- c(breaks_full[breaks_full <= lo][max(1, sum(breaks_full <= lo))],
+                   breaks_full[breaks_full > lo],
+                   max(dilutions[dilutions >= hi], hi * 1.01))
+  breaks_full <- unique(sort(breaks_full))
+
+  assign_bins <- function(br) as.integer(cut(mic_numeric, breaks = br, include.lowest = FALSE))
+
+  bins_before  <- assign_bins(breaks_full)
+  breaks_before <- breaks_full
+
+  interior <- breaks_full[-c(1, length(breaks_full))]
+  n_int    <- length(interior)
+
+  best_cv     <- Inf
+  best_breaks <- NULL
+
+  # 2. Enumerate all non-empty subsets of interior breakpoints (K >= 2 bins)
+  for (k in seq_len(n_int)) {
+    combos <- combn(n_int, k, simplify = FALSE)
+    for (idx in combos) {
+      br_try  <- c(breaks_full[1], interior[idx], breaks_full[length(breaks_full)])
+      br_try  <- unique(sort(br_try))
+      counts  <- tabulate(assign_bins(br_try), nbins = length(br_try) - 1)
+      if (any(counts < min_bin_size)) next
+      cv_val  <- sd(counts) / mean(counts)
+      if (cv_val < best_cv) {
+        best_cv     <- cv_val
+        best_breaks <- br_try
+      }
+    }
+  }
+
+  # 3. Fallback: if no valid subset meets min_bin_size, split at the middle interior point
+  if (is.null(best_breaks)) {
+    warning("bin_mic_equalfreq: no subset meets min_bin_size=", min_bin_size,
+            " for ", dataset_label, "; falling back to midpoint split.")
+    mid_idx     <- ceiling(n_int / 2)
+    best_breaks <- c(breaks_full[1], interior[mid_idx], breaks_full[length(breaks_full)])
+    best_cv     <- NA_real_
+  }
+
+  bins_after   <- assign_bins(best_breaks)
+  counts_after <- tabulate(bins_after, nbins = length(best_breaks) - 1)
+  K <- length(best_breaks) - 1
+
+  cat("\n--- bin_mic_equalfreq:", dataset_label, "---\n")
+  cat("Final K =", K, "bins  (CV =", round(best_cv, 3), ")\n")
+  bin_labels <- paste0("(", best_breaks[-length(best_breaks)], ", ", best_breaks[-1], "]")
+  print(data.frame(bin = 1:K, interval = bin_labels, count = counts_after))
+
+  if (!is.null(hist_path)) {
+    .save_bin_histogram(
+      mic_numeric   = mic_numeric,
+      bins_after    = bins_after,
+      breaks_after  = best_breaks,
+      dataset_label = paste(dataset_label, "(equal-freq)"),
+      hist_path     = hist_path
     )
   }
 
-  df_before <- cbind(make_df(bins_before, breaks_before), panel = "Before rebalancing")
-  df_after  <- cbind(make_df(bins_after,  breaks_after),  panel = "After rebalancing")
-  df <- rbind(df_before, df_after)
-  df$panel <- factor(df$panel, levels = c("Before rebalancing", "After rebalancing"))
+  list(
+    bins            = bins_after,
+    breakpoints     = best_breaks,
+    K               = K,
+    bin_counts      = counts_after,
+    mic_breakpoints = best_breaks[-c(1, length(best_breaks))]
+  )
+}
 
-  p <- ggplot(df, aes(x = log2_mic, fill = bin)) +
-    geom_histogram(bins = 40, color = "white", linewidth = 0.2) +
-    facet_wrap(~panel, ncol = 2) +
+
+#' Bin MIC values by placing breakpoints at valleys between natural peaks in the MIC
+#' distribution, then applying a min-size merge pass identical to bin_mic_auto.
+#' Valley bins are identified from a moving-average-smoothed count histogram.
+#'
+#' @param mic_numeric   numeric vector of cleaned MIC values
+#' @param min_bin_size  minimum samples per bin (default 30)
+#' @param dilutions     candidate breakpoints (default: MIC_STANDARD_DILUTIONS from config)
+#' @param smooth_span   moving-average window for count smoothing (default 3)
+#' @param hist_path     path to save histogram PNG (NULL = no save)
+#' @param dataset_label label used in histogram title
+#' @return list(bins, breakpoints, K, bin_counts, mic_breakpoints) — same structure as bin_mic_auto
+bin_mic_peaks <- function(mic_numeric,
+                           min_bin_size  = 30,
+                           dilutions     = MIC_STANDARD_DILUTIONS,
+                           smooth_span   = 3,
+                           hist_path     = NULL,
+                           dataset_label = "") {
+
+  # 1. Same initial breakpoints as bin_mic_auto
+  lo <- min(mic_numeric, na.rm = TRUE)
+  hi <- max(mic_numeric, na.rm = TRUE)
+  breaks_full <- dilutions[dilutions < hi]
+  breaks_full <- c(breaks_full[breaks_full <= lo][max(1, sum(breaks_full <= lo))],
+                   breaks_full[breaks_full > lo],
+                   max(dilutions[dilutions >= hi], hi * 1.01))
+  breaks_full <- unique(sort(breaks_full))
+
+  assign_bins <- function(br) as.integer(cut(mic_numeric, breaks = br, include.lowest = FALSE))
+
+  bins_before   <- assign_bins(breaks_full)
+  breaks_before <- breaks_full
+  counts_full   <- tabulate(bins_before, nbins = length(breaks_full) - 1)
+  n_bins_full   <- length(counts_full)
+
+  # 2. Smooth counts with a moving average; replace edge NAs with original counts
+  smooth_raw <- as.numeric(stats::filter(counts_full, rep(1/smooth_span, smooth_span), sides = 2))
+  smooth_counts <- ifelse(is.na(smooth_raw), counts_full, smooth_raw)
+
+  # 3. Find interior bins that are local minima (valleys between peaks)
+  valley_idx <- integer(0)
+  if (n_bins_full >= 3) {
+    interior_idx <- seq(2, n_bins_full - 1)
+    valley_idx   <- interior_idx[
+      smooth_counts[interior_idx] < smooth_counts[interior_idx - 1] &
+      smooth_counts[interior_idx] < smooth_counts[interior_idx + 1]
+    ]
+  }
+
+  # 4. Keep only breakpoints adjacent to valley bins (left and right edges of each valley)
+  #    Bin i spans (breaks_full[i], breaks_full[i+1]], so its edges are
+  #    breaks_full[valley_idx] (left) and breaks_full[valley_idx + 1] (right).
+  if (length(valley_idx) > 0) {
+    near_valley <- sort(unique(c(breaks_full[valley_idx], breaks_full[valley_idx + 1])))
+    breaks      <- unique(sort(c(breaks_full[1], near_valley, breaks_full[length(breaks_full)])))
+  } else {
+    # No valleys detected (unimodal / monotone): fall back to bin_mic_auto behaviour
+    message("  bin_mic_peaks: no valleys detected for ", dataset_label,
+            "; falling back to min-size merge.")
+    breaks <- breaks_full
+  }
+
+  # 5. Min-size merge pass (identical to bin_mic_auto)
+  counts_cur <- tabulate(assign_bins(breaks), nbins = length(breaks) - 1)
+  while (any(counts_cur < min_bin_size, na.rm = TRUE) && length(breaks) > 2) {
+    counts_tmp  <- tabulate(assign_bins(breaks), nbins = length(breaks) - 1)
+    small_idx   <- which.min(counts_tmp)
+    merge_left  <- if (small_idx > 1)                   counts_tmp[small_idx - 1] else Inf
+    merge_right <- if (small_idx < length(counts_tmp))  counts_tmp[small_idx + 1] else Inf
+    if (merge_left <= merge_right) {
+      breaks <- breaks[-(small_idx)]
+    } else {
+      breaks <- breaks[-(small_idx + 1)]
+    }
+    counts_cur <- tabulate(assign_bins(breaks), nbins = length(breaks) - 1)
+  }
+
+  bins_after   <- assign_bins(breaks)
+  counts_after <- tabulate(bins_after, nbins = length(breaks) - 1)
+  K <- length(breaks) - 1
+
+  cat("\n--- bin_mic_peaks:", dataset_label, "---\n")
+  cat("Final K =", K, "bins  (", length(valley_idx), "valleys detected)\n")
+  bin_labels <- paste0("(", breaks[-length(breaks)], ", ", breaks[-1], "]")
+  print(data.frame(bin = 1:K, interval = bin_labels, count = counts_after))
+
+  if (!is.null(hist_path)) {
+    .save_bin_histogram(
+      mic_numeric   = mic_numeric,
+      bins_after    = bins_after,
+      breaks_after  = breaks,
+      dataset_label = paste(dataset_label, "(peaks)"),
+      hist_path     = hist_path
+    )
+  }
+
+  list(
+    bins            = bins_after,
+    breakpoints     = breaks,
+    K               = K,
+    bin_counts      = counts_after,
+    mic_breakpoints = breaks[-c(1, length(breaks))]
+  )
+}
+
+
+# Internal helper: save two-panel histogram
+# Panel 1: continuous histogram of raw MIC values with vertical lines at chosen breakpoints
+# Panel 2: bar chart of sample counts per final bin
+.save_bin_histogram <- function(mic_numeric, bins_after, breaks_after,
+                                dataset_label, hist_path) {
+  K            <- length(breaks_after) - 1
+  counts_after <- tabulate(bins_after, nbins = K)
+  log2_mic     <- log2(mic_numeric)
+  inner_cuts   <- log2(breaks_after[-c(1, length(breaks_after))])
+  bin_labels   <- paste0("(", round(breaks_after[-length(breaks_after)], 4),
+                         ", ", round(breaks_after[-1], 4), "]")
+  mid_log2     <- (log2(breaks_after[-length(breaks_after)]) +
+                   log2(breaks_after[-1])) / 2
+
+  # Panel 1: raw MIC distribution with breakpoint lines
+  df_raw <- data.frame(log2_mic = log2_mic)
+  p1 <- ggplot(df_raw, aes(x = log2_mic)) +
+    geom_histogram(bins = 60, fill = "steelblue", colour = "white", linewidth = 0.2) +
+    geom_vline(xintercept = inner_cuts, colour = "red", linetype = "dashed", linewidth = 0.7) +
     labs(
-      title = paste(dataset_label, "MIC bins — before/after rebalancing"),
-      x = "log2(MIC)", y = "Count", fill = "Bin"
+      title = paste(dataset_label, "\u2014 raw MIC distribution (red = chosen breakpoints)"),
+      x = "log2(MIC)", y = "Count"
+    ) +
+    theme_bw(base_size = 12)
+
+  # Panel 2: binned bar chart
+  df_bins <- data.frame(
+    bin   = factor(seq_len(K), levels = seq_len(K), labels = bin_labels),
+    mid   = mid_log2,
+    count = counts_after
+  )
+  p2 <- ggplot(df_bins, aes(x = mid, y = count, fill = bin)) +
+    geom_col(colour = "white", linewidth = 0.2) +
+    scale_x_continuous(breaks = mid_log2, labels = bin_labels) +
+    labs(
+      title = paste(dataset_label, "\u2014 final", K, "bins"),
+      x = "log2(MIC) bin", y = "Count"
     ) +
     theme_bw(base_size = 12) +
-    theme(legend.position = "bottom",
-          legend.text = element_text(size = 7))
+    theme(legend.position = "none",
+          axis.text.x = element_text(angle = 35, hjust = 1, size = 8))
 
   dir.create(dirname(hist_path), showWarnings = FALSE, recursive = TRUE)
-  ggsave(hist_path, p, width = 10, height = 5, dpi = 150)
+  ggsave(hist_path, gridExtra::arrangeGrob(p1, p2, ncol = 2),
+         width = 10, height = 5, dpi = 150)
   message("  Saved MIC bin histogram to: ", hist_path)
 }
 
