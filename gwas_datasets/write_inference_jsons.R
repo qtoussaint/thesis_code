@@ -5,24 +5,24 @@
 ##
 ##   SPN PENICILLIN
 ##   01 SPN penicillin    binary
-##   02 SPN penicillin    MIC (ordinal, dilution-merge >= 30/bin)
+##   02 SPN penicillin    MIC (ordinal, >= 5% per bin)
 ##   03 SPN penicillin    continuous (log2)
-##   10 SPN penicillin    MIC (ordinal, equal-frequency bins)
-##   11 SPN penicillin    MIC (ordinal, peak-valley bins)
+##   10 SPN penicillin    MIC (ordinal, coarse dilutions, >= 5% per bin)
+##   11 SPN penicillin    MIC (ordinal, >= 10% per bin)
 ##
 ##   SPN TRIMETHOPRIM
 ##   04 SPN trimethoprim  binary
-##   05 SPN trimethoprim  MIC (ordinal, dilution-merge >= 30/bin)
+##   05 SPN trimethoprim  MIC (ordinal, >= 5% per bin)
 ##   06 SPN trimethoprim  continuous (log2)
-##   12 SPN trimethoprim  MIC (ordinal, equal-frequency bins)
-##   13 SPN trimethoprim  MIC (ordinal, peak-valley bins)
+##   12 SPN trimethoprim  MIC (ordinal, coarse dilutions, >= 5% per bin)
+##   13 SPN trimethoprim  MIC (ordinal, >= 10% per bin)
 ##
 ##   TB RIFAMPICIN
 ##   07 TB  rifampicin    binary
-##   08 TB  rifampicin    MIC (ordinal, dilution-merge >= 30/bin)
+##   08 TB  rifampicin    MIC (ordinal, >= 5% per bin)
 ##   09 TB  rifampicin    continuous (log2)
-##   14 TB  rifampicin    MIC (ordinal, equal-frequency bins)
-##   15 TB  rifampicin    MIC (ordinal, peak-valley bins)
+##   14 TB  rifampicin    MIC (ordinal, coarse dilutions, >= 5% per bin)
+##   15 TB  rifampicin    MIC (ordinal, >= 10% per bin)
 ##
 ## All input paths and parameters come from config.R.
 ## Shared functions come from utils.R.
@@ -157,10 +157,112 @@ aligned <- intersect_and_align(
 
 binning <- bin_mic_auto(
   mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_size  = MIC_MIN_BIN_SIZE,
+  min_bin_frac  = MIC_MIN_BIN_FRAC,
   dilutions     = MIC_STANDARD_DILUTIONS,
   hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
   dataset_label = "SPN Penicillin"
+)
+
+enc <- encode_lineages_spn(
+  lineages_df = aligned$lineages,
+  sublin_df   = aligned$sublineages,
+  pheno_vec   = binning$bins
+)
+
+stan_list <- build_stan_inference(
+  pheno      = binning$bins,
+  geno_mat   = aligned$geno_mat,
+  lin_mat    = enc$lineage_matrix,
+  sublin_mat = enc$sublineage_matrix,
+  parent_lin = enc$parent_lineage,
+  K          = binning$K,
+  mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = stan_list,
+  sample_ids   = aligned$sample_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name
+)
+
+
+############################################################
+## 10: SPN PENICILLIN MIC (ordinal, coarse dilutions)
+############################################################
+
+message("\n=== 10: SPN penicillin MIC coarse dilutions (ordinal) ===")
+dataset_name <- "10_spn_penicillin_MIC_coarse_dilutions"
+out_dir <- file.path(OUT_INFER, dataset_name)
+
+aligned <- intersect_and_align(
+  pheno_df    = pen_raw,
+  geno        = spn_geno,
+  lineages_df = spn_lin$lineages,
+  sublin_df   = spn_lin$sublineages,
+  id_col      = "ID",
+  geno_in_cols = TRUE
+)
+
+binning <- bin_mic_auto(
+  mic_numeric   = aligned$pheno$MIC_num,
+  min_bin_frac  = MIC_MIN_BIN_FRAC,
+  dilutions     = MIC_COARSE_DILUTIONS,
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label = "SPN Penicillin (coarse dilutions)"
+)
+
+enc <- encode_lineages_spn(
+  lineages_df = aligned$lineages,
+  sublin_df   = aligned$sublineages,
+  pheno_vec   = binning$bins
+)
+
+stan_list <- build_stan_inference(
+  pheno      = binning$bins,
+  geno_mat   = aligned$geno_mat,
+  lin_mat    = enc$lineage_matrix,
+  sublin_mat = enc$sublineage_matrix,
+  parent_lin = enc$parent_lineage,
+  K          = binning$K,
+  mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = stan_list,
+  sample_ids   = aligned$sample_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name
+)
+
+
+############################################################
+## 11: SPN PENICILLIN MIC (ordinal, large min bin)
+############################################################
+
+message("\n=== 11: SPN penicillin MIC large minbin (ordinal) ===")
+dataset_name <- "11_spn_penicillin_MIC_large_minbin"
+out_dir <- file.path(OUT_INFER, dataset_name)
+
+aligned <- intersect_and_align(
+  pheno_df    = pen_raw,
+  geno        = spn_geno,
+  lineages_df = spn_lin$lineages,
+  sublin_df   = spn_lin$sublineages,
+  id_col      = "ID",
+  geno_in_cols = TRUE
+)
+
+binning <- bin_mic_auto(
+  mic_numeric   = aligned$pheno$MIC_num,
+  min_bin_frac  = MIC_MIN_BIN_FRAC_COARSE,
+  dilutions     = MIC_STANDARD_DILUTIONS,
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label = "SPN Penicillin (large minbin)"
 )
 
 enc <- encode_lineages_spn(
@@ -231,107 +333,6 @@ write_dataset(
   dataset_name = dataset_name
 )
 
-
-############################################################
-## 10: SPN PENICILLIN MIC (ordinal, equal-frequency bins)
-############################################################
-
-message("\n=== 10: SPN penicillin MIC (equal-freq) ===")
-dataset_name <- "10_spn_penicillin_MIC_equalfreq"
-out_dir <- file.path(OUT_INFER, dataset_name)
-
-aligned <- intersect_and_align(
-  pheno_df    = pen_raw,
-  geno        = spn_geno,
-  lineages_df = spn_lin$lineages,
-  sublin_df   = spn_lin$sublineages,
-  id_col      = "ID",
-  geno_in_cols = TRUE
-)
-
-binning <- bin_mic_equalfreq(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_size  = MIC_MIN_BIN_SIZE,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Penicillin"
-)
-
-enc <- encode_lineages_spn(
-  lineages_df = aligned$lineages,
-  sublin_df   = aligned$sublineages,
-  pheno_vec   = binning$bins
-)
-
-stan_list <- build_stan_inference(
-  pheno      = binning$bins,
-  geno_mat   = aligned$geno_mat,
-  lin_mat    = enc$lineage_matrix,
-  sublin_mat = enc$sublineage_matrix,
-  parent_lin = enc$parent_lineage,
-  K          = binning$K,
-  mic_bkpts  = binning$mic_breakpoints
-)
-
-write_dataset(
-  stan_list    = stan_list,
-  sample_ids   = aligned$sample_ids,
-  variant_names = rownames(spn_geno),
-  parent_lin   = enc$parent_lineage,
-  outdir       = out_dir,
-  dataset_name = dataset_name
-)
-
-
-############################################################
-## 11: SPN PENICILLIN MIC (ordinal, peak-valley bins)
-############################################################
-
-message("\n=== 11: SPN penicillin MIC (peaks) ===")
-dataset_name <- "11_spn_penicillin_MIC_peaks"
-out_dir <- file.path(OUT_INFER, dataset_name)
-
-aligned <- intersect_and_align(
-  pheno_df    = pen_raw,
-  geno        = spn_geno,
-  lineages_df = spn_lin$lineages,
-  sublin_df   = spn_lin$sublineages,
-  id_col      = "ID",
-  geno_in_cols = TRUE
-)
-
-binning <- bin_mic_peaks(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_size  = MIC_MIN_BIN_SIZE,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Penicillin"
-)
-
-enc <- encode_lineages_spn(
-  lineages_df = aligned$lineages,
-  sublin_df   = aligned$sublineages,
-  pheno_vec   = binning$bins
-)
-
-stan_list <- build_stan_inference(
-  pheno      = binning$bins,
-  geno_mat   = aligned$geno_mat,
-  lin_mat    = enc$lineage_matrix,
-  sublin_mat = enc$sublineage_matrix,
-  parent_lin = enc$parent_lineage,
-  K          = binning$K,
-  mic_bkpts  = binning$mic_breakpoints
-)
-
-write_dataset(
-  stan_list    = stan_list,
-  sample_ids   = aligned$sample_ids,
-  variant_names = rownames(spn_geno),
-  parent_lin   = enc$parent_lineage,
-  outdir       = out_dir,
-  dataset_name = dataset_name
-)
 
 
 ############################################################
@@ -412,10 +413,112 @@ aligned <- intersect_and_align(
 
 binning <- bin_mic_auto(
   mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_size  = MIC_MIN_BIN_SIZE,
+  min_bin_frac  = MIC_MIN_BIN_FRAC,
   dilutions     = MIC_STANDARD_DILUTIONS,
   hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
   dataset_label = "SPN Trimethoprim"
+)
+
+enc <- encode_lineages_spn(
+  lineages_df = aligned$lineages,
+  sublin_df   = aligned$sublineages,
+  pheno_vec   = binning$bins
+)
+
+stan_list <- build_stan_inference(
+  pheno      = binning$bins,
+  geno_mat   = aligned$geno_mat,
+  lin_mat    = enc$lineage_matrix,
+  sublin_mat = enc$sublineage_matrix,
+  parent_lin = enc$parent_lineage,
+  K          = binning$K,
+  mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = stan_list,
+  sample_ids   = aligned$sample_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name
+)
+
+
+############################################################
+## 12: SPN TRIMETHOPRIM MIC (ordinal, coarse dilutions)
+############################################################
+
+message("\n=== 12: SPN trimethoprim MIC coarse dilutions (ordinal) ===")
+dataset_name <- "12_spn_trimethoprim_MIC_coarse_dilutions"
+out_dir <- file.path(OUT_INFER, dataset_name)
+
+aligned <- intersect_and_align(
+  pheno_df    = tmp_raw,
+  geno        = spn_geno,
+  lineages_df = spn_lin$lineages,
+  sublin_df   = spn_lin$sublineages,
+  id_col      = "ID",
+  geno_in_cols = TRUE
+)
+
+binning <- bin_mic_auto(
+  mic_numeric   = aligned$pheno$MIC_num,
+  min_bin_frac  = MIC_MIN_BIN_FRAC,
+  dilutions     = MIC_COARSE_DILUTIONS,
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label = "SPN Trimethoprim (coarse dilutions)"
+)
+
+enc <- encode_lineages_spn(
+  lineages_df = aligned$lineages,
+  sublin_df   = aligned$sublineages,
+  pheno_vec   = binning$bins
+)
+
+stan_list <- build_stan_inference(
+  pheno      = binning$bins,
+  geno_mat   = aligned$geno_mat,
+  lin_mat    = enc$lineage_matrix,
+  sublin_mat = enc$sublineage_matrix,
+  parent_lin = enc$parent_lineage,
+  K          = binning$K,
+  mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = stan_list,
+  sample_ids   = aligned$sample_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name
+)
+
+
+############################################################
+## 13: SPN TRIMETHOPRIM MIC (ordinal, large min bin)
+############################################################
+
+message("\n=== 13: SPN trimethoprim MIC large minbin (ordinal) ===")
+dataset_name <- "13_spn_trimethoprim_MIC_large_minbin"
+out_dir <- file.path(OUT_INFER, dataset_name)
+
+aligned <- intersect_and_align(
+  pheno_df    = tmp_raw,
+  geno        = spn_geno,
+  lineages_df = spn_lin$lineages,
+  sublin_df   = spn_lin$sublineages,
+  id_col      = "ID",
+  geno_in_cols = TRUE
+)
+
+binning <- bin_mic_auto(
+  mic_numeric   = aligned$pheno$MIC_num,
+  min_bin_frac  = MIC_MIN_BIN_FRAC_COARSE,
+  dilutions     = MIC_STANDARD_DILUTIONS,
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label = "SPN Trimethoprim (large minbin)"
 )
 
 enc <- encode_lineages_spn(
@@ -487,110 +590,9 @@ write_dataset(
 )
 
 
-############################################################
-## 12: SPN TRIMETHOPRIM MIC (ordinal, equal-frequency bins)
-############################################################
-
-message("\n=== 12: SPN trimethoprim MIC (equal-freq) ===")
-dataset_name <- "12_spn_trimethoprim_MIC_equalfreq"
-out_dir <- file.path(OUT_INFER, dataset_name)
-
-aligned <- intersect_and_align(
-  pheno_df    = tmp_raw,
-  geno        = spn_geno,
-  lineages_df = spn_lin$lineages,
-  sublin_df   = spn_lin$sublineages,
-  id_col      = "ID",
-  geno_in_cols = TRUE
-)
-
-binning <- bin_mic_equalfreq(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_size  = MIC_MIN_BIN_SIZE,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Trimethoprim"
-)
-
-enc <- encode_lineages_spn(
-  lineages_df = aligned$lineages,
-  sublin_df   = aligned$sublineages,
-  pheno_vec   = binning$bins
-)
-
-stan_list <- build_stan_inference(
-  pheno      = binning$bins,
-  geno_mat   = aligned$geno_mat,
-  lin_mat    = enc$lineage_matrix,
-  sublin_mat = enc$sublineage_matrix,
-  parent_lin = enc$parent_lineage,
-  K          = binning$K,
-  mic_bkpts  = binning$mic_breakpoints
-)
-
-write_dataset(
-  stan_list    = stan_list,
-  sample_ids   = aligned$sample_ids,
-  variant_names = rownames(spn_geno),
-  parent_lin   = enc$parent_lineage,
-  outdir       = out_dir,
-  dataset_name = dataset_name
-)
-
 
 ############################################################
-## 13: SPN TRIMETHOPRIM MIC (ordinal, peak-valley bins)
-############################################################
-
-message("\n=== 13: SPN trimethoprim MIC (peaks) ===")
-dataset_name <- "13_spn_trimethoprim_MIC_peaks"
-out_dir <- file.path(OUT_INFER, dataset_name)
-
-aligned <- intersect_and_align(
-  pheno_df    = tmp_raw,
-  geno        = spn_geno,
-  lineages_df = spn_lin$lineages,
-  sublin_df   = spn_lin$sublineages,
-  id_col      = "ID",
-  geno_in_cols = TRUE
-)
-
-binning <- bin_mic_peaks(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_size  = MIC_MIN_BIN_SIZE,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Trimethoprim"
-)
-
-enc <- encode_lineages_spn(
-  lineages_df = aligned$lineages,
-  sublin_df   = aligned$sublineages,
-  pheno_vec   = binning$bins
-)
-
-stan_list <- build_stan_inference(
-  pheno      = binning$bins,
-  geno_mat   = aligned$geno_mat,
-  lin_mat    = enc$lineage_matrix,
-  sublin_mat = enc$sublineage_matrix,
-  parent_lin = enc$parent_lineage,
-  K          = binning$K,
-  mic_bkpts  = binning$mic_breakpoints
-)
-
-write_dataset(
-  stan_list    = stan_list,
-  sample_ids   = aligned$sample_ids,
-  variant_names = rownames(spn_geno),
-  parent_lin   = enc$parent_lineage,
-  outdir       = out_dir,
-  dataset_name = dataset_name
-)
-
-
-############################################################
-## TB DATA LOADING (shared across datasets 07-09, 14-15)
+## TB DATA LOADING (shared across datasets 07-09)
 ############################################################
 
 message("\n=== Loading TB data ===")
@@ -706,10 +708,92 @@ out_dir <- file.path(OUT_INFER, dataset_name)
 
 binning <- bin_mic_auto(
   mic_numeric   = tb_mic_num,
-  min_bin_size  = MIC_MIN_BIN_SIZE,
+  min_bin_frac  = MIC_MIN_BIN_FRAC,
   dilutions     = MIC_STANDARD_DILUTIONS,
   hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
   dataset_label = "TB Rifampicin"
+)
+
+enc <- encode_lineages_tb(
+  lineages_df = tb_lin_aligned,
+  pheno_vec   = binning$bins
+)
+
+stan_list <- build_stan_inference(
+  pheno      = binning$bins,
+  geno_mat   = tb_geno_mat,
+  lin_mat    = enc$lineage_matrix,
+  sublin_mat = enc$sublineage_matrix,
+  parent_lin = enc$parent_lineage,
+  K          = binning$K,
+  mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = stan_list,
+  sample_ids   = tb_sample_ids,
+  variant_names = tb_var_names,
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name
+)
+
+
+############################################################
+## 14: TB RIFAMPICIN MIC (ordinal, coarse dilutions)
+############################################################
+
+message("\n=== 14: TB rifampicin MIC coarse dilutions (ordinal) ===")
+dataset_name <- "14_tb_rifampicin_MIC_coarse_dilutions"
+out_dir <- file.path(OUT_INFER, dataset_name)
+
+binning <- bin_mic_auto(
+  mic_numeric   = tb_mic_num,
+  min_bin_frac  = MIC_MIN_BIN_FRAC,
+  dilutions     = MIC_COARSE_DILUTIONS,
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label = "TB Rifampicin (coarse dilutions)"
+)
+
+enc <- encode_lineages_tb(
+  lineages_df = tb_lin_aligned,
+  pheno_vec   = binning$bins
+)
+
+stan_list <- build_stan_inference(
+  pheno      = binning$bins,
+  geno_mat   = tb_geno_mat,
+  lin_mat    = enc$lineage_matrix,
+  sublin_mat = enc$sublineage_matrix,
+  parent_lin = enc$parent_lineage,
+  K          = binning$K,
+  mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = stan_list,
+  sample_ids   = tb_sample_ids,
+  variant_names = tb_var_names,
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name
+)
+
+
+############################################################
+## 15: TB RIFAMPICIN MIC (ordinal, large min bin)
+############################################################
+
+message("\n=== 15: TB rifampicin MIC large minbin (ordinal) ===")
+dataset_name <- "15_tb_rifampicin_MIC_large_minbin"
+out_dir <- file.path(OUT_INFER, dataset_name)
+
+binning <- bin_mic_auto(
+  mic_numeric   = tb_mic_num,
+  min_bin_frac  = MIC_MIN_BIN_FRAC_COARSE,
+  dilutions     = MIC_STANDARD_DILUTIONS,
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label = "TB Rifampicin (large minbin)"
 )
 
 enc <- encode_lineages_tb(
@@ -769,87 +853,6 @@ write_dataset(
   dataset_name = dataset_name
 )
 
-
-############################################################
-## 14: TB RIFAMPICIN MIC (ordinal, equal-frequency bins)
-############################################################
-
-message("\n=== 14: TB rifampicin MIC (equal-freq) ===")
-dataset_name <- "14_tb_rifampicin_MIC_equalfreq"
-out_dir <- file.path(OUT_INFER, dataset_name)
-
-binning <- bin_mic_equalfreq(
-  mic_numeric   = tb_mic_num,
-  min_bin_size  = MIC_MIN_BIN_SIZE,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "TB Rifampicin"
-)
-
-enc <- encode_lineages_tb(
-  lineages_df = tb_lin_aligned,
-  pheno_vec   = binning$bins
-)
-
-stan_list <- build_stan_inference(
-  pheno      = binning$bins,
-  geno_mat   = tb_geno_mat,
-  lin_mat    = enc$lineage_matrix,
-  sublin_mat = enc$sublineage_matrix,
-  parent_lin = enc$parent_lineage,
-  K          = binning$K,
-  mic_bkpts  = binning$mic_breakpoints
-)
-
-write_dataset(
-  stan_list    = stan_list,
-  sample_ids   = tb_sample_ids,
-  variant_names = tb_var_names,
-  parent_lin   = enc$parent_lineage,
-  outdir       = out_dir,
-  dataset_name = dataset_name
-)
-
-
-############################################################
-## 15: TB RIFAMPICIN MIC (ordinal, peak-valley bins)
-############################################################
-
-message("\n=== 15: TB rifampicin MIC (peaks) ===")
-dataset_name <- "15_tb_rifampicin_MIC_peaks"
-out_dir <- file.path(OUT_INFER, dataset_name)
-
-binning <- bin_mic_peaks(
-  mic_numeric   = tb_mic_num,
-  min_bin_size  = MIC_MIN_BIN_SIZE,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "TB Rifampicin"
-)
-
-enc <- encode_lineages_tb(
-  lineages_df = tb_lin_aligned,
-  pheno_vec   = binning$bins
-)
-
-stan_list <- build_stan_inference(
-  pheno      = binning$bins,
-  geno_mat   = tb_geno_mat,
-  lin_mat    = enc$lineage_matrix,
-  sublin_mat = enc$sublineage_matrix,
-  parent_lin = enc$parent_lineage,
-  K          = binning$K,
-  mic_bkpts  = binning$mic_breakpoints
-)
-
-write_dataset(
-  stan_list    = stan_list,
-  sample_ids   = tb_sample_ids,
-  variant_names = tb_var_names,
-  parent_lin   = enc$parent_lineage,
-  outdir       = out_dir,
-  dataset_name = dataset_name
-)
 
 
 message("\n=== All 15 inference datasets written to: ", OUT_INFER, " ===")

@@ -127,7 +127,7 @@ mic_to_binary <- function(mic_numeric, s_max, r_min = NULL) {
 #' Saves a two-panel before/after histogram PNG.
 #'
 #' @param mic_numeric  numeric vector of cleaned MIC values
-#' @param min_bin_size minimum samples per bin (default 30)
+#' @param min_bin_frac  minimum fraction of samples per bin (default 0.05 = 5%)
 #' @param dilutions    candidate breakpoints (default: MIC_STANDARD_DILUTIONS from config)
 #' @param hist_path    path to save histogram PNG (NULL = no save)
 #' @param dataset_label label used in histogram title
@@ -139,10 +139,12 @@ mic_to_binary <- function(mic_numeric, s_max, r_min = NULL) {
 #'   mic_breakpoints = inner breakpoints (for PPOM cutpoints)
 #' )
 bin_mic_auto <- function(mic_numeric,
-                         min_bin_size  = 30,
+                         min_bin_frac  = 0.05,
                          dilutions     = MIC_STANDARD_DILUTIONS,
                          hist_path     = NULL,
                          dataset_label = "") {
+
+  min_bin_size <- max(1L, round(min_bin_frac * length(mic_numeric)))
 
   # 1. Restrict breakpoints to span observed range
   lo <- min(mic_numeric, na.rm = TRUE)

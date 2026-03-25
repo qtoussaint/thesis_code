@@ -62,8 +62,12 @@ TB_RIF_MIC_REPLACEMENTS <- c(
 # Standard microbiological doubling-dilution breakpoints used by bin_mic_auto()
 MIC_STANDARD_DILUTIONS <- c(0, 0.008, 0.016, 0.03, 0.06, 0.12, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64)
 
-# Minimum number of samples required per bin after auto-binning
-MIC_MIN_BIN_SIZE <- 30
+# Minimum fraction of samples required per bin after auto-binning
+MIC_MIN_BIN_FRAC        <- 0.05   # 5%  — standard MIC datasets
+MIC_MIN_BIN_FRAC_COARSE <- 0.10   # 10% — coarser-binned MIC datasets
+
+# 4-fold (every-other-step) dilution grid for coarser MIC datasets
+MIC_COARSE_DILUTIONS <- MIC_STANDARD_DILUTIONS[c(TRUE, FALSE)]
 
 
 # === OUTPUT PATHS ===
