@@ -55,7 +55,14 @@ tmp_raw <- tmp_raw[complete.cases(tmp_raw), ]
 tmp_raw$MIC_num <- clean_mic_values(tmp_raw$MIC, SPN_TMP_MIC_REPLACEMENTS)
 tmp_raw <- tmp_raw[!is.na(tmp_raw$MIC_num), ]
 
-spn_pen_bin_raw <- read.csv(SPN_PEN_BINARY_PATH, na.strings = "")
+pen_bin <- pen_raw
+pen_bin$binary <- mic_to_binary(
+  mic_numeric = pen_bin$MIC_num,
+  s_max       = SPN_PEN_BINARY_S_MAX,
+  r_min       = SPN_PEN_BINARY_R_MIN
+)
+pen_bin <- pen_bin[!is.na(pen_bin$binary), ]
+pen_bin$pheno <- pen_bin$binary
 
 
 ############################################################
@@ -66,10 +73,8 @@ message("\n=== 01-pred: SPN penicillin binary ===")
 dataset_name <- "01_spn_penicillin_binary"
 out_dir <- file.path(OUT_PRED, dataset_name)
 
-pheno_df <- spn_pen_bin_raw[complete.cases(spn_pen_bin_raw), ]
-
 aligned <- intersect_and_align(
-  pheno_df    = pheno_df,
+  pheno_df    = pen_bin,
   geno        = spn_geno,
   lineages_df = spn_lin$lineages,
   sublin_df   = spn_lin$sublineages,
@@ -80,11 +85,11 @@ aligned <- intersect_and_align(
 enc <- encode_lineages_spn(
   lineages_df = aligned$lineages,
   sublin_df   = aligned$sublineages,
-  pheno_vec   = aligned$pheno$resistance
+  pheno_vec   = aligned$pheno$pheno
 )
 
 pred <- build_stan_prediction(
-  pheno      = aligned$pheno$resistance,
+  pheno      = aligned$pheno$pheno,
   geno_mat   = aligned$geno_mat,
   lin_mat    = enc$lineage_matrix,
   sublin_mat = enc$sublineage_matrix,
@@ -101,18 +106,6 @@ write_dataset(
   dataset_name = dataset_name,
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
-)
-
-pen_bin_joined <- merge(
-  pheno_df[, c("ID", "resistance")],
-  pen_raw[, c("ID", "MIC_num")],
-  by = "ID"
-)
-save_binary_histogram(
-  mic_numeric   = pen_bin_joined$MIC_num,
-  binary_vec    = pen_bin_joined$resistance,
-  dataset_label = "SPN Penicillin",
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png"))
 )
 
 

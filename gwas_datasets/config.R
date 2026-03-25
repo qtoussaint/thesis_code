@@ -14,7 +14,6 @@ SPN_LINEAGES_PATH <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/lineag
 
 # SPN phenotype sources
 SPN_METADATA_PATH    <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/phenotype/sparc_metadata.csv"
-SPN_PEN_BINARY_PATH  <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/phenotype/sparc_penicillin_eucast_binary.csv"
 
 # TB genotype — presence/absence matrix filtered to samples with RIF MIC data (Jan 20 2025)
 TB_PRESABS_PATH     <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/subsampled_presabs/presence_absence_final_RIF_K8.tsv"
@@ -31,8 +30,9 @@ TB_LINEAGES_PATH <- "/nfs/research/jlees/jacqueline/gwas_data/code/gwas_data/tub
 
 # === PHENOTYPE PARAMETERS ===
 
-# --- SPN penicillin binary (EUCAST 2025): pre-computed in sparc_penicillin_eucast_binary.csv
-#     (S if MIC < 0.06 ug/mL, R if >= 0.06 ug/mL)
+# --- SPN penicillin binary (EUCAST 2025): S if MIC < 0.06 ug/mL, R if >= 0.06 ug/mL
+SPN_PEN_BINARY_S_MAX <- 0.03   # last standard dilution below 0.06
+SPN_PEN_BINARY_R_MIN <- 0.06   # EUCAST resistant threshold
 
 # --- SPN trimethoprim binary (EUCAST 2025): S if MIC <= 1, R if MIC >= 2
 SPN_TMP_BINARY_S_MAX <- 1.0   # susceptible threshold

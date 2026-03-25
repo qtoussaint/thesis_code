@@ -34,7 +34,6 @@ write_inputs_manifest(
     spn_genotype     = SPN_GENOTYPE_PATH,
     spn_lineages     = SPN_LINEAGES_PATH,
     spn_metadata     = SPN_METADATA_PATH,
-    spn_pen_binary   = SPN_PEN_BINARY_PATH,
     tb_presabs       = TB_PRESABS_PATH,
     tb_variant_index = TB_VARIANT_IDX_PATH,
     tb_sample_index  = TB_SAMPLE_INDEX_PATH,
@@ -73,9 +72,6 @@ tmp_raw <- tmp_raw[complete.cases(tmp_raw), ]
 tmp_raw$MIC_num <- clean_mic_values(tmp_raw$MIC, SPN_TMP_MIC_REPLACEMENTS)
 tmp_raw <- tmp_raw[!is.na(tmp_raw$MIC_num), ]
 
-# Load pre-computed EUCAST binary for penicillin
-spn_pen_bin_raw <- read.csv(SPN_PEN_BINARY_PATH, na.strings = "")
-
 
 ############################################################
 ## 01: SPN PENICILLIN BINARY
@@ -85,10 +81,17 @@ message("\n=== 01: SPN penicillin binary ===")
 dataset_name <- "01_spn_penicillin_binary"
 out_dir <- file.path(OUT_INFER, dataset_name)
 
-pheno_df <- spn_pen_bin_raw[complete.cases(spn_pen_bin_raw), ]
+pen_bin <- pen_raw
+pen_bin$binary <- mic_to_binary(
+  mic_numeric = pen_bin$MIC_num,
+  s_max       = SPN_PEN_BINARY_S_MAX,
+  r_min       = SPN_PEN_BINARY_R_MIN
+)
+pen_bin <- pen_bin[!is.na(pen_bin$binary), ]
+pen_bin$pheno <- pen_bin$binary
 
 aligned <- intersect_and_align(
-  pheno_df    = pheno_df,
+  pheno_df    = pen_bin,
   geno        = spn_geno,
   lineages_df = spn_lin$lineages,
   sublin_df   = spn_lin$sublineages,
@@ -99,11 +102,11 @@ aligned <- intersect_and_align(
 enc <- encode_lineages_spn(
   lineages_df = aligned$lineages,
   sublin_df   = aligned$sublineages,
-  pheno_vec   = aligned$pheno$resistance
+  pheno_vec   = aligned$pheno$pheno
 )
 
 stan_list <- build_stan_inference(
-  pheno      = aligned$pheno$resistance,
+  pheno      = aligned$pheno$pheno,
   geno_mat   = aligned$geno_mat,
   lin_mat    = enc$lineage_matrix,
   sublin_mat = enc$sublineage_matrix,
@@ -119,17 +122,13 @@ write_dataset(
   dataset_name = dataset_name
 )
 
-# Join pen_raw MIC values to binary-labeled samples for the distribution plot
-pen_bin_joined <- merge(
-  pheno_df[, c("ID", "resistance")],
-  pen_raw[, c("ID", "MIC_num")],
-  by = "ID"
-)
 save_binary_histogram(
-  mic_numeric   = pen_bin_joined$MIC_num,
-  binary_vec    = pen_bin_joined$resistance,
+  mic_numeric   = aligned$pheno$MIC_num,
+  binary_vec    = aligned$pheno$pheno,
   dataset_label = "SPN Penicillin",
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png"))
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
+  s_max         = SPN_PEN_BINARY_S_MAX,
+  r_min         = SPN_PEN_BINARY_R_MIN
 )
 
 
