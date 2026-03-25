@@ -409,53 +409,63 @@ bin_mic_peaks <- function(mic_numeric,
 }
 
 
-# Internal helper: save two-panel histogram
-# Panel 1: continuous histogram of raw MIC values with vertical lines at chosen breakpoints
-# Panel 2: bar chart of sample counts per final bin
+# Internal helper: save three-panel histogram
+# Panel 0 (left):   raw MIC histogram with vertical lines at bin boundaries
+# Panel 1 (middle): log2(MIC) histogram with vertical lines at bin boundaries
+# Panel 2 (right):  categorical bar chart of sample counts per final bin
 .save_bin_histogram <- function(mic_numeric, bins_after, breaks_after,
                                 dataset_label, hist_path) {
   K            <- length(breaks_after) - 1
   counts_after <- tabulate(bins_after, nbins = K)
   log2_mic     <- log2(mic_numeric)
   inner_cuts   <- log2(breaks_after[-c(1, length(breaks_after))])
+  inner_cuts_raw <- breaks_after[-c(1, length(breaks_after))]
   bin_labels   <- paste0("(", round(breaks_after[-length(breaks_after)], 4),
                          ", ", round(breaks_after[-1], 4), "]")
-  mid_log2     <- (log2(breaks_after[-length(breaks_after)]) +
-                   log2(breaks_after[-1])) / 2
 
-  # Panel 1: raw MIC distribution with breakpoint lines
-  # Bars use binwidth=1 (one bar per doubling dilution), boundary=0 aligns bar edges to
-  # half-integer values so breakpoint lines at inner_cuts+0.5 fall cleanly between bars.
+  # Panel 0: raw (non-log) MIC distribution with breakpoint lines
+  df_raw_mic <- data.frame(mic = mic_numeric)
+  p0 <- ggplot(df_raw_mic, aes(x = mic)) +
+    geom_histogram(bins = 40, fill = "steelblue", colour = "white", linewidth = 0.2) +
+    geom_vline(xintercept = inner_cuts_raw,
+               colour = "red", linetype = "dashed", linewidth = 0.7) +
+    labs(
+      title = paste(dataset_label, "\u2014 raw MIC (dashed = bin boundaries)"),
+      x = "MIC (\u00b5g/mL)", y = "Count"
+    ) +
+    theme_bw(base_size = 12)
+
+  # Panel 1: log2(MIC) distribution with breakpoint lines
+  # Bars use binwidth=0.25, boundary=0; breakpoint lines at inner_cuts+0.5 fall
+  # cleanly between bars.
   df_raw <- data.frame(log2_mic = log2_mic)
   p1 <- ggplot(df_raw, aes(x = log2_mic)) +
     geom_histogram(binwidth = 0.25, boundary = 0, fill = "steelblue", colour = "white", linewidth = 0.2) +
     geom_vline(xintercept = inner_cuts + 0.5, colour = "red", linetype = "dashed", linewidth = 0.7) +
     labs(
-      title = paste(dataset_label, "\u2014 raw MIC distribution (dashed = bin boundaries)"),
+      title = paste(dataset_label, "\u2014 log2(MIC) distribution (dashed = bin boundaries)"),
       x = "log2(MIC)", y = "Count"
     ) +
     theme_bw(base_size = 12)
 
-  # Panel 2: binned bar chart
+  # Panel 2: categorical binned bar chart (equal spacing, no log2 x axis)
   df_bins <- data.frame(
     bin   = factor(seq_len(K), levels = seq_len(K), labels = bin_labels),
-    mid   = mid_log2,
     count = counts_after
   )
-  p2 <- ggplot(df_bins, aes(x = mid, y = count, fill = bin)) +
+  p2 <- ggplot(df_bins, aes(x = bin, y = count, fill = bin)) +
     geom_col(colour = "white", linewidth = 0.2) +
-    scale_x_continuous(breaks = mid_log2, labels = bin_labels) +
     labs(
       title = paste(dataset_label, "\u2014 final", K, "bins"),
-      x = "log2(MIC) bin", y = "Count"
+      x = "MIC bin", y = "Count"
     ) +
     theme_bw(base_size = 12) +
     theme(legend.position = "none",
           axis.text.x = element_text(angle = 35, hjust = 1, size = 8))
 
   dir.create(dirname(hist_path), showWarnings = FALSE, recursive = TRUE)
-  ggsave(hist_path, gridExtra::arrangeGrob(p1, p2, ncol = 2),
-         width = 10, height = 5, dpi = 150)
+  ggsave(hist_path, gridExtra::arrangeGrob(p0, p1, p2, ncol = 3),
+         width = 15, height = 5, dpi = 150)
   message("  Saved MIC bin histogram to: ", hist_path)
 }
 
@@ -484,18 +494,32 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
 
   panels <- list()
 
-  # Panel 1: plain log2(MIC) histogram with breakpoint line (if MIC data available)
   if (!is.null(mic_numeric)) {
+    # Panel 0 (leftmost): raw (non-log) MIC histogram with breakpoint line
+    df_raw_mic <- data.frame(mic = mic_numeric)
+    p0 <- ggplot(df_raw_mic, aes(x = mic)) +
+      geom_histogram(bins = 40, fill = "steelblue", colour = "white", linewidth = 0.2) +
+      labs(
+        title = paste(dataset_label, "\u2014 raw MIC (dashed = breakpoint)"),
+        x = "MIC (\u00b5g/mL)", y = "Count"
+      ) +
+      theme_bw(base_size = 12)
+    if (!is.null(s_max)) {
+      p0 <- p0 + geom_vline(xintercept = s_max, colour = "red",
+                             linetype = "dashed", linewidth = 0.7)
+    }
+    panels[["p0"]] <- p0
+
+    # Panel 1 (middle): log2(MIC) histogram with breakpoint line
     df_raw <- data.frame(log2_mic = log2(mic_numeric))
     p1 <- ggplot(df_raw, aes(x = log2_mic)) +
       geom_histogram(binwidth = 0.25, boundary = 0, fill = "steelblue",
                      colour = "white", linewidth = 0.2) +
       labs(
-        title = paste(dataset_label, "\u2014 raw MIC distribution (dashed = breakpoint)"),
+        title = paste(dataset_label, "\u2014 log2(MIC) distribution (dashed = breakpoint)"),
         x = "log2(MIC)", y = "Count"
       ) +
       theme_bw(base_size = 12)
-
     if (!is.null(s_max)) {
       threshold_cut <- log2(s_max) + 0.5
       p1 <- p1 +
@@ -505,7 +529,7 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
     panels[["p1"]] <- p1
   }
 
-  # Panel 2: bar chart of S/R counts
+  # Panel 2 (rightmost): bar chart of S/R counts
   df_counts <- data.frame(
     class = names(counts),
     count = as.integer(counts)
@@ -524,15 +548,11 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
     theme(legend.position = "none")
   panels[["p2"]] <- p2
 
-  grob <- if (length(panels) == 2) {
-    gridExtra::arrangeGrob(panels$p1, panels$p2, ncol = 2)
-  } else {
-    gridExtra::arrangeGrob(panels$p2, ncol = 1)
-  }
+  grob <- gridExtra::arrangeGrob(grobs = panels, ncol = length(panels))
 
   dir.create(dirname(hist_path), showWarnings = FALSE, recursive = TRUE)
   ggsave(hist_path, grob,
-         width = if (length(panels) == 2) 10 else 5, height = 5, dpi = 150)
+         width = 5 * length(panels), height = 5, dpi = 150)
   message("  Saved binary histogram to: ", hist_path)
 }
 
