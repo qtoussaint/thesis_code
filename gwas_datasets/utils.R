@@ -422,12 +422,14 @@ bin_mic_peaks <- function(mic_numeric,
                    log2(breaks_after[-1])) / 2
 
   # Panel 1: raw MIC distribution with breakpoint lines
+  # Bars use binwidth=1 (one bar per doubling dilution), boundary=0 aligns bar edges to
+  # half-integer values so breakpoint lines at inner_cuts+0.5 fall cleanly between bars.
   df_raw <- data.frame(log2_mic = log2_mic)
   p1 <- ggplot(df_raw, aes(x = log2_mic)) +
-    geom_histogram(bins = 60, fill = "steelblue", colour = "white", linewidth = 0.2) +
-    geom_vline(xintercept = inner_cuts, colour = "red", linetype = "dashed", linewidth = 0.7) +
+    geom_histogram(binwidth = 1, boundary = 0, fill = "steelblue", colour = "white", linewidth = 0.2) +
+    geom_vline(xintercept = inner_cuts + 0.5, colour = "red", linetype = "dashed", linewidth = 0.7) +
     labs(
-      title = paste(dataset_label, "\u2014 raw MIC distribution (red = chosen breakpoints)"),
+      title = paste(dataset_label, "\u2014 raw MIC distribution (dashed = bin boundary, shifted right)"),
       x = "log2(MIC)", y = "Count"
     ) +
     theme_bw(base_size = 12)
@@ -453,6 +455,89 @@ bin_mic_peaks <- function(mic_numeric,
   ggsave(hist_path, gridExtra::arrangeGrob(p1, p2, ncol = 2),
          width = 10, height = 5, dpi = 150)
   message("  Saved MIC bin histogram to: ", hist_path)
+}
+
+
+#' Save a two-panel phenotype distribution plot for a binary (S/R) dataset.
+#'
+#' Panel 1 (if mic_numeric provided): log2(MIC) histogram coloured by binary class.
+#'   If s_max is given, draws a dashed threshold line shifted right by 0.5 in log2
+#'   space (same convention as .save_bin_histogram) to sit clearly between bars.
+#' Panel 2: bar chart of susceptible (0) vs resistant (1) counts.
+#'
+#' @param mic_numeric  numeric MIC vector (same length as binary_vec), or NULL to
+#'                     omit Panel 1.
+#' @param binary_vec   integer/numeric vector of 0/1 phenotype values.
+#' @param dataset_label  character label used in plot titles.
+#' @param hist_path    file path for the output PNG.
+#' @param s_max        susceptible threshold (MIC <= s_max => 0); draws a threshold
+#'                     line when provided.
+#' @param r_min        resistant threshold (optional, for annotation only).
+save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
+                                  dataset_label, hist_path,
+                                  s_max = NULL, r_min = NULL) {
+  binary_fac <- factor(binary_vec, levels = c(0, 1),
+                       labels = c("Susceptible (0)", "Resistant (1)"))
+  counts     <- table(binary_fac)
+
+  panels <- list()
+
+  # Panel 1: log2(MIC) histogram coloured by class (if MIC data available)
+  if (!is.null(mic_numeric)) {
+    df_raw <- data.frame(
+      log2_mic = log2(mic_numeric),
+      class    = binary_fac
+    )
+    p1 <- ggplot(df_raw, aes(x = log2_mic, fill = class)) +
+      geom_histogram(binwidth = 1, boundary = 0, colour = "white",
+                     linewidth = 0.2, position = "stack") +
+      scale_fill_manual(values = c("Susceptible (0)" = "steelblue",
+                                   "Resistant (1)"   = "firebrick")) +
+      labs(
+        title = paste(dataset_label, "\u2014 MIC distribution by class"),
+        x = "log2(MIC)", y = "Count", fill = NULL
+      ) +
+      theme_bw(base_size = 12) +
+      theme(legend.position = "bottom")
+
+    if (!is.null(s_max)) {
+      threshold_cut <- log2(s_max) + 0.5
+      p1 <- p1 +
+        geom_vline(xintercept = threshold_cut, colour = "black",
+                   linetype = "dashed", linewidth = 0.7)
+    }
+    panels[["p1"]] <- p1
+  }
+
+  # Panel 2: bar chart of S/R counts
+  df_counts <- data.frame(
+    class = names(counts),
+    count = as.integer(counts)
+  )
+  p2 <- ggplot(df_counts, aes(x = class, y = count,
+                               fill = class)) +
+    geom_col(colour = "white", linewidth = 0.2) +
+    geom_text(aes(label = count), vjust = -0.3, size = 3.5) +
+    scale_fill_manual(values = c("Susceptible (0)" = "steelblue",
+                                 "Resistant (1)"   = "firebrick")) +
+    labs(
+      title = paste(dataset_label, "\u2014 binary phenotype counts"),
+      x = NULL, y = "Count"
+    ) +
+    theme_bw(base_size = 12) +
+    theme(legend.position = "none")
+  panels[["p2"]] <- p2
+
+  grob <- if (length(panels) == 2) {
+    gridExtra::arrangeGrob(panels$p1, panels$p2, ncol = 2)
+  } else {
+    gridExtra::arrangeGrob(panels$p2, ncol = 1)
+  }
+
+  dir.create(dirname(hist_path), showWarnings = FALSE, recursive = TRUE)
+  ggsave(hist_path, grob,
+         width = if (length(panels) == 2) 10 else 5, height = 5, dpi = 150)
+  message("  Saved binary histogram to: ", hist_path)
 }
 
 

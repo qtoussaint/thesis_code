@@ -18,7 +18,8 @@ SPN_PEN_BINARY_PATH  <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/phe
 
 # TB genotype — presence/absence matrix filtered to samples with RIF MIC data (Jan 20 2025)
 TB_PRESABS_PATH     <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/subsampled_presabs/presence_absence_final_RIF_K8.tsv"
-TB_VARIANT_IDX_PATH <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/subsampled_presabs/variant_index_presence_absence_RIF_K8.tsv"
+TB_VARIANT_IDX_PATH  <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/subsampled_presabs/variant_index_presence_absence_RIF_K8.tsv"
+TB_SAMPLE_INDEX_PATH <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/sample_index_RIF_K8.txt"
 
 # TB phenotype — CRyPTIC reuse table (Sep 17 2024; most recent version)
 # Relevant columns: col 1 = ENA_RUN, col 27 = RIF_MIC, col 44 = REGENOTYPED_VCF

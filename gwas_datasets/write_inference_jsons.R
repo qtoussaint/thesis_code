@@ -37,6 +37,7 @@ write_inputs_manifest(
     spn_pen_binary   = SPN_PEN_BINARY_PATH,
     tb_presabs       = TB_PRESABS_PATH,
     tb_variant_index = TB_VARIANT_IDX_PATH,
+    tb_sample_index  = TB_SAMPLE_INDEX_PATH,
     tb_phenotype     = TB_PHENOTYPE_PATH,
     tb_lineages      = TB_LINEAGES_PATH
   ),
@@ -116,6 +117,19 @@ write_dataset(
   parent_lin   = enc$parent_lineage,
   outdir       = out_dir,
   dataset_name = dataset_name
+)
+
+# Join pen_raw MIC values to binary-labeled samples for the distribution plot
+pen_bin_joined <- merge(
+  pheno_df[, c("ID", "resistance")],
+  pen_raw[, c("ID", "MIC_num")],
+  by = "ID"
+)
+save_binary_histogram(
+  mic_numeric   = pen_bin_joined$MIC_num,
+  binary_vec    = pen_bin_joined$resistance,
+  dataset_label = "SPN Penicillin",
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png"))
 )
 
 
@@ -262,6 +276,15 @@ write_dataset(
   dataset_name = dataset_name
 )
 
+save_binary_histogram(
+  mic_numeric   = aligned$pheno$MIC_num,
+  binary_vec    = aligned$pheno$pheno,
+  dataset_label = "SPN Trimethoprim",
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
+  s_max         = SPN_TMP_BINARY_S_MAX,
+  r_min         = SPN_TMP_BINARY_R_MIN
+)
+
 
 ############################################################
 ## 05: SPN TRIMETHOPRIM MIC (ordinal, auto-binned)
@@ -395,10 +418,20 @@ sample_in_lin <- match(tb_pheno_raw$ENA_RUN, tb_lin_raw$X.sample)
 tb_pheno_with_lin <- tb_pheno_raw[!is.na(sample_in_lin), ]
 tb_lin_aligned    <- tb_lin_raw[na.omit(sample_in_lin), ]
 
-# Now align genotype rows to this order
-# Genotype sample order = tb_pheno_raw$ENA_RUN (rows of presence_absence_final)
-geno_row_idx <- match(tb_pheno_with_lin$ENA_RUN, tb_pheno_raw$ENA_RUN)
-geno_row_idx <- geno_row_idx[!is.na(geno_row_idx)]
+# Align genotype rows using VCF sample IDs from sample_index_RIF_K8.txt,
+# which defines the true row order of presence_absence_final_RIF_K8.tsv.
+# VCF sample IDs = basename(REGENOTYPED_VCF) without ".regeno.vcf.gz".
+vcf_sample_ids <- readLines(TB_SAMPLE_INDEX_PATH)
+tb_pheno_with_lin$VCF_ID <- sub("\\.regeno\\.vcf\\.gz$", "",
+                                 basename(tb_pheno_with_lin$REGENOTYPED_VCF))
+geno_row_idx <- match(tb_pheno_with_lin$VCF_ID, vcf_sample_ids)
+
+# Drop samples not present in the RIF_K8 genotype
+has_geno          <- !is.na(geno_row_idx)
+tb_pheno_with_lin <- tb_pheno_with_lin[has_geno, ]
+tb_lin_aligned    <- tb_lin_aligned[has_geno, ]
+geno_row_idx      <- geno_row_idx[has_geno]
+
 tb_geno_mat  <- as.matrix(tb_geno[geno_row_idx, ])
 storage.mode(tb_geno_mat) <- "integer"
 
@@ -443,6 +476,14 @@ write_dataset(
   parent_lin   = enc$parent_lineage,
   outdir       = out_dir,
   dataset_name = dataset_name
+)
+
+save_binary_histogram(
+  mic_numeric   = tb_mic_num[keep_idx],
+  binary_vec    = tb_binary[keep_idx],
+  dataset_label = "TB Rifampicin",
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
+  s_max         = TB_RIF_BINARY_THRESHOLD
 )
 
 

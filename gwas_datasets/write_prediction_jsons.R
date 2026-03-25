@@ -103,6 +103,18 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+pen_bin_joined <- merge(
+  pheno_df[, c("ID", "resistance")],
+  pen_raw[, c("ID", "MIC_num")],
+  by = "ID"
+)
+save_binary_histogram(
+  mic_numeric   = pen_bin_joined$MIC_num,
+  binary_vec    = pen_bin_joined$resistance,
+  dataset_label = "SPN Penicillin",
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png"))
+)
+
 
 ############################################################
 ## 02: SPN PENICILLIN MIC (ordinal, auto-binned)
@@ -254,6 +266,15 @@ write_dataset(
   dataset_name = dataset_name,
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
+)
+
+save_binary_histogram(
+  mic_numeric   = aligned$pheno$MIC_num,
+  binary_vec    = aligned$pheno$pheno,
+  dataset_label = "SPN Trimethoprim",
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
+  s_max         = SPN_TMP_BINARY_S_MAX,
+  r_min         = SPN_TMP_BINARY_R_MIN
 )
 
 
@@ -423,6 +444,14 @@ write_dataset(
   dataset_name = dataset_name,
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
+)
+
+save_binary_histogram(
+  mic_numeric   = tb_mic_num[keep_idx],
+  binary_vec    = tb_binary[keep_idx],
+  dataset_label = "TB Rifampicin",
+  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
+  s_max         = TB_RIF_BINARY_THRESHOLD
 )
 
 
