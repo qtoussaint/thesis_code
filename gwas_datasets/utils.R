@@ -426,7 +426,7 @@ bin_mic_peaks <- function(mic_numeric,
   # half-integer values so breakpoint lines at inner_cuts+0.5 fall cleanly between bars.
   df_raw <- data.frame(log2_mic = log2_mic)
   p1 <- ggplot(df_raw, aes(x = log2_mic)) +
-    geom_histogram(binwidth = 1, boundary = 0, fill = "steelblue", colour = "white", linewidth = 0.2) +
+    geom_histogram(binwidth = 0.25, boundary = 0, fill = "steelblue", colour = "white", linewidth = 0.2) +
     geom_vline(xintercept = inner_cuts + 0.5, colour = "red", linetype = "dashed", linewidth = 0.7) +
     labs(
       title = paste(dataset_label, "\u2014 raw MIC distribution (dashed = bin boundaries)"),
@@ -486,7 +486,7 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
   if (!is.null(mic_numeric)) {
     df_raw <- data.frame(log2_mic = log2(mic_numeric))
     p1 <- ggplot(df_raw, aes(x = log2_mic)) +
-      geom_histogram(binwidth = 1, boundary = 0, fill = "steelblue",
+      geom_histogram(binwidth = 0.25, boundary = 0, fill = "steelblue",
                      colour = "white", linewidth = 0.2) +
       labs(
         title = paste(dataset_label, "\u2014 raw MIC distribution (dashed = breakpoint)"),
