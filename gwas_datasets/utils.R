@@ -429,7 +429,7 @@ bin_mic_peaks <- function(mic_numeric,
     geom_histogram(binwidth = 1, boundary = 0, fill = "steelblue", colour = "white", linewidth = 0.2) +
     geom_vline(xintercept = inner_cuts + 0.5, colour = "red", linetype = "dashed", linewidth = 0.7) +
     labs(
-      title = paste(dataset_label, "\u2014 raw MIC distribution (dashed = bin boundary, shifted right)"),
+      title = paste(dataset_label, "\u2014 raw MIC distribution (dashed = bin boundaries)"),
       x = "log2(MIC)", y = "Count"
     ) +
     theme_bw(base_size = 12)
@@ -460,9 +460,9 @@ bin_mic_peaks <- function(mic_numeric,
 
 #' Save a two-panel phenotype distribution plot for a binary (S/R) dataset.
 #'
-#' Panel 1 (if mic_numeric provided): log2(MIC) histogram coloured by binary class.
-#'   If s_max is given, draws a dashed threshold line shifted right by 0.5 in log2
-#'   space (same convention as .save_bin_histogram) to sit clearly between bars.
+#' Panel 1 (if mic_numeric provided): plain log2(MIC) histogram of all samples.
+#'   If s_max is given, draws a red dashed breakpoint line shifted right by 0.5 in
+#'   log2 space to sit cleanly between histogram bars.
 #' Panel 2: bar chart of susceptible (0) vs resistant (1) counts.
 #'
 #' @param mic_numeric  numeric MIC vector (same length as binary_vec), or NULL to
@@ -482,28 +482,22 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
 
   panels <- list()
 
-  # Panel 1: log2(MIC) histogram coloured by class (if MIC data available)
+  # Panel 1: plain log2(MIC) histogram with breakpoint line (if MIC data available)
   if (!is.null(mic_numeric)) {
-    df_raw <- data.frame(
-      log2_mic = log2(mic_numeric),
-      class    = binary_fac
-    )
-    p1 <- ggplot(df_raw, aes(x = log2_mic, fill = class)) +
-      geom_histogram(binwidth = 1, boundary = 0, colour = "white",
-                     linewidth = 0.2, position = "stack") +
-      scale_fill_manual(values = c("Susceptible (0)" = "steelblue",
-                                   "Resistant (1)"   = "firebrick")) +
+    df_raw <- data.frame(log2_mic = log2(mic_numeric))
+    p1 <- ggplot(df_raw, aes(x = log2_mic)) +
+      geom_histogram(binwidth = 1, boundary = 0, fill = "steelblue",
+                     colour = "white", linewidth = 0.2) +
       labs(
-        title = paste(dataset_label, "\u2014 MIC distribution by class"),
-        x = "log2(MIC)", y = "Count", fill = NULL
+        title = paste(dataset_label, "\u2014 raw MIC distribution (dashed = breakpoint)"),
+        x = "log2(MIC)", y = "Count"
       ) +
-      theme_bw(base_size = 12) +
-      theme(legend.position = "bottom")
+      theme_bw(base_size = 12)
 
     if (!is.null(s_max)) {
       threshold_cut <- log2(s_max) + 0.5
       p1 <- p1 +
-        geom_vline(xintercept = threshold_cut, colour = "black",
+        geom_vline(xintercept = threshold_cut, colour = "red",
                    linetype = "dashed", linewidth = 0.7)
     }
     panels[["p1"]] <- p1
