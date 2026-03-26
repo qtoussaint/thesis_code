@@ -475,6 +475,7 @@ bin_mic_peaks <- function(mic_numeric,
   )
   p2 <- ggplot(df_bins, aes(x = bin, y = count, fill = bin)) +
     geom_col(colour = "white", linewidth = 0.2) +
+    scale_fill_manual(values = colorRampPalette(c("#6BAED6", "#08519C"))(K)) +
     labs(
       x = "Binned MICs", y = "Number of samples"
     ) +

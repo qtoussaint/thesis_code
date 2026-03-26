@@ -1,7 +1,13 @@
 ############################################################
 ## write_prediction_jsons.R
 ##
-## Creates 15 prediction Stan JSON datasets (80/20 train/test):
+## Creates 30 prediction Stan JSON datasets:
+##
+## For each species/antibiotic/phenotype combination, two train/test
+## splitting strategies are used:
+##   - 80/20 random split
+##   - Leave-one-sublineage-out (LOSO): the largest sublineage with
+##     <20% of isolates is held out as the test set
 ##
 ##   SPN PENICILLIN
 ##   01 SPN penicillin    binary
@@ -23,6 +29,8 @@
 ##   14 TB  rifampicin    MIC (ordinal, coarse dilutions, >= 5% per bin)
 ##   15 TB  rifampicin    MIC (ordinal, >= 10% per bin)
 ##   09 TB  rifampicin    continuous (log2)
+##
+## Each of the above also has a _loso variant.
 ##
 ## MIC binning is deterministic given the data and MIC_MIN_BIN_FRAC.
 ## Histograms are saved by the inference script (hist_path = NULL here).
@@ -123,6 +131,32 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+# ---- LOSO ----
+message("\n=== 01-pred LOSO: SPN penicillin binary ===")
+dataset_name <- "01_spn_penicillin_binary_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = aligned$pheno$pheno,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]]
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
 
 ############################################################
 ## 02: SPN PENICILLIN MIC (ordinal, auto-binned)
@@ -164,6 +198,34 @@ pred <- build_stan_prediction(
   sample_ids = aligned$sample_ids,
   K          = binning$K,
   mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+# ---- LOSO ----
+message("\n=== 02-pred LOSO: SPN penicillin MIC (ordinal) ===")
+dataset_name <- "02_spn_penicillin_MIC_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]],
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
 )
 
 write_dataset(
@@ -232,6 +294,35 @@ write_dataset(
 )
 
 
+# ---- LOSO ----
+message("\n=== 10-pred LOSO: SPN penicillin MIC coarse dilutions (ordinal) ===")
+dataset_name <- "10_spn_penicillin_MIC_coarse_dilutions_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]],
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
 ############################################################
 ## 11: SPN PENICILLIN MIC (ordinal, large min bin)
 ############################################################
@@ -272,6 +363,35 @@ pred <- build_stan_prediction(
   sample_ids = aligned$sample_ids,
   K          = binning$K,
   mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
+# ---- LOSO ----
+message("\n=== 11-pred LOSO: SPN penicillin MIC large minbin (ordinal) ===")
+dataset_name <- "11_spn_penicillin_MIC_large_minbin_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]],
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
 )
 
 write_dataset(
@@ -332,6 +452,33 @@ write_dataset(
 )
 
 
+# ---- LOSO ----
+message("\n=== 03-pred LOSO: SPN penicillin continuous ===")
+dataset_name <- "03_spn_penicillin_continuous_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = log2_mic,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]]
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
 ############################################################
 ## 04: SPN TRIMETHOPRIM BINARY
 ############################################################
@@ -375,13 +522,32 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
-save_binary_histogram(
-  mic_numeric   = aligned$pheno$MIC_num,
-  binary_vec    = aligned$pheno$pheno,
-  dataset_label = "SPN Trimethoprim",
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
-  s_max         = SPN_TMP_BINARY_S_MAX,
-  r_min         = SPN_TMP_BINARY_R_MIN
+
+
+# ---- LOSO ----
+message("\n=== 04-pred LOSO: SPN trimethoprim binary ===")
+dataset_name <- "04_spn_trimethoprim_binary_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = aligned$pheno$pheno,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]]
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
 )
 
 
@@ -425,6 +591,35 @@ pred <- build_stan_prediction(
   sample_ids = aligned$sample_ids,
   K          = binning$K,
   mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
+# ---- LOSO ----
+message("\n=== 05-pred LOSO: SPN trimethoprim MIC (ordinal) ===")
+dataset_name <- "05_spn_trimethoprim_MIC_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]],
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
 )
 
 write_dataset(
@@ -493,6 +688,35 @@ write_dataset(
 )
 
 
+# ---- LOSO ----
+message("\n=== 12-pred LOSO: SPN trimethoprim MIC coarse dilutions (ordinal) ===")
+dataset_name <- "12_spn_trimethoprim_MIC_coarse_dilutions_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]],
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
 ############################################################
 ## 13: SPN TRIMETHOPRIM MIC (ordinal, large min bin)
 ############################################################
@@ -547,6 +771,35 @@ write_dataset(
 )
 
 
+# ---- LOSO ----
+message("\n=== 13-pred LOSO: SPN trimethoprim MIC large minbin (ordinal) ===")
+dataset_name <- "13_spn_trimethoprim_MIC_large_minbin_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]],
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
 ############################################################
 ## 06: SPN TRIMETHOPRIM CONTINUOUS (log2 MIC)
 ############################################################
@@ -579,6 +832,33 @@ pred <- build_stan_prediction(
   sublin_mat = enc$sublineage_matrix,
   parent_lin = enc$parent_lineage,
   sample_ids = aligned$sample_ids
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_geno),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
+# ---- LOSO ----
+message("\n=== 06-pred LOSO: SPN trimethoprim continuous ===")
+dataset_name <- "06_spn_trimethoprim_continuous_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = log2_mic,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]]
 )
 
 write_dataset(
@@ -661,12 +941,32 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
-save_binary_histogram(
-  mic_numeric   = tb_mic_num[keep_idx],
-  binary_vec    = tb_binary[keep_idx],
-  dataset_label = "TB Rifampicin",
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
-  s_max         = TB_RIF_BINARY_THRESHOLD
+
+
+# ---- LOSO ----
+message("\n=== 07-pred LOSO: TB rifampicin binary ===")
+dataset_name <- "07_tb_rifampicin_binary_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = tb_binary[keep_idx],
+  geno_mat      = tb_geno_mat[keep_idx, , drop = FALSE],
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = tb_sample_ids[keep_idx],
+  sublineage_vec = tb_lin_aligned[keep_idx, ]$lineages
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = tb_var_names,
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
 )
 
 
@@ -700,6 +1000,35 @@ pred <- build_stan_prediction(
   sample_ids = tb_sample_ids,
   K          = binning$K,
   mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = tb_var_names,
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
+# ---- LOSO ----
+message("\n=== 08-pred LOSO: TB rifampicin MIC (ordinal) ===")
+dataset_name <- "08_tb_rifampicin_MIC_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = tb_geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = tb_sample_ids,
+  sublineage_vec = tb_lin_aligned$lineages,
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
 )
 
 write_dataset(
@@ -758,6 +1087,35 @@ write_dataset(
 )
 
 
+# ---- LOSO ----
+message("\n=== 14-pred LOSO: TB rifampicin MIC coarse dilutions (ordinal) ===")
+dataset_name <- "14_tb_rifampicin_MIC_coarse_dilutions_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = tb_geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = tb_sample_ids,
+  sublineage_vec = tb_lin_aligned$lineages,
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = tb_var_names,
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
 ############################################################
 ## 15: TB RIFAMPICIN MIC (ordinal, large min bin)
 ############################################################
@@ -788,6 +1146,35 @@ pred <- build_stan_prediction(
   sample_ids = tb_sample_ids,
   K          = binning$K,
   mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = tb_var_names,
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
+# ---- LOSO ----
+message("\n=== 15-pred LOSO: TB rifampicin MIC large minbin (ordinal) ===")
+dataset_name <- "15_tb_rifampicin_MIC_large_minbin_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = tb_geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = tb_sample_ids,
+  sublineage_vec = tb_lin_aligned$lineages,
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
 )
 
 write_dataset(
@@ -838,4 +1225,31 @@ write_dataset(
 )
 
 
-message("\n=== All 15 prediction datasets written to: ", OUT_PRED, " ===")
+# ---- LOSO ----
+message("\n=== 09-pred LOSO: TB rifampicin continuous ===")
+dataset_name <- "09_tb_rifampicin_continuous_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = log2_mic,
+  geno_mat      = tb_geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = tb_sample_ids,
+  sublineage_vec = tb_lin_aligned$lineages
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = tb_var_names,
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+
+message("\n=== All 30 prediction datasets written to: ", OUT_PRED, " ===")
