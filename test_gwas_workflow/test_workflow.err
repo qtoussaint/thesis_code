@@ -7,7 +7,7 @@ Analysis Type:     inference
 Nickname:          test_worklow
 Output Directory:  /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow
 LD Pruning:        true
-Pruning Software:  /nfs/research/jlees/jacqueline/gwas_code/ld_pruning/BacPrune-Rust/
+Pruning Software:  /hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/
 MAF Cutoff:        0
 Cargo Binary:      ~/.cargo/bin/cargo
 Model Type:        ppom
@@ -15,19 +15,73 @@ Phandango Coords:  /nfs/research/jlees/jacqueline/bayesian_gwas_paper/00_data/in
 Threads:           48
 cppRATE Binary:    /hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate-0.2.0/build/bin/cpprate
 Resuming pipeline: checking for completed steps...
-Completed steps (will be skipped): LD pruning, Stan model fitting, PPOM effects, cppRATE, Phandango
-Incomplete steps (will run): Gene trajectory plot, Manhattan plots
-Pipeline will start from: Gene trajectory plot
-Skipping LD pruning (already complete). Loading pruned variant list.
-LD-pruned JSON generated. Fitting Stan model.
-Skipping Stan model fitting (already complete). Loading from disk.
-Loading fitted model from: /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/fitted_model/test_worklow_713a01e48ecc8.RDS
-Skipping PPOM effects computation (already complete). Loading from disk.
-Generating cppRATE input files.
-Generating coefficient matrices for different cutpoints.
-Skipping cppRATE (already complete). Loading results from disk.
-Writing Manhattan plots.
-Error in .checkTypos(e, names_x) : 
-  Column 2 is length 732 which differs from length of column 1 (0), are you attempting to order by a list column?
-Calls: run_pipeline ... <Anonymous> -> .checkTypos -> stopf -> raise_condition -> signal
+Completed steps (will be skipped): (none)
+Incomplete steps (will run): LD pruning, Stan model fitting, PPOM effects, cppRATE, Gene trajectory plot, Manhattan plots, Phandango
+Pipeline will start from: LD pruning
+Generating LD pruning input files.
+LD pruning input files generated. Beginning LD pruning.
+    Updating crates.io index
+ Downloading crates ...
+  Downloaded clap v4.4.18
+  Downloaded strsim v0.10.0
+  Downloaded syn v2.0.117
+  Downloaded unicode-ident v1.0.24
+  Downloaded is_terminal_polyfill v1.70.2
+  Downloaded clap_builder v4.4.18
+  Downloaded anstream v0.6.21
+  Downloaded quote v1.0.45
+  Downloaded proc-macro2 v1.0.106
+  Downloaded colorchoice v1.0.5
+  Downloaded clap_lex v0.6.0
+  Downloaded clap_derive v4.4.7
+  Downloaded anstyle-query v1.1.5
+  Downloaded anstyle-parse v0.2.7
+  Downloaded anstyle v1.0.14
+   Compiling autocfg v1.1.0
+   Compiling proc-macro2 v1.0.106
+   Compiling memchr v2.5.0
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.45
+   Compiling serde v1.0.160
+   Compiling utf8parse v0.2.2
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling rawpointer v0.2.1
+   Compiling anstyle-query v1.1.5
+   Compiling anstyle v1.0.14
+   Compiling colorchoice v1.0.5
+   Compiling ryu v1.0.13
+   Compiling clap_lex v0.6.0
+   Compiling heck v0.4.1
+   Compiling itoa v1.0.6
+   Compiling strsim v0.10.0
+   Compiling either v1.8.1
+   Compiling matrixmultiply v0.3.3
+   Compiling anstyle-parse v0.2.7
+   Compiling anstream v0.6.21
+   Compiling num-traits v0.2.15
+   Compiling num-integer v0.1.45
+   Compiling clap_builder v4.4.18
+   Compiling csv-core v0.1.10
+   Compiling syn v2.0.117
+   Compiling csv v1.2.1
+   Compiling num-complex v0.4.3
+   Compiling ndarray v0.15.6
+   Compiling clap_derive v4.4.7
+   Compiling ndarray-csv v0.5.1
+   Compiling clap v4.4.18
+   Compiling bacprune v0.9.0 (/hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 25.78s
+     Running `target/debug/bacprune /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_matrices/pruning_input.csv 612 32406 0 /nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_matrices/`
+error: the following required arguments were not provided:
+  --ld <THRESHOLD>
+
+Usage: bacprune --ld <THRESHOLD> <INPUT_FILE> <N_ROWS> <N_COLS> <MAF_CUTOFF> <OUTPUT_DIRECTORY>
+
+For more information, try '--help'.
+LD pruning complete. Generating LD-pruned data JSON.
+Error in file(file, "rt") : cannot open the connection
+Calls: run_pipeline ... read_pruned_variants -> read.csv -> read.table -> file
+In addition: Warning message:
+In file(file, "rt") :
+  cannot open file '/nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow/cppRATE_matrices/bacprune_rust_results.csv': No such file or directory
 Execution halted

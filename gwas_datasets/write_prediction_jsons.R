@@ -42,6 +42,8 @@ script_dir <- if (length(file_arg) > 0) dirname(normalizePath(sub("--file=", "",
 source(file.path(script_dir, "config.R"))
 source(file.path(script_dir, "utils.R"))
 
+pdf(NULL)
+
 
 ############################################################
 ## SPN DATA LOADING
@@ -131,6 +133,17 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_binary_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  dataset_label = "SPN Penicillin",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "benzylpenicillin",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
 # ---- LOSO ----
 message("\n=== 01-pred LOSO: SPN penicillin binary ===")
 dataset_name <- "01_spn_penicillin_binary_loso"
@@ -156,6 +169,18 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_binary_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  dataset_label  = "SPN Penicillin",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -211,6 +236,19 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "SPN Penicillin",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "benzylpenicillin",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
 # ---- LOSO ----
 message("\n=== 02-pred LOSO: SPN penicillin MIC (ordinal) ===")
 dataset_name <- "02_spn_penicillin_MIC_loso"
@@ -238,6 +276,20 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "SPN Penicillin",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -293,6 +345,19 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "SPN Penicillin (coarse dilutions)",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "benzylpenicillin",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
 
 # ---- LOSO ----
 message("\n=== 10-pred LOSO: SPN penicillin MIC coarse dilutions (ordinal) ===")
@@ -321,6 +386,20 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "SPN Penicillin (coarse dilutions)",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -376,6 +455,19 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "SPN Penicillin (large minbin)",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "benzylpenicillin",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
 
 # ---- LOSO ----
 message("\n=== 11-pred LOSO: SPN penicillin MIC large minbin (ordinal) ===")
@@ -404,6 +496,20 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "SPN Penicillin (large minbin)",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -522,6 +628,17 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_binary_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  dataset_label = "SPN Trimethoprim",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "trimethoprim",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
 
 
 # ---- LOSO ----
@@ -549,6 +666,18 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_binary_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  dataset_label  = "SPN Trimethoprim",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "trimethoprim",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -604,6 +733,19 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "SPN Trimethoprim",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "trimethoprim",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
 
 # ---- LOSO ----
 message("\n=== 05-pred LOSO: SPN trimethoprim MIC (ordinal) ===")
@@ -632,6 +774,20 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "SPN Trimethoprim",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "trimethoprim",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -687,6 +843,19 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "SPN Trimethoprim (coarse dilutions)",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "trimethoprim",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
 
 # ---- LOSO ----
 message("\n=== 12-pred LOSO: SPN trimethoprim MIC coarse dilutions (ordinal) ===")
@@ -715,6 +884,20 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "SPN Trimethoprim (coarse dilutions)",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "trimethoprim",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -770,6 +953,19 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "SPN Trimethoprim (large minbin)",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "trimethoprim",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
 
 # ---- LOSO ----
 message("\n=== 13-pred LOSO: SPN trimethoprim MIC large minbin (ordinal) ===")
@@ -798,6 +994,20 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "SPN Trimethoprim (large minbin)",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "trimethoprim",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -941,6 +1151,17 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_binary_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  dataset_label = "TB Rifampicin",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "rifampicin",
+  species_name = "M. tuberculosis",
+  split_label  = "80/20 random"
+)
+
+
 
 
 # ---- LOSO ----
@@ -968,6 +1189,18 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_binary_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  dataset_label  = "TB Rifampicin",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "rifampicin",
+  species_name   = "M. tuberculosis",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -1013,6 +1246,19 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "TB Rifampicin",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "rifampicin",
+  species_name = "M. tuberculosis",
+  split_label  = "80/20 random"
+)
+
+
 
 # ---- LOSO ----
 message("\n=== 08-pred LOSO: TB rifampicin MIC (ordinal) ===")
@@ -1041,6 +1287,20 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "TB Rifampicin",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "rifampicin",
+  species_name   = "M. tuberculosis",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -1086,6 +1346,19 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "TB Rifampicin (coarse dilutions)",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "rifampicin",
+  species_name = "M. tuberculosis",
+  split_label  = "80/20 random"
+)
+
+
 
 # ---- LOSO ----
 message("\n=== 14-pred LOSO: TB rifampicin MIC coarse dilutions (ordinal) ===")
@@ -1114,6 +1387,20 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "TB Rifampicin (coarse dilutions)",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "rifampicin",
+  species_name   = "M. tuberculosis",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################
@@ -1159,6 +1446,19 @@ write_dataset(
   test_pheno   = pred$stan_list$test_phenotype
 )
 
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "TB Rifampicin (large minbin)",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "rifampicin",
+  species_name = "M. tuberculosis",
+  split_label  = "80/20 random"
+)
+
+
 
 # ---- LOSO ----
 message("\n=== 15-pred LOSO: TB rifampicin MIC large minbin (ordinal) ===")
@@ -1187,6 +1487,20 @@ write_dataset(
   test_ids     = pred$test_ids,
   test_pheno   = pred$stan_list$test_phenotype
 )
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "TB Rifampicin (large minbin)",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "rifampicin",
+  species_name   = "M. tuberculosis",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
 
 
 ############################################################

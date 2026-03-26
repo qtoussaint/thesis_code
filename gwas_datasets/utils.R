@@ -602,6 +602,112 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
 }
 
 
+#' Save a train/test distribution bar chart for a binary prediction dataset.
+save_prediction_binary_histogram <- function(train_pheno, test_pheno,
+                                              dataset_label, hist_path,
+                                              drug_name = "", species_name = "",
+                                              split_label = "80/20 random",
+                                              held_out_name = NULL) {
+  train_fac <- factor(train_pheno, levels = c(0, 1),
+                      labels = c("Susceptible (0)", "Resistant (1)"))
+  test_fac  <- factor(test_pheno,  levels = c(0, 1),
+                      labels = c("Susceptible (0)", "Resistant (1)"))
+
+  df <- rbind(
+    data.frame(class = train_fac, split = "Train"),
+    data.frame(class = test_fac,  split = "Test")
+  )
+  df$split <- factor(df$split, levels = c("Train", "Test"))
+
+  df_counts <- as.data.frame(table(class = df$class, split = df$split))
+  colnames(df_counts)[3] <- "count"
+
+  p <- ggplot(df_counts, aes(x = class, y = count, fill = split)) +
+    geom_col(position = position_dodge(width = 0.7), width = 0.6,
+             colour = "white", linewidth = 0.2) +
+    geom_text(aes(label = count),
+              position = position_dodge(width = 0.7), vjust = -0.3, size = 3.5) +
+    scale_fill_manual(values = c("Train" = "steelblue", "Test" = "firebrick")) +
+    labs(x = NULL, y = "Number of samples", fill = NULL) +
+    theme_bw(base_size = 12) +
+    theme(legend.position = "top")
+
+  overall_title <- if (nzchar(drug_name) && nzchar(species_name)) {
+    grid::textGrob(
+      bquote("Train/test binary distribution (" * .(split_label) * "), "
+             * .(drug_name) * " resistance in " * italic(.(species_name))),
+      gp = grid::gpar(fontsize = 14)
+    )
+  } else {
+    grid::textGrob(paste0(dataset_label, " (", split_label, ")"),
+                   gp = grid::gpar(fontsize = 14))
+  }
+
+  if (!is.null(held_out_name)) {
+    p <- p + labs(subtitle = paste0("Held-out sublineage: ", held_out_name))
+  }
+
+  grob <- gridExtra::arrangeGrob(p, top = overall_title)
+
+  dir.create(dirname(hist_path), showWarnings = FALSE, recursive = TRUE)
+  ggsave(hist_path, grob, width = 7, height = 5.5, dpi = 150)
+  message("  Saved prediction binary histogram to: ", hist_path)
+}
+
+
+#' Save a train/test distribution bar chart for an ordinal prediction dataset.
+save_prediction_ordinal_histogram <- function(train_pheno, test_pheno,
+                                               K, breakpoints,
+                                               dataset_label, hist_path,
+                                               drug_name = "", species_name = "",
+                                               split_label = "80/20 random",
+                                               held_out_name = NULL) {
+  bin_labels <- paste0("(", round(breakpoints[-length(breakpoints)], 4),
+                       ", ", round(breakpoints[-1], 4), "]")
+
+  train_counts <- tabulate(train_pheno, nbins = K)
+  test_counts  <- tabulate(test_pheno,  nbins = K)
+
+  df <- data.frame(
+    bin   = factor(rep(seq_len(K), 2), levels = seq_len(K), labels = bin_labels),
+    split = factor(rep(c("Train", "Test"), each = K), levels = c("Train", "Test")),
+    count = c(train_counts, test_counts)
+  )
+
+  p <- ggplot(df, aes(x = bin, y = count, fill = split)) +
+    geom_col(position = position_dodge(width = 0.7), width = 0.6,
+             colour = "white", linewidth = 0.2) +
+    geom_text(aes(label = ifelse(count > 0, count, "")),
+              position = position_dodge(width = 0.7), vjust = -0.3, size = 3.5) +
+    scale_fill_manual(values = c("Train" = "steelblue", "Test" = "darkorange")) +
+    labs(x = "Binned MICs", y = "Number of samples", fill = NULL) +
+    theme_bw(base_size = 12) +
+    theme(legend.position = "top",
+          axis.text.x = element_text(angle = 35, hjust = 1, size = 8))
+
+  overall_title <- if (nzchar(drug_name) && nzchar(species_name)) {
+    grid::textGrob(
+      bquote("Train/test ordinal distribution (" * .(split_label) * "), "
+             * .(drug_name) * " resistance in " * italic(.(species_name))),
+      gp = grid::gpar(fontsize = 14)
+    )
+  } else {
+    grid::textGrob(paste0(dataset_label, " (", split_label, ")"),
+                   gp = grid::gpar(fontsize = 14))
+  }
+
+  if (!is.null(held_out_name)) {
+    p <- p + labs(subtitle = paste0("Held-out sublineage: ", held_out_name))
+  }
+
+  grob <- gridExtra::arrangeGrob(p, top = overall_title)
+
+  dir.create(dirname(hist_path), showWarnings = FALSE, recursive = TRUE)
+  ggsave(hist_path, grob, width = 10, height = 5.5, dpi = 150)
+  message("  Saved prediction ordinal histogram to: ", hist_path)
+}
+
+
 # ============================================================
 #  SAMPLE ALIGNMENT
 # ============================================================
@@ -831,6 +937,59 @@ build_stan_prediction <- function(pheno, geno_mat, lin_mat, sublin_mat,
     stan_list  = d,
     train_ids  = sample_ids[train_idx],
     test_ids   = sample_ids[test_idx]
+  )
+}
+
+
+#' Build Stan data for leave-one-sublineage-out (LOSO) prediction.
+#'
+#' Holds out the largest sublineage with <20% of total isolates as the test set.
+#' Returns the same structure as build_stan_prediction() plus the name of the
+#' held-out sublineage.
+build_stan_prediction_loso <- function(pheno, geno_mat, lin_mat, sublin_mat,
+                                       parent_lin, sample_ids, sublineage_vec,
+                                       K = NULL, mic_bkpts = NULL) {
+  N <- nrow(geno_mat)
+  sub_tab <- sort(table(sublineage_vec), decreasing = TRUE)
+  candidates <- sub_tab[sub_tab / N < 0.20]
+  if (length(candidates) == 0) {
+    stop("No sublineage has <20% of isolates; cannot perform LOSO split.")
+  }
+  held_out <- names(candidates)[1]
+  test_idx  <- which(sublineage_vec == held_out)
+  train_idx <- setdiff(seq_len(N), test_idx)
+
+  N_train <- length(train_idx)
+  N_test  <- length(test_idx)
+  V <- ncol(geno_mat)
+  S <- ncol(sublin_mat)
+
+  message("  LOSO held-out sublineage: ", held_out,
+          " (", N_test, " test, ", N_train, " train)")
+
+  d <- list(
+    training_phenotype   = pheno[train_idx],
+    test_phenotype       = pheno[test_idx],
+    training_variants    = geno_mat[train_idx, , drop = FALSE],
+    test_variants        = geno_mat[test_idx,  , drop = FALSE],
+    lineage_matrix       = lin_mat,
+    sublineage_matrix    = sublin_mat,
+    training_lineages    = lin_mat[train_idx, , drop = FALSE],
+    test_lineages        = lin_mat[test_idx,  , drop = FALSE],
+    training_sublineages = sublin_mat[train_idx, , drop = FALSE],
+    test_sublineages     = sublin_mat[test_idx,  , drop = FALSE],
+    parent_lineage       = parent_lin,
+    N_train = N_train, N_test = N_test, V = V, S = S,
+    L = ncol(lin_mat)
+  )
+  if (!is.null(K))         d$K               <- as.integer(K)
+  if (!is.null(mic_bkpts)) d$mic_breakpoints <- mic_bkpts
+
+  list(
+    stan_list            = d,
+    train_ids            = sample_ids[train_idx],
+    test_ids             = sample_ids[test_idx],
+    held_out_sublineage  = held_out
   )
 }
 

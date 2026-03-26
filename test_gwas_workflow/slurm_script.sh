@@ -31,7 +31,7 @@ CPPRATE_BIN="--cpprate_bin /hps/software/users/jlees/jacqueline/manual_installs/
 # ---------------------------------------------------------------------------
 
 LD_PRUNING="--ld_pruning true"                      # true | false
-PRUNING_SOFTWARE="--pruning_software /nfs/research/jlees/jacqueline/gwas_code/ld_pruning/BacPrune-Rust/"
+PRUNING_SOFTWARE="--pruning_software /hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"
 MAF_CUTOFF="--maf_cutoff 0"                      # 0 disables MAF filtering
 #CARGO_BIN="--cargo_bin /path/to/.cargo/bin/cargo"   # defaults to ~/.cargo/bin/cargo if omitted
 
