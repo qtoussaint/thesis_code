@@ -1,0 +1,4 @@
+species_drug,breakpoint,type,source
+spn_benzylpenicillin,0.06,r_min,EUCAST_2026
+spn_trimethoprim,1,s_max,EUCAST_2026
+tb_rifampicin,0.125,threshold,https://pmc.ncbi.nlm.nih.gov/articles/PMC8809345/

@@ -142,7 +142,10 @@ bin_mic_auto <- function(mic_numeric,
                          min_bin_frac  = 0.05,
                          dilutions     = MIC_STANDARD_DILUTIONS,
                          hist_path     = NULL,
-                         dataset_label = "") {
+                         dataset_label = "",
+                         drug_name     = "",
+                         species_name  = "",
+                         strategy_label = "") {
 
   min_bin_size <- max(1L, round(min_bin_frac * length(mic_numeric)))
 
@@ -194,11 +197,14 @@ bin_mic_auto <- function(mic_numeric,
   # 5. Save histogram PNG
   if (!is.null(hist_path)) {
     .save_bin_histogram(
-      mic_numeric   = mic_numeric,
-      bins_after    = bins_after,
-      breaks_after  = breaks,
-      dataset_label = dataset_label,
-      hist_path     = hist_path
+      mic_numeric    = mic_numeric,
+      bins_after     = bins_after,
+      breaks_after   = breaks,
+      dataset_label  = dataset_label,
+      hist_path      = hist_path,
+      drug_name      = drug_name,
+      species_name   = species_name,
+      strategy_label = strategy_label
     )
   }
 
@@ -228,7 +234,10 @@ bin_mic_equalfreq <- function(mic_numeric,
                                min_bin_size  = 30,
                                dilutions     = MIC_STANDARD_DILUTIONS,
                                hist_path     = NULL,
-                               dataset_label = "") {
+                               dataset_label = "",
+                               drug_name     = "",
+                               species_name  = "",
+                               strategy_label = "") {
 
   # 1. Same initial breakpoints as bin_mic_auto (restrict to observed range)
   lo <- min(mic_numeric, na.rm = TRUE)
@@ -286,11 +295,14 @@ bin_mic_equalfreq <- function(mic_numeric,
 
   if (!is.null(hist_path)) {
     .save_bin_histogram(
-      mic_numeric   = mic_numeric,
-      bins_after    = bins_after,
-      breaks_after  = best_breaks,
-      dataset_label = paste(dataset_label, "(equal-freq)"),
-      hist_path     = hist_path
+      mic_numeric    = mic_numeric,
+      bins_after     = bins_after,
+      breaks_after   = best_breaks,
+      dataset_label  = paste(dataset_label, "(equal-freq)"),
+      hist_path      = hist_path,
+      drug_name      = drug_name,
+      species_name   = species_name,
+      strategy_label = strategy_label
     )
   }
 
@@ -320,7 +332,10 @@ bin_mic_peaks <- function(mic_numeric,
                            dilutions     = MIC_STANDARD_DILUTIONS,
                            smooth_span   = 3,
                            hist_path     = NULL,
-                           dataset_label = "") {
+                           dataset_label = "",
+                           drug_name     = "",
+                           species_name  = "",
+                           strategy_label = "") {
 
   # 1. Same initial breakpoints as bin_mic_auto
   lo <- min(mic_numeric, na.rm = TRUE)
@@ -391,11 +406,14 @@ bin_mic_peaks <- function(mic_numeric,
 
   if (!is.null(hist_path)) {
     .save_bin_histogram(
-      mic_numeric   = mic_numeric,
-      bins_after    = bins_after,
-      breaks_after  = breaks,
-      dataset_label = paste(dataset_label, "(peaks)"),
-      hist_path     = hist_path
+      mic_numeric    = mic_numeric,
+      bins_after     = bins_after,
+      breaks_after   = breaks,
+      dataset_label  = paste(dataset_label, "(peaks)"),
+      hist_path      = hist_path,
+      drug_name      = drug_name,
+      species_name   = species_name,
+      strategy_label = strategy_label
     )
   }
 
@@ -414,7 +432,9 @@ bin_mic_peaks <- function(mic_numeric,
 # Panel 1 (middle): log2(MIC) histogram with vertical lines at bin boundaries
 # Panel 2 (right):  categorical bar chart of sample counts per final bin
 .save_bin_histogram <- function(mic_numeric, bins_after, breaks_after,
-                                dataset_label, hist_path) {
+                                dataset_label, hist_path,
+                                drug_name = "", species_name = "",
+                                strategy_label = "") {
   K            <- length(breaks_after) - 1
   counts_after <- tabulate(bins_after, nbins = K)
   log2_mic     <- log2(mic_numeric)
@@ -425,13 +445,14 @@ bin_mic_peaks <- function(mic_numeric,
 
   # Panel 0: raw (non-log) MIC distribution with breakpoint lines
   df_raw_mic <- data.frame(mic = mic_numeric)
+  sorted_mics <- sort(unique(mic_numeric))
+  mic_bw <- if (length(sorted_mics) > 1) min(diff(sorted_mics)) * 0.9 else 0.01
   p0 <- ggplot(df_raw_mic, aes(x = mic)) +
-    geom_histogram(bins = 40, fill = "steelblue", colour = "white", linewidth = 0.2) +
+    geom_histogram(binwidth = mic_bw, fill = "steelblue", colour = "white", linewidth = 0.2) +
     geom_vline(xintercept = inner_cuts_raw,
                colour = "red", linetype = "dashed", linewidth = 0.7) +
     labs(
-      title = paste(dataset_label, "\u2014 raw MIC (dashed = bin boundaries)"),
-      x = "MIC (\u00b5g/mL)", y = "Count"
+      x = expression(MIC~(mu*g%.%mL^{-1})), y = "Number of samples"
     ) +
     theme_bw(base_size = 12)
 
@@ -443,8 +464,7 @@ bin_mic_peaks <- function(mic_numeric,
     geom_histogram(binwidth = 0.25, boundary = 0, fill = "steelblue", colour = "white", linewidth = 0.2) +
     geom_vline(xintercept = inner_cuts + 0.5, colour = "red", linetype = "dashed", linewidth = 0.7) +
     labs(
-      title = paste(dataset_label, "\u2014 log2(MIC) distribution (dashed = bin boundaries)"),
-      x = "log2(MIC)", y = "Count"
+      x = expression(log[2](MIC)), y = "Number of samples"
     ) +
     theme_bw(base_size = 12)
 
@@ -456,16 +476,27 @@ bin_mic_peaks <- function(mic_numeric,
   p2 <- ggplot(df_bins, aes(x = bin, y = count, fill = bin)) +
     geom_col(colour = "white", linewidth = 0.2) +
     labs(
-      title = paste(dataset_label, "\u2014 final", K, "bins"),
-      x = "MIC bin", y = "Count"
+      x = "Binned MICs", y = "Number of samples"
     ) +
     theme_bw(base_size = 12) +
     theme(legend.position = "none",
           axis.text.x = element_text(angle = 35, hjust = 1, size = 8))
 
+  # Build overall title with italic species name
+  overall_title <- if (nzchar(drug_name) && nzchar(species_name)) {
+    grid::textGrob(
+      bquote("Distribution of ordered categories using " * .(strategy_label) * ", "
+             * .(drug_name) * " resistance in " * italic(.(species_name))),
+      gp = grid::gpar(fontsize = 14)
+    )
+  } else {
+    grid::textGrob(dataset_label, gp = grid::gpar(fontsize = 14))
+  }
+
   dir.create(dirname(hist_path), showWarnings = FALSE, recursive = TRUE)
-  ggsave(hist_path, gridExtra::arrangeGrob(p0, p1, p2, ncol = 3),
-         width = 15, height = 5, dpi = 150)
+  ggsave(hist_path, gridExtra::arrangeGrob(p0, p1, p2, ncol = 3,
+                                           top = overall_title),
+         width = 15, height = 5.5, dpi = 150)
   message("  Saved MIC bin histogram to: ", hist_path)
 }
 
@@ -487,7 +518,9 @@ bin_mic_peaks <- function(mic_numeric,
 #' @param r_min        resistant threshold (optional, for annotation only).
 save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
                                   dataset_label, hist_path,
-                                  s_max = NULL, r_min = NULL) {
+                                  s_max = NULL, r_min = NULL,
+                                  drug_name = "", species_name = "",
+                                  strategy_label = "") {
   binary_fac <- factor(binary_vec, levels = c(0, 1),
                        labels = c("Susceptible (0)", "Resistant (1)"))
   counts     <- table(binary_fac)
@@ -497,11 +530,12 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
   if (!is.null(mic_numeric)) {
     # Panel 0 (leftmost): raw (non-log) MIC histogram with breakpoint line
     df_raw_mic <- data.frame(mic = mic_numeric)
+    sorted_mics <- sort(unique(mic_numeric))
+    mic_bw <- if (length(sorted_mics) > 1) min(diff(sorted_mics)) * 0.9 else 0.01
     p0 <- ggplot(df_raw_mic, aes(x = mic)) +
-      geom_histogram(bins = 40, fill = "steelblue", colour = "white", linewidth = 0.2) +
+      geom_histogram(binwidth = mic_bw, fill = "steelblue", colour = "white", linewidth = 0.2) +
       labs(
-        title = paste(dataset_label, "\u2014 raw MIC (dashed = breakpoint)"),
-        x = "MIC (\u00b5g/mL)", y = "Count"
+        x = expression(MIC~(mu*g%.%mL^{-1})), y = "Number of samples"
       ) +
       theme_bw(base_size = 12)
     if (!is.null(s_max)) {
@@ -516,8 +550,7 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
       geom_histogram(binwidth = 0.25, boundary = 0, fill = "steelblue",
                      colour = "white", linewidth = 0.2) +
       labs(
-        title = paste(dataset_label, "\u2014 log2(MIC) distribution (dashed = breakpoint)"),
-        x = "log2(MIC)", y = "Count"
+        x = expression(log[2](MIC)), y = "Number of samples"
       ) +
       theme_bw(base_size = 12)
     if (!is.null(s_max)) {
@@ -541,18 +574,29 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
     scale_fill_manual(values = c("Susceptible (0)" = "steelblue",
                                  "Resistant (1)"   = "firebrick")) +
     labs(
-      title = paste(dataset_label, "\u2014 binary phenotype counts"),
-      x = NULL, y = "Count"
+      x = NULL, y = "Number of samples"
     ) +
     theme_bw(base_size = 12) +
     theme(legend.position = "none")
   panels[["p2"]] <- p2
 
-  grob <- gridExtra::arrangeGrob(grobs = panels, ncol = length(panels))
+  # Build overall title with italic species name
+  overall_title <- if (nzchar(drug_name) && nzchar(species_name)) {
+    grid::textGrob(
+      bquote("Distribution of binary categories using " * .(strategy_label) * ", "
+             * .(drug_name) * " resistance in " * italic(.(species_name))),
+      gp = grid::gpar(fontsize = 14)
+    )
+  } else {
+    grid::textGrob(dataset_label, gp = grid::gpar(fontsize = 14))
+  }
+
+  grob <- gridExtra::arrangeGrob(grobs = panels, ncol = length(panels),
+                                 top = overall_title)
 
   dir.create(dirname(hist_path), showWarnings = FALSE, recursive = TRUE)
   ggsave(hist_path, grob,
-         width = 5 * length(panels), height = 5, dpi = 150)
+         width = 5 * length(panels), height = 5.5, dpi = 150)
   message("  Saved binary histogram to: ", hist_path)
 }
 

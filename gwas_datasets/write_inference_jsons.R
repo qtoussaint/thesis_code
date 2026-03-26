@@ -34,6 +34,10 @@ script_dir <- if (length(file_arg) > 0) dirname(normalizePath(sub("--file=", "",
 source(file.path(script_dir, "config.R"))
 source(file.path(script_dir, "utils.R"))
 
+# Open a null graphics device so that gridExtra::arrangeGrob() does not
+# create an Rplots.pdf in the working directory.
+pdf(NULL)
+
 # Write manifest of all input files used
 write_inputs_manifest(
   paths = c(
@@ -129,12 +133,15 @@ write_dataset(
 )
 
 save_binary_histogram(
-  mic_numeric   = aligned$pheno$MIC_num,
-  binary_vec    = aligned$pheno$pheno,
-  dataset_label = "SPN Penicillin",
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
-  s_max         = SPN_PEN_BINARY_S_MAX,
-  r_min         = SPN_PEN_BINARY_R_MIN
+  mic_numeric    = aligned$pheno$MIC_num,
+  binary_vec     = aligned$pheno$pheno,
+  dataset_label  = "SPN Penicillin",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
+  s_max          = SPN_PEN_BINARY_S_MAX,
+  r_min          = SPN_PEN_BINARY_R_MIN,
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  strategy_label = "EUCAST breakpoint at 0.06 \u00b5g\u00b7mL\u207b\u00b9"
 )
 
 
@@ -156,11 +163,14 @@ aligned <- intersect_and_align(
 )
 
 binning <- bin_mic_auto(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_frac  = MIC_MIN_BIN_FRAC,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Penicillin"
+  mic_numeric    = aligned$pheno$MIC_num,
+  min_bin_frac   = MIC_MIN_BIN_FRAC,
+  dilutions      = MIC_STANDARD_DILUTIONS,
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label  = "SPN Penicillin",
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  strategy_label = "doubling dilutions with 5% minimum frequency per bin"
 )
 
 enc <- encode_lineages_spn(
@@ -207,11 +217,14 @@ aligned <- intersect_and_align(
 )
 
 binning <- bin_mic_auto(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_frac  = MIC_MIN_BIN_FRAC,
-  dilutions     = MIC_COARSE_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Penicillin (coarse dilutions)"
+  mic_numeric    = aligned$pheno$MIC_num,
+  min_bin_frac   = MIC_MIN_BIN_FRAC,
+  dilutions      = MIC_COARSE_DILUTIONS,
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label  = "SPN Penicillin (coarse dilutions)",
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  strategy_label = "4-fold dilutions with 5% minimum frequency per bin"
 )
 
 enc <- encode_lineages_spn(
@@ -258,11 +271,14 @@ aligned <- intersect_and_align(
 )
 
 binning <- bin_mic_auto(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_frac  = MIC_MIN_BIN_FRAC_COARSE,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Penicillin (large minbin)"
+  mic_numeric    = aligned$pheno$MIC_num,
+  min_bin_frac   = MIC_MIN_BIN_FRAC_COARSE,
+  dilutions      = MIC_STANDARD_DILUTIONS,
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label  = "SPN Penicillin (large minbin)",
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  strategy_label = "doubling dilutions with 10% minimum frequency per bin"
 )
 
 enc <- encode_lineages_spn(
@@ -385,12 +401,15 @@ write_dataset(
 )
 
 save_binary_histogram(
-  mic_numeric   = aligned$pheno$MIC_num,
-  binary_vec    = aligned$pheno$pheno,
-  dataset_label = "SPN Trimethoprim",
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
-  s_max         = SPN_TMP_BINARY_S_MAX,
-  r_min         = SPN_TMP_BINARY_R_MIN
+  mic_numeric    = aligned$pheno$MIC_num,
+  binary_vec     = aligned$pheno$pheno,
+  dataset_label  = "SPN Trimethoprim",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
+  s_max          = SPN_TMP_BINARY_S_MAX,
+  r_min          = SPN_TMP_BINARY_R_MIN,
+  drug_name      = "trimethoprim",
+  species_name   = "S. pneumoniae",
+  strategy_label = "EUCAST breakpoint at 2 \u00b5g\u00b7mL\u207b\u00b9"
 )
 
 
@@ -412,11 +431,14 @@ aligned <- intersect_and_align(
 )
 
 binning <- bin_mic_auto(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_frac  = MIC_MIN_BIN_FRAC,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Trimethoprim"
+  mic_numeric    = aligned$pheno$MIC_num,
+  min_bin_frac   = MIC_MIN_BIN_FRAC,
+  dilutions      = MIC_STANDARD_DILUTIONS,
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label  = "SPN Trimethoprim",
+  drug_name      = "trimethoprim",
+  species_name   = "S. pneumoniae",
+  strategy_label = "doubling dilutions with 5% minimum frequency per bin"
 )
 
 enc <- encode_lineages_spn(
@@ -463,11 +485,14 @@ aligned <- intersect_and_align(
 )
 
 binning <- bin_mic_auto(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_frac  = MIC_MIN_BIN_FRAC,
-  dilutions     = MIC_COARSE_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Trimethoprim (coarse dilutions)"
+  mic_numeric    = aligned$pheno$MIC_num,
+  min_bin_frac   = MIC_MIN_BIN_FRAC,
+  dilutions      = MIC_COARSE_DILUTIONS,
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label  = "SPN Trimethoprim (coarse dilutions)",
+  drug_name      = "trimethoprim",
+  species_name   = "S. pneumoniae",
+  strategy_label = "4-fold dilutions with 5% minimum frequency per bin"
 )
 
 enc <- encode_lineages_spn(
@@ -514,11 +539,14 @@ aligned <- intersect_and_align(
 )
 
 binning <- bin_mic_auto(
-  mic_numeric   = aligned$pheno$MIC_num,
-  min_bin_frac  = MIC_MIN_BIN_FRAC_COARSE,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "SPN Trimethoprim (large minbin)"
+  mic_numeric    = aligned$pheno$MIC_num,
+  min_bin_frac   = MIC_MIN_BIN_FRAC_COARSE,
+  dilutions      = MIC_STANDARD_DILUTIONS,
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label  = "SPN Trimethoprim (large minbin)",
+  drug_name      = "trimethoprim",
+  species_name   = "S. pneumoniae",
+  strategy_label = "doubling dilutions with 10% minimum frequency per bin"
 )
 
 enc <- encode_lineages_spn(
@@ -690,11 +718,14 @@ write_dataset(
 )
 
 save_binary_histogram(
-  mic_numeric   = tb_mic_num[keep_idx],
-  binary_vec    = tb_binary[keep_idx],
-  dataset_label = "TB Rifampicin",
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
-  s_max         = TB_RIF_BINARY_THRESHOLD
+  mic_numeric    = tb_mic_num[keep_idx],
+  binary_vec     = tb_binary[keep_idx],
+  dataset_label  = "TB Rifampicin",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_dist.png")),
+  s_max          = TB_RIF_BINARY_THRESHOLD,
+  drug_name      = "rifampicin",
+  species_name   = "M. tuberculosis",
+  strategy_label = "EUCAST breakpoint at 0.125 \u00b5g\u00b7mL\u207b\u00b9"
 )
 
 
@@ -707,11 +738,14 @@ dataset_name <- "08_tb_rifampicin_MIC"
 out_dir <- file.path(OUT_INFER, dataset_name)
 
 binning <- bin_mic_auto(
-  mic_numeric   = tb_mic_num,
-  min_bin_frac  = MIC_MIN_BIN_FRAC,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "TB Rifampicin"
+  mic_numeric    = tb_mic_num,
+  min_bin_frac   = MIC_MIN_BIN_FRAC,
+  dilutions      = MIC_STANDARD_DILUTIONS,
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label  = "TB Rifampicin",
+  drug_name      = "rifampicin",
+  species_name   = "M. tuberculosis",
+  strategy_label = "doubling dilutions with 5% minimum frequency per bin"
 )
 
 enc <- encode_lineages_tb(
@@ -748,11 +782,14 @@ dataset_name <- "14_tb_rifampicin_MIC_coarse_dilutions"
 out_dir <- file.path(OUT_INFER, dataset_name)
 
 binning <- bin_mic_auto(
-  mic_numeric   = tb_mic_num,
-  min_bin_frac  = MIC_MIN_BIN_FRAC,
-  dilutions     = MIC_COARSE_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "TB Rifampicin (coarse dilutions)"
+  mic_numeric    = tb_mic_num,
+  min_bin_frac   = MIC_MIN_BIN_FRAC,
+  dilutions      = MIC_COARSE_DILUTIONS,
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label  = "TB Rifampicin (coarse dilutions)",
+  drug_name      = "rifampicin",
+  species_name   = "M. tuberculosis",
+  strategy_label = "4-fold dilutions with 5% minimum frequency per bin"
 )
 
 enc <- encode_lineages_tb(
@@ -789,11 +826,14 @@ dataset_name <- "15_tb_rifampicin_MIC_large_minbin"
 out_dir <- file.path(OUT_INFER, dataset_name)
 
 binning <- bin_mic_auto(
-  mic_numeric   = tb_mic_num,
-  min_bin_frac  = MIC_MIN_BIN_FRAC_COARSE,
-  dilutions     = MIC_STANDARD_DILUTIONS,
-  hist_path     = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
-  dataset_label = "TB Rifampicin (large minbin)"
+  mic_numeric    = tb_mic_num,
+  min_bin_frac   = MIC_MIN_BIN_FRAC_COARSE,
+  dilutions      = MIC_STANDARD_DILUTIONS,
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_bins.png")),
+  dataset_label  = "TB Rifampicin (large minbin)",
+  drug_name      = "rifampicin",
+  species_name   = "M. tuberculosis",
+  strategy_label = "doubling dilutions with 10% minimum frequency per bin"
 )
 
 enc <- encode_lineages_tb(
