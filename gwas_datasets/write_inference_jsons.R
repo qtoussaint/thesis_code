@@ -409,7 +409,7 @@ save_binary_histogram(
   r_min          = SPN_TMP_BINARY_R_MIN,
   drug_name      = "trimethoprim",
   species_name   = "S. pneumoniae",
-  strategy_label = "EUCAST breakpoint at 2 \u00b5g\u00b7mL\u207b\u00b9"
+  strategy_label = "EUCAST breakpoint at 1 \u00b5g\u00b7mL\u207b\u00b9"
 )
 
 
