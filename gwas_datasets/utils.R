@@ -446,7 +446,7 @@ bin_mic_peaks <- function(mic_numeric,
   # Panel 0: raw (non-log) MIC distribution with breakpoint lines
   df_raw_mic <- data.frame(mic = mic_numeric)
   sorted_mics <- sort(unique(mic_numeric))
-  mic_bw <- if (length(sorted_mics) > 1) min(diff(sorted_mics)) * 0.9 else 0.01
+  mic_bw <- if (length(sorted_mics) > 1) diff(range(sorted_mics)) / 30 else 0.01
   p0 <- ggplot(df_raw_mic, aes(x = mic)) +
     geom_histogram(binwidth = mic_bw, fill = "steelblue", colour = "white", linewidth = 0.2) +
     geom_vline(xintercept = inner_cuts_raw,
@@ -531,7 +531,7 @@ save_binary_histogram <- function(mic_numeric = NULL, binary_vec,
     # Panel 0 (leftmost): raw (non-log) MIC histogram with breakpoint line
     df_raw_mic <- data.frame(mic = mic_numeric)
     sorted_mics <- sort(unique(mic_numeric))
-    mic_bw <- if (length(sorted_mics) > 1) min(diff(sorted_mics)) * 0.9 else 0.01
+    mic_bw <- if (length(sorted_mics) > 1) diff(range(sorted_mics)) / 30 else 0.01
     p0 <- ggplot(df_raw_mic, aes(x = mic)) +
       geom_histogram(binwidth = mic_bw, fill = "steelblue", colour = "white", linewidth = 0.2) +
       labs(
