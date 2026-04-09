@@ -33,6 +33,7 @@ CPPRATE_BIN="--cpprate_bin /hps/software/users/jlees/jacqueline/manual_installs/
 LD_PRUNING="--ld_pruning true"                      # true | false
 PRUNING_SOFTWARE="--pruning_software /hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"
 MAF_CUTOFF="--maf_cutoff 0"                      # 0 disables MAF filtering
+LD_THRESHOLD="--ld_threshold 1"                # r² threshold (0-1); pairs at or above this are pruned
 #CARGO_BIN="--cargo_bin /path/to/.cargo/bin/cargo"   # defaults to ~/.cargo/bin/cargo if omitted
 
 # ---------------------------------------------------------------------------
@@ -61,6 +62,7 @@ $CPPRATE_BIN \
 $LD_PRUNING \
 $PRUNING_SOFTWARE \
 $MAF_CUTOFF \
+$LD_THRESHOLD \
 $CARGO_BIN \
 $PHANDANGO \
 $CMDSTAN_PATH \

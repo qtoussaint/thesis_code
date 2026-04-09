@@ -3,8 +3,8 @@
 #SBATCH --job-name=gwas_inference_datasets
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=30G
-#SBATCH --time=06:00:00
+#SBATCH --mem=400G
+#SBATCH --time=23:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/logs/inference.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/logs/inference.out
 

@@ -998,6 +998,63 @@ build_stan_prediction_loso <- function(pheno, geno_mat, lin_mat, sublin_mat,
 #  OUTPUT WRITING
 # ============================================================
 
+#' Stream-write a named list as CmdStan-compatible JSON.
+#'
+#' Unlike cmdstanr::write_stan_json(), this never builds the full JSON as a
+#' single R string, so it avoids the 2^31-1 byte character limit that arises
+#' with very large matrices (e.g. TB rifampicin ~11 k samples x 75 k variants).
+#'
+#' @param data  named list (scalars, vectors, matrices)
+#' @param file  output path
+write_stan_json_streaming <- function(data, file) {
+  stopifnot(is.list(data), !is.null(names(data)))
+
+  con <- file(file, open = "wt")
+  on.exit(close(con))
+
+  cat("{\n", file = con)
+
+  nms <- names(data)
+  for (fi in seq_along(nms)) {
+    nm  <- nms[fi]
+    val <- data[[nm]]
+
+    # comma before every field except the first
+    if (fi > 1L) cat(",\n", file = con)
+
+    cat(sprintf('"%s": ', nm), file = con)
+
+    if (is.matrix(val)) {
+      # stream row-by-row to avoid giant string
+      nr <- nrow(val)
+      cat("[\n", file = con)
+      for (i in seq_len(nr)) {
+        row_json <- jsonlite::toJSON(val[i, , drop = TRUE], auto_unbox = FALSE)
+        cat(row_json, file = con)
+        if (i < nr) cat(",\n", file = con)
+      }
+      cat("\n]", file = con)
+
+    } else if (length(val) == 1L) {
+      # scalar
+      if (is.integer(val)) {
+        cat(val, file = con)
+      } else if (is.numeric(val) && val == floor(val)) {
+        cat(as.integer(val), file = con)
+      } else {
+        cat(jsonlite::toJSON(val, auto_unbox = TRUE), file = con)
+      }
+
+    } else {
+      # vector
+      cat(jsonlite::toJSON(val, auto_unbox = FALSE), file = con)
+    }
+  }
+
+  cat("\n}\n", file = con)
+}
+
+
 #' Write all output files for one dataset.
 #' Creates the output directory if needed.
 #'
@@ -1016,7 +1073,7 @@ write_dataset <- function(stan_list, sample_ids, variant_names, parent_lin,
 
   # JSON
   json_path <- file.path(outdir, paste0(dataset_name, ".json"))
-  write_stan_json(data = stan_list, file = json_path)
+  write_stan_json_streaming(data = stan_list, file = json_path)
   message("  Wrote JSON: ", json_path)
 
   # Variant index
