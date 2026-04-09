@@ -7,6 +7,7 @@ data {
   int<lower=1> L; // number of lineage clusters
   int<lower=1> S; // number of sublineage clusters
   array[N] int<lower = 1, upper = K> phenotype;
+  vector<lower=1e-12>[K-1] mic_breakpoints;  // concentration breakpoints used to define K (must be >0)
   matrix[N,V] variant_matrix;
   matrix[N,L-1] lineage_matrix; // lineage clusters
   matrix[N,S-1] sublineage_matrix; // lineage subclusters
@@ -36,8 +37,7 @@ model {
   beta_lineage ~ normal(0, h_gene_var);
   sigma_sublineage ~ normal(0,1); // variance from parent lineage mean
   heritability ~ beta(1,1);
-  cutpoints ~ normal([-4.97, -3.94, -2.32, 1], 0.5); // reduces VI instability (cutpoints are not on the same scale as ordcats -- this is a good prior given my integer categories)
-  // cutpoint priors are log2(MIC breakpoints)
+  cutpoints ~ normal(log2(mic_breakpoints), 0.5); // prior centered on log2(MIC breakpoints), reduces VI instability
 
   // each sublineage EF is centered around its parent lineage dist with variance of sigma_sublineage
   for (k in 1:(S-1)) {
