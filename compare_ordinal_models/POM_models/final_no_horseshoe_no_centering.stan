@@ -46,7 +46,7 @@ parameters {
   vector[S-1] z_sub;              // std normals, noncentered
 
   // variant effects with weakly informative normal prior
-  vector[V] beta_variant;
+  vector[V] beta_variant_raw;
 
 }
 
@@ -77,7 +77,7 @@ model {
   vector[N] mu; // likelihood
 
   // weakly informative normal prior on variant effects
-  beta_variant ~ normal(0, 1);
+  beta_variant_raw ~ normal(0, 1);
 
   // POPULATION STRUCTURE CORRECTION
 
@@ -91,7 +91,7 @@ model {
   // LINEAR PREDICTOR
 
   // likelihood statement
-  mu = (variant_matrix * beta_variant) + (sublineages_treatmentcontrast * beta_sublineage) + alpha_mean;
+  mu = (variant_matrix * beta_variant_raw) + (sublineages_treatmentcontrast * beta_sublineage) + alpha_mean;
 
   // fit with ordered logistic
   phenotype ~ ordered_logistic(mu, cutpoints);
@@ -99,12 +99,12 @@ model {
 }
 
 generated quantities {
-  vector[V] beta_variant_allele;
+  vector[V] beta_variant;
   vector[V] OR_variant_allele;
 
   for (v in 1:V) {
-    beta_variant_allele[v] = beta_variant[v];          // already on 0->1 allele scale
-    OR_variant_allele[v]   = exp(beta_variant_allele[v]); // cumulative OR
+    beta_variant[v] = beta_variant_raw[v];          // already on 0->1 allele scale
+    OR_variant_allele[v]   = exp(beta_variant[v]); // cumulative OR
   }
 
 }

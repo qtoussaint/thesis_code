@@ -157,7 +157,7 @@ transformed parameters {
 
 
 
-  vector[V] beta_variant; // variant effects
+  vector[V] beta_variant_std; // variant effects
 
   // local shrinkage parameters
 
@@ -171,7 +171,7 @@ transformed parameters {
             (c2 + square(tau) * square(lambda[v])) );
 
     // regularized horseshoe prior draw for coefficient
-    beta_variant[v] = z[v] * tau * lambda_tilde[v];
+    beta_variant_std[v] = z[v] * tau * lambda_tilde[v];
   }
 
 }
@@ -212,7 +212,7 @@ model {
   // mu = variant effects + sublineage population correction + intercept
   // alpha: baseline latent position of the reference sublineage (no variants, no sublineage deviation)
   // beta_sublineage: within-lineage-centered deviations; reference sublineage effect = 0 by encoding
-  mu = (X_std * beta_variant) + (sublineages_treatmentcontrast * beta_sublineage) + alpha;
+  mu = (X_std * beta_variant_std) + (sublineages_treatmentcontrast * beta_sublineage) + alpha;
 
   // fit with ordered logistic
   phenotype ~ ordered_logistic(mu, cutpoints);
@@ -220,15 +220,15 @@ model {
 }
 
 generated quantities {
-  vector[V] beta_variant_allele;
+  vector[V] beta_variant;
   vector[V] OR_variant_allele;
 
   for (v in 1:V) {
     if (sss[v] > 0) {
-      beta_variant_allele[v] = beta_variant[v] / sss[v];   // per 0->1 allele
-      OR_variant_allele[v]   = exp(beta_variant_allele[v]); // cumulative OR
+      beta_variant[v] = beta_variant_std[v] / sss[v];   // per 0->1 allele
+      OR_variant_allele[v]   = exp(beta_variant[v]); // cumulative OR
     } else {
-      beta_variant_allele[v] = 0;
+      beta_variant[v] = 0;
       OR_variant_allele[v]   = 1;
     }
   }
@@ -245,7 +245,7 @@ generated quantities {
   //real h2_latent;
 
   // for (n in 1:N) {
-    //   eta_var[n] = (variant_matrix_ctr[n] * beta_variant);
+    //   eta_var[n] = (variant_matrix_ctr[n] * beta_variant_std);
     //}
   // Vg = variance(eta_var);
 
@@ -268,17 +268,17 @@ generated quantities {
   // -- ADDITIONAL DIAGNOSTICS FOR PRIOR PREDICTION --
 
 
-  vector[V] beta_variant_prior;
+  vector[V] beta_variant_std_prior;
 
   for (v in 1:V) {
-      beta_variant_prior[v] = z[v] * tau * lambda_tilde[v];
+      beta_variant_std_prior[v] = z[v] * tau * lambda_tilde[v];
   }
 
   //vector[N] eta_variant;
   //vector[N] eta_sub;
 
   //for (n in 1:N) {
-    // eta_variant[n] = (variant_matrix_std[n] * beta_variant);
+    // eta_variant[n] = (variant_matrix_std[n] * beta_variant_std);
     // eta_sub[n]     = sublineage_matrix[n] * beta_sublineage;
     //}
 
