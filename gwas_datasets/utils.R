@@ -804,14 +804,24 @@ encode_lineages_spn <- function(lineages_df, sublin_df, pheno_vec) {
   ref_sublin <- select_reference_sublineage(sublin_df[[2]], pheno_vec)
   sublin_fac <- relevel(factor(sublin_df[[2]]), ref = as.character(ref_sublin))
 
-  lin_mat   <- model.matrix(~ as.factor(lineages_df[[2]]) - 1)
+  # Build full sublineage one-hot (reference is column 1 after relevel)
   sublin_mat <- model.matrix(~ sublin_fac - 1)
-
-  # Shorten column names for readability
-  colnames(lin_mat)    <- levels(factor(lineages_df[[2]]))
   colnames(sublin_mat) <- levels(sublin_fac)
 
-  # parent_lineage[k] = index of the majority lineage for sublineage k
+  # Identify parent lineage of reference sublineage
+  lin_fac <- factor(lineages_df[[2]])
+  lin_mat_tmp <- model.matrix(~ lin_fac - 1)
+  colnames(lin_mat_tmp) <- levels(lin_fac)
+  ref_sub_idx <- which(sublin_mat[, 1] == 1)
+  ref_lin <- names(which.max(colSums(lin_mat_tmp[ref_sub_idx, , drop = FALSE])))
+  message("  Reference (dropped) lineage: ", ref_lin)
+
+  # Relevel lineage factor so reference lineage is column 1
+  lin_fac <- relevel(lin_fac, ref = ref_lin)
+  lin_mat <- model.matrix(~ lin_fac - 1)
+  colnames(lin_mat) <- levels(lin_fac)
+
+  # parent_lineage[k] = column index of majority lineage for sublineage k
   parent_lineage <- integer(ncol(sublin_mat))
   for (k in seq_len(ncol(sublin_mat))) {
     sub_idx <- which(sublin_mat[, k] == 1)
@@ -836,12 +846,23 @@ encode_lineages_tb <- function(lineages_df, pheno_vec) {
   sublin_fac <- relevel(factor(lineages_df$lineages), ref = ref_sublin)
   coarse_fac <- factor(lineages_df$lineages_coarse)
 
-  lin_mat    <- model.matrix(~ coarse_fac - 1)
+  # Build full sublineage one-hot (reference is column 1 after relevel)
   sublin_mat <- model.matrix(~ sublin_fac - 1)
-
-  colnames(lin_mat)    <- levels(coarse_fac)
   colnames(sublin_mat) <- levels(sublin_fac)
 
+  # Identify parent lineage of reference sublineage
+  lin_mat_tmp <- model.matrix(~ coarse_fac - 1)
+  colnames(lin_mat_tmp) <- levels(coarse_fac)
+  ref_sub_idx <- which(sublin_mat[, 1] == 1)
+  ref_lin <- names(which.max(colSums(lin_mat_tmp[ref_sub_idx, , drop = FALSE])))
+  message("  Reference (dropped) lineage: ", ref_lin)
+
+  # Relevel lineage factor so reference lineage is column 1
+  coarse_fac <- relevel(coarse_fac, ref = ref_lin)
+  lin_mat <- model.matrix(~ coarse_fac - 1)
+  colnames(lin_mat) <- levels(coarse_fac)
+
+  # parent_lineage mapping
   parent_lineage <- integer(ncol(sublin_mat))
   for (k in seq_len(ncol(sublin_mat))) {
     sub_idx <- which(sublin_mat[, k] == 1)

@@ -13,12 +13,20 @@ data {
 
   matrix[N,V] variant_matrix; // genotype
 
-  matrix[N,S-1] sublineage_matrix; // lineage subclusters
-  array[S-1] int<lower = 1, upper = L-1> parent_lineage; // vector in same order as subcluster matrix, containing parent lineage of that cluster
+  matrix[N,S] sublineage_matrix; // lineage subclusters (full one-hot, reference in column 1)
+  array[S] int<lower = 1, upper = L> parent_lineage; // vector in same order as subcluster matrix, containing parent lineage of that cluster
 
 }
 
 transformed data {
+
+  // Drop reference sublineage (column 1) — treatment-contrast encoding
+  matrix[N, S-1] sublineages_treatmentcontrast = block(sublineage_matrix, 1, 2, N, S-1);
+
+  // Drop reference sublineage from parent_lineage mapping
+  array[S-1] int parent_lineage_treatmentcontrast;
+  for (k in 1:(S-1))
+    parent_lineage_treatmentcontrast[k] = parent_lineage[k+1];
 
   matrix[N,V] X_ctr;
   matrix[N,V] X_std;
@@ -48,7 +56,7 @@ transformed data {
 parameters {
 
   // basic parameters
-  vector[L-1] beta_lineage; // effect sizes of lineage clusters
+  vector[L] beta_lineage; // effect sizes of lineage clusters
   real<lower=0> sigma_sublineage; // variance in sublineage effect sizes
   vector[S-1] z_sub;              // std normals, noncentered
 
@@ -59,18 +67,18 @@ parameters {
 
 transformed parameters {
 
-  vector[S-1] beta_sublineage_raw = beta_lineage[parent_lineage] + sigma_sublineage * z_sub;
+  vector[S-1] beta_sublineage_raw = beta_lineage[parent_lineage_treatmentcontrast] + sigma_sublineage * z_sub;
 
   // Optional but recommended: sum-to-zero within each parent lineage
   vector[S-1] beta_sublineage = beta_sublineage_raw;
 
-  for (l in 1:(L-1)) {
+  for (l in 1:L) {
     real m = 0;
     int cnt = 0;
-    for (s in 1:(S-1)) if (parent_lineage[s] == l) { m += beta_sublineage_raw[s]; cnt += 1; }
+    for (s in 1:(S-1)) if (parent_lineage_treatmentcontrast[s] == l) { m += beta_sublineage_raw[s]; cnt += 1; }
     if (cnt > 0) {
       m /= cnt;
-      for (s in 1:(S-1)) if (parent_lineage[s] == l)
+      for (s in 1:(S-1)) if (parent_lineage_treatmentcontrast[s] == l)
         beta_sublineage[s] = beta_sublineage_raw[s] - m;
     }
   }
@@ -98,7 +106,7 @@ model {
   // LINEAR PREDICTOR
 
   // likelihood statement
-  mu = (X_std * beta_variant) +  (sublineage_matrix * beta_sublineage) + alpha_mean;
+  mu = (X_std * beta_variant) +  (sublineages_treatmentcontrast * beta_sublineage) + alpha_mean;
 
   // fit with ordered logistic
   phenotype ~ ordered_logistic(mu, cutpoints);

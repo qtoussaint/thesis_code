@@ -9,9 +9,18 @@ data {
   array[N] int<lower = 1, upper = K> phenotype;
   vector<lower=1e-12>[K-1] mic_breakpoints;  // concentration breakpoints used to define K (must be >0)
   matrix[N,V] variant_matrix;
-  matrix[N,L-1] lineage_matrix; // lineage clusters
-  matrix[N,S-1] sublineage_matrix; // lineage subclusters
-  array[S-1] int<lower = 1, upper = L-1> parent_lineage; // vector in same order as subcluster matrix, containing parent lineage of that cluster
+  matrix[N,S] sublineage_matrix; // lineage subclusters (full one-hot, reference in column 1)
+  array[S] int<lower = 1, upper = L> parent_lineage; // vector in same order as subcluster matrix, containing parent lineage of that cluster
+}
+
+transformed data {
+  // Drop reference sublineage (column 1) — treatment-contrast encoding
+  matrix[N, S-1] sublineages_treatmentcontrast = block(sublineage_matrix, 1, 2, N, S-1);
+
+  // Drop reference sublineage from parent_lineage mapping
+  array[S-1] int parent_lineage_treatmentcontrast;
+  for (k in 1:(S-1))
+    parent_lineage_treatmentcontrast[k] = parent_lineage[k+1];
 }
 
 parameters {
@@ -19,7 +28,7 @@ parameters {
   real<lower=0, upper=1> heritability;
   real<lower=0> h_env_var;
   vector[V] beta_variant;
-  vector[L-1] beta_lineage; // effect sizes of lineage clusters
+  vector[L] beta_lineage; // effect sizes of lineage clusters
   vector[S-1] beta_sublineage; // effect sizes of lineage subclusters
   real<lower=0> sigma_sublineage; // variance in sublineage effect sizes
 }
@@ -30,7 +39,7 @@ transformed parameters {
 
 model {
   //create the linear predictor
-  vector[N] mu =  variant_matrix * beta_variant + sublineage_matrix * beta_sublineage;
+  vector[N] mu =  variant_matrix * beta_variant + sublineages_treatmentcontrast * beta_sublineage;
 
   //define priors
   beta_variant ~ normal(0, 5);
@@ -41,7 +50,7 @@ model {
 
   // each sublineage EF is centered around its parent lineage dist with variance of sigma_sublineage
   for (k in 1:(S-1)) {
-    beta_sublineage[k] ~ normal(beta_lineage[parent_lineage[k]], sigma_sublineage);
+    beta_sublineage[k] ~ normal(beta_lineage[parent_lineage_treatmentcontrast[k]], sigma_sublineage);
   }
 
   //write the likelihood
