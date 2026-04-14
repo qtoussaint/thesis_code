@@ -41,6 +41,7 @@ LD_THRESHOLD="--ld_threshold 1"
 PHANDANGO="--phandango /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/10_spn_penicillin_MIC_coarse_dilutions/10_spn_penicillin_MIC_coarse_dilutions_variant_index.csv"
 ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
 MODEL_TYPE="--model_type ppom"
+GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/test_gwas_workflow/genes_of_interest.csv"
 NORATE="--norate"
 
 # ---------------------------------------------------------------------------
@@ -61,4 +62,5 @@ $LD_THRESHOLD \
 $PHANDANGO \
 $ANNOTATIONS \
 $MODEL_TYPE \
+$GENES_OF_INTEREST \
 $NORATE \

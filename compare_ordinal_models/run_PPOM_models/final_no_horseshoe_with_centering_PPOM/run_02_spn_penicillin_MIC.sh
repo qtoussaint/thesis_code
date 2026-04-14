@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=paperPPOM_11_spn_pen_lgbin
+#SBATCH --job-name=noHSwCentPPOM_02_spn_pen_MIC
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
-#SBATCH --mem=50G
+#SBATCH --mem=150G
 #SBATCH --time=5:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_no_horseshoe_with_centering_PPOM/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_no_horseshoe_with_centering_PPOM/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out
 
 #################################################################################
 
@@ -18,11 +18,11 @@ RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/in
 # Required arguments
 # ---------------------------------------------------------------------------
 
-DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/11_spn_penicillin_MIC_large_minbin/11_spn_penicillin_MIC_large_minbin.json"
-STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/paper_model_PPOM.stan"
+DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC.json"
+STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_no_horseshoe_with_centering_PPOM.stan"
 ANALYSIS_TYPE="--analysis_type inference"
-ANALYSIS_NICKNAME="--analysis_nickname 11_spn_penicillin_MIC_large_minbin_paperPPOM"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/11_spn_penicillin_MIC_large_minbin"
+ANALYSIS_NICKNAME="--analysis_nickname 02_spn_penicillin_MIC_noHSwCentPPOM"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_no_horseshoe_with_centering_PPOM/02_spn_penicillin_MIC"
 THREADS="--threads 48"
 
 # ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ LD_THRESHOLD="--ld_threshold 1"
 # Optional arguments
 # ---------------------------------------------------------------------------
 
-PHANDANGO="--phandango /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/11_spn_penicillin_MIC_large_minbin/11_spn_penicillin_MIC_large_minbin_variant_index.csv"
+PHANDANGO="--phandango /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv"
 ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
 MODEL_TYPE="--model_type ppom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/test_gwas_workflow/genes_of_interest.csv"
@@ -46,7 +46,7 @@ NORATE="--norate"
 
 # ---------------------------------------------------------------------------
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/11_spn_penicillin_MIC_large_minbin/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_no_horseshoe_with_centering_PPOM/02_spn_penicillin_MIC/logs
 
 Rscript $RSCRIPT_PATH \
 $DATA \

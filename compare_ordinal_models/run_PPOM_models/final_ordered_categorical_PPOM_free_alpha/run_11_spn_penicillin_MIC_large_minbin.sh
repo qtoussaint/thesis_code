@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=paperPPOM_11_spn_pen_lgbin
+#SBATCH --job-name=freeAlphaPPOM_11_spn_pen_lgbin
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
-#SBATCH --mem=50G
+#SBATCH --mem=150G
 #SBATCH --time=5:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_alpha/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_alpha/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.out
 
 #################################################################################
 
@@ -19,10 +19,10 @@ RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/in
 # ---------------------------------------------------------------------------
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/11_spn_penicillin_MIC_large_minbin/11_spn_penicillin_MIC_large_minbin.json"
-STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/paper_model_PPOM.stan"
+STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_ordered_categorical_PPOM_free_alpha.stan"
 ANALYSIS_TYPE="--analysis_type inference"
-ANALYSIS_NICKNAME="--analysis_nickname 11_spn_penicillin_MIC_large_minbin_paperPPOM"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/11_spn_penicillin_MIC_large_minbin"
+ANALYSIS_NICKNAME="--analysis_nickname 11_spn_penicillin_MIC_large_minbin_freeAlphaPPOM"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_alpha/11_spn_penicillin_MIC_large_minbin"
 THREADS="--threads 48"
 
 # ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ NORATE="--norate"
 
 # ---------------------------------------------------------------------------
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/11_spn_penicillin_MIC_large_minbin/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_alpha/11_spn_penicillin_MIC_large_minbin/logs
 
 Rscript $RSCRIPT_PATH \
 $DATA \
