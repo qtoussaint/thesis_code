@@ -1,34 +1,32 @@
 // Ordered association model with lineage subclusters
 //
-// Changes from final_ordered_categorical_POM.stan:
+// Changes from final_ordered_categorical_POM_free_alpha.stan:
 //
-//   1. CUTPOINTS: Fixed at log2(mic_breakpoints) — unchanged. These are experimental
-//      design constants (dilution series thresholds), not biological parameters.
-//      Estimating them would add K-1 parameters, confound variant effects, and
-//      lose interpretability. MIC rounding error (±1 dilution) is irreducible
-//      from ordinal data and is already handled implicitly by the ordinal likelihood.
+//   1. DATA-INFORMED ALPHA PRIOR: The previous `alpha ~ normal(cutpoints[1]-2, 1.5)`
+//      was too loose (±3 log2-dilutions of flex), letting alpha absorb variant-level
+//      signal. Here alpha is anchored on the *empirical* fraction of reference-sublineage
+//      samples that sit in MIC category 1:
+//          p_baseline_emp    = #(reference rows in cat 1) / #(reference rows)
+//          alpha_prior_mean  = cutpoints[1] - logit(p_baseline_emp)
+//          alpha_prior_sd    = 0.5   (~1 log2-dilution at 95%, matches MIC rounding)
+//      This works because `gwas_datasets/utils.R:select_reference_sublineage()` picks
+//      the minimum-mean-phenotype sublineage upstream, so column 1 of sublineage_matrix
+//      is guaranteed to be a deliberately-susceptible reference. Laplace smoothing
+//      (+0.5/+1) handles sparse reference clusters; a small fallback applies if the
+//      reference cluster has <5 samples.
 //
-//   2. INTERCEPT: Replaced the fixed heuristic alpha_mean = cutpoints[1] - logit(0.99)
-//      with a free estimated parameter `alpha`. The 0.99 assumption is inappropriate
-//      when MIC distributions are drug/lineage-dependent. A free alpha with an
-//      informative prior adapts to the actual baseline distribution.
-//      Prior: alpha ~ normal(mean(cutpoints), 2.0)
-//        - Centered at the midpoint of the log2-MIC scale.
-//        - Since sublineage effects are nuisance parameters for population structure correction,
-//          the dropped reference sublineage is arbitrary and may not be susceptible. A prior
-//          anchored to the susceptible end (cutpoints[1]) would be wrong for a resistant reference.
-//          Centering at mean(cutpoints) makes no assumption about the reference's resistance profile.
-//        - sigma = 2.0 ≈ 2 log2-dilutions of flexibility in either direction.
-//      Identification: fixed cutpoints + free intercept is the canonical identified
-//      parameterization for ordinal models with known thresholds.
+//   2. POSTERIOR PREDICTIVE CATEGORY FREQUENCIES: generated quantities now produces
+//      `y_rep` and `cat_freq_rep` so the posterior predictive MIC histogram can be
+//      compared directly to the observed histogram (the direct check on whether
+//      alpha is in the right place).
 //
-//   3. GLOBAL SUBLINEAGE CENTERING REMOVED: The line `beta_sublineage -= mean(beta_sublineage)`
-//      conflicted with treatment-contrast encoding of sublineage_matrix (model.matrix(...)[,-1]).
-//      In treatment contrast, the reference sublineage is represented by all-zeros rows,
-//      and alpha represents its baseline. After global centering, the reference sublineage
-//      acquires an implicit effect of -mean(beta_sublineage), making alpha's prior
-//      uninterpretable. The within-lineage centering loop is retained (it is correct
-//      for partial pooling).
+//   3. DIAGNOSTIC OUTPUTS: `alpha_prior_mean_out` and `p_baseline_emp_out` are exposed
+//      in generated quantities for post-hoc verification against an R-side hand
+//      computation over the reference-sublineage subset.
+//
+// Unchanged from free_alpha: fixed cutpoints at log2(mic_breakpoints), within-lineage
+// sum-to-zero sublineage centering (no global centering), regularized horseshoe on
+// beta_variant with tau_0 = 0.1.
 
 data {
   int<lower=1> N; // number of samples
@@ -78,15 +76,39 @@ transformed data {
   ordered[K-1] cutpoints;
   cutpoints = log2(mic_breakpoints);
 
+  // ---- Empirical baseline for alpha prior ---------------------------
+  // The reference sublineage (column 1 of sublineage_matrix) is chosen upstream
+  // to be the minimum-mean-phenotype sublineage (see gwas_datasets/utils.R
+  // select_reference_sublineage), so it is deliberately susceptible. We compute
+  // the empirical fraction of reference-sublineage samples in MIC category 1 and
+  // use it to anchor alpha.
+  int n_ref = 0;
+  int n_ref_cat1 = 0;
+  for (n in 1:N) {
+    if (sublineage_matrix[n, 1] > 0.5) {
+      n_ref += 1;
+      if (phenotype[n] == 1) n_ref_cat1 += 1;
+    }
+  }
+  real p_baseline_emp;
+  if (n_ref >= 5)
+    p_baseline_emp = (n_ref_cat1 + 0.5) / (n_ref + 1.0);  // Laplace smoothing
+  else
+    p_baseline_emp = 0.9;                                 // fallback for tiny ref clusters
+  // Clamp to avoid degenerate logit at 0 or 1
+  p_baseline_emp = fmin(fmax(p_baseline_emp, 0.5), 0.995);
+
+  real alpha_prior_mean = cutpoints[1] - logit(p_baseline_emp);
+  real alpha_prior_sd   = 0.5;  // ≈ 1 log2-dilution at 95% — matches MIC rounding
 }
 
 parameters {
 
   // Intercept: latent position of the reference sublineage at zero variant effects.
-  // Prior centered at the midpoint of the MIC scale — no assumption about whether the
-  // dropped reference sublineage is susceptible or resistant (it is randomly chosen).
-  // Since sublineage effects are purely a population structure nuisance, alpha's
-  // interpretation is secondary; the prior just needs to be broad enough to not constrain it.
+  // Prior is tight and anchored on the empirical reference-cluster MIC distribution
+  // (computed in transformed data). Tight enough to block alpha from absorbing
+  // variant-level signal; loose enough to accommodate sampling noise in the
+  // reference cluster.
   real alpha;
 
   // basic parameters
@@ -122,11 +144,8 @@ transformed parameters {
   vector[S-1] beta_sublineage_raw = beta_lineage[parent_lineage_treatmentcontrast] + sigma_sublineage * z_sub;
 
   // Sum-to-zero within each parent lineage (partial pooling / identifiability within lineage groups).
-  // NOTE: global mean-centering (beta_sublineage -= mean(beta_sublineage)) has been removed.
-  // That step conflicted with treatment-contrast encoding: after global centering, the reference
-  // sublineage (all-zeros rows) acquired an implicit effect of -mean(beta_sublineage), making
-  // alpha's prior uninterpretable. Within-lineage centering is retained because it is
-  // hierarchically meaningful and does not affect the reference sublineage.
+  // NOTE: global mean-centering is intentionally absent (it would conflict with the treatment-contrast
+  // encoding and make alpha's prior uninterpretable).
   vector[S-1] beta_sublineage = beta_sublineage_raw;
 
   for (l in 1:L) {
@@ -188,15 +207,8 @@ model {
   to_vector(lambda) ~ cauchy(0, 2); // half-Cauchy(0,2)
 
 
-  // INTERCEPT
-  // The dropped reference sublineage is arbitrary (not a meaningful susceptible reference),
-  // so the prior is centered at the midpoint of the log2-MIC scale with sigma=2 (≈2 log2-dilutions).
-  // This makes no assumption about the reference's resistance profile. Since sublineages are
-  // purely a population structure nuisance, alpha's absolute value is not of biological interest —
-  // the prior just needs to be uninformative enough to not constrain it.
-  // NOTE: if you later relevel() in R to use a known-susceptible sublineage as reference,
-  // switch to: alpha ~ normal(cutpoints[1] - 2, 1.5)
-  alpha ~ normal(cutpoints[1] - 2, 1.5);
+  // INTERCEPT — tight, data-informed prior anchored on the empirical reference-cluster baseline
+  alpha ~ normal(alpha_prior_mean, alpha_prior_sd);
 
   // POPULATION STRUCTURE CORRECTION
 
@@ -209,9 +221,6 @@ model {
 
 
   // LINEAR PREDICTOR
-  // mu = variant effects + sublineage population correction + intercept
-  // alpha: baseline latent position of the reference sublineage (no variants, no sublineage deviation)
-  // beta_sublineage: within-lineage-centered deviations; reference sublineage effect = 0 by encoding
   mu = (X_std * beta_variant_std) + (sublineages_treatmentcontrast * beta_sublineage) + alpha;
 
   // fit with ordered logistic
@@ -233,7 +242,7 @@ generated quantities {
     }
   }
 
-  // Posterior predictive MIC category frequencies
+  // Posterior predictive MIC category frequencies — direct check on alpha placement.
   array[N] int y_rep;
   vector[K] cat_freq_rep = rep_vector(0, K);
   {
@@ -245,57 +254,13 @@ generated quantities {
     cat_freq_rep /= N;
   }
 
-  // HERITABILITY
-
-  // latent residual variance for logistic link is fixed at pi^2 / 3
-  // genetic variance Vg computed from the variant component of the linear predictor
-  // so: h2 = Vg / (Vg + Ve)
-
-  //real Ve = pi()^2 / 3;
-  //vector[N] eta_var;
-  //real Vg;
-  //real h2_latent;
-
-  // for (n in 1:N) {
-    //   eta_var[n] = (variant_matrix_ctr[n] * beta_variant_std);
-    //}
-  // Vg = variance(eta_var);
-
-  //h2_latent = Vg / (Vg + Ve);
-
-
-  // POSTERIOR PREDICTIVE CHECKS
-
-  // for WAIC/LOO
-  //array[N_train] real log_lik;
-
-  // simulate phenotypes from likelihood for prior/posterior predictive checks
-  //array[N] real y_rep;
-
-  //for (n in 1:N) {
-    //log_lik[n] = ordered_logistic_lpmf(training_phenotypes[n] | mu[n], cutpoints);
-    //y_rep[n] = ordered_logistic_rng(mu[n], cutpoints);
-    //}
-
-  // -- ADDITIONAL DIAGNOSTICS FOR PRIOR PREDICTION --
-
+  // Expose the data-informed prior inputs for post-hoc verification in R.
+  real alpha_prior_mean_out = alpha_prior_mean;
+  real p_baseline_emp_out   = p_baseline_emp;
 
   vector[V] beta_variant_std_prior;
-
   for (v in 1:V) {
       beta_variant_std_prior[v] = z[v] * tau * lambda_tilde[v];
   }
-
-  //vector[N] eta_variant;
-  //vector[N] eta_sub;
-
-  //for (n in 1:N) {
-    // eta_variant[n] = (variant_matrix_std[n] * beta_variant_std);
-    // eta_sub[n]     = sublineage_matrix[n] * beta_sublineage;
-    //}
-
-  //real sd_eta_variant = sd(eta_variant);
-  //real sd_eta_sub     = sd(eta_sub);
-  //real sd_mu          = sd(to_vector(mu));
 
 }

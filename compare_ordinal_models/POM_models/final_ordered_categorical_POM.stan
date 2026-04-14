@@ -184,7 +184,7 @@ model {
 generated quantities {
   vector[V] beta_variant;
   vector[V] OR_variant_allele;
-  
+
   for (v in 1:V) {
     if (sss[v] > 0) {
       beta_variant[v] = beta_variant_std[v] / sss[v];   // per 0->1 allele
@@ -193,6 +193,18 @@ generated quantities {
       beta_variant[v] = 0;
       OR_variant_allele[v]   = 1;
     }
+  }
+
+  // Posterior predictive MIC category frequencies
+  array[N] int y_rep;
+  vector[K] cat_freq_rep = rep_vector(0, K);
+  {
+    vector[N] mu_gen = (X_std * beta_variant_std)
+                       + (sublineages_treatmentcontrast * beta_sublineage)
+                       + alpha_mean;
+    for (n in 1:N) y_rep[n] = ordered_logistic_rng(mu_gen[n], cutpoints);
+    for (n in 1:N) cat_freq_rep[y_rep[n]] += 1;
+    cat_freq_rep /= N;
   }
 
   // HERITABILITY
