@@ -3,7 +3,7 @@
 #SBATCH --job-name=noHSnoCentPPOM_02_spn_pen_MIC
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
-#SBATCH --mem=150G
+#SBATCH --mem=400G
 #SBATCH --time=5:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_no_horseshoe_no_centering_PPOM/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_no_horseshoe_no_centering_PPOM/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out

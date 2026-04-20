@@ -3,7 +3,7 @@
 #SBATCH --job-name=fixedAlphaPPOM_11_spn_pen_lgbin
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
-#SBATCH --mem=150G
+#SBATCH --mem=400G
 #SBATCH --time=5:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_fixed_alpha/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_fixed_alpha/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.out

@@ -3,7 +3,7 @@
 #SBATCH --job-name=paperPPOM_02_spn_pen_MIC
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
-#SBATCH --mem=50G
+#SBATCH --mem=400G
 #SBATCH --time=5:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/paper_model_PPOM/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out
