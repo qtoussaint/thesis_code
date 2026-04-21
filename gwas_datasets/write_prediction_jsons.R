@@ -1106,9 +1106,20 @@ tb_pheno_raw <- tb_pheno_raw[!is.na(tb_pheno_raw$RIF_MIC_num), ]
 sample_in_lin     <- match(tb_pheno_raw$ENA_RUN, tb_lin_raw$X.sample)
 tb_pheno_with_lin <- tb_pheno_raw[!is.na(sample_in_lin), ]
 tb_lin_aligned    <- tb_lin_raw[na.omit(sample_in_lin), ]
-geno_row_idx      <- match(tb_pheno_with_lin$ENA_RUN, tb_pheno_raw$ENA_RUN)
-geno_row_idx      <- geno_row_idx[!is.na(geno_row_idx)]
-tb_geno_mat       <- as.matrix(tb_geno[geno_row_idx, ])
+
+# Genotype rows follow the VCF sample order in TB_SAMPLE_INDEX_PATH, not the
+# phenotype-table order; match on VCF_ID derived from REGENOTYPED_VCF.
+vcf_sample_ids <- readLines(TB_SAMPLE_INDEX_PATH)
+tb_pheno_with_lin$VCF_ID <- sub("\\.regeno\\.vcf\\.gz$", "",
+                                 basename(tb_pheno_with_lin$REGENOTYPED_VCF))
+geno_row_idx <- match(tb_pheno_with_lin$VCF_ID, vcf_sample_ids)
+
+has_geno          <- !is.na(geno_row_idx)
+tb_pheno_with_lin <- tb_pheno_with_lin[has_geno, ]
+tb_lin_aligned    <- tb_lin_aligned[has_geno, ]
+geno_row_idx      <- geno_row_idx[has_geno]
+
+tb_geno_mat <- as.matrix(tb_geno[geno_row_idx, ])
 storage.mode(tb_geno_mat) <- "integer"
 tb_sample_ids <- tb_pheno_with_lin$ENA_RUN
 tb_mic_num    <- tb_pheno_with_lin$RIF_MIC_num
