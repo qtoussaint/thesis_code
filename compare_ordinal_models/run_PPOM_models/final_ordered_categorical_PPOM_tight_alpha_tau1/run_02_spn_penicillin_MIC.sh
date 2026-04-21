@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=tightAlphaPPOM_02_spn_pen_MIC
+#SBATCH --job-name=tightAlphaPPOMtau1_02_spn_pen_MIC
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=650G
 #SBATCH --time=23:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_tight_alpha/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_tight_alpha/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_tight_alpha_tau1/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_tight_alpha_tau1/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out
 
 #################################################################################
 
@@ -19,10 +19,10 @@ RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/in
 # ---------------------------------------------------------------------------
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC.json"
-STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_ordered_categorical_PPOM_tight_alpha.stan"
+STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_ordered_categorical_PPOM_tight_alpha_tau1.stan"
 ANALYSIS_TYPE="--analysis_type inference"
-ANALYSIS_NICKNAME="--analysis_nickname 02_spn_penicillin_MIC_tightAlphaPPOM"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_tight_alpha/02_spn_penicillin_MIC"
+ANALYSIS_NICKNAME="--analysis_nickname 02_spn_penicillin_MIC_tightAlphaPPOMtau1"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_tight_alpha_tau1/02_spn_penicillin_MIC"
 THREADS="--threads 48"
 
 # ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ NORATE="--norate"
 
 # ---------------------------------------------------------------------------
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_tight_alpha/02_spn_penicillin_MIC/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_tight_alpha_tau1/02_spn_penicillin_MIC/logs
 
 Rscript $RSCRIPT_PATH \
 $DATA \
