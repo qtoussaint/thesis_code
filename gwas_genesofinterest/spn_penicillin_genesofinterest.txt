@@ -3,21 +3,19 @@ pbp1A, pbp1a
 pbp1B, pbp1b
 pbp2A, pbp2a
 penA, pbp2b
-mraY,mraY
-mraW,mraW
-murM,murM
-murN,murN
-ftsL,ftsL
-SPN23F03440,gpsB
-clpL,clpL
-clpX,clpX
-ciaH,ciaH
-ciaR,ciaR
-recU,recU
-SPN23F09960,cpoA
-dyr,dhfR
-folP,folP
-SPN23F01040,spr1178
-SPN23F17350,stkP
-SPN23F17360,phpP
-SPN23F22380,pde1
+mraY, mraY
+mraW, mraW
+murM, murM
+murN, murN
+ftsL, ftsL
+SPN23F03440, gpsB
+clpL, clpL
+clpX, clpX
+ciaH, ciaH
+ciaR, ciaR
+recU, recU
+SPN23F09960, cpoA
+SPN23F01040, spr1178
+SPN23F17350, stkP
+SPN23F17360, phpP
+SPN23F22380, pde1
