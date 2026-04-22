@@ -199,4 +199,33 @@ generated quantities {
   for (k in 1:(K-1))
     for (v in 1:V)
       beta_variant_std_prior[v, k] = z_variant[v, k] * tau * lambda_tilde_variant[v, k];
+
+  // Heritability on the liability (logistic-latent) scale, per cutpoint k.
+  // beta_variant_std is V x (K-1) under partial proportional odds, so the
+  // additive genetic score variance differs per threshold. h2_narrow_k[k] /
+  // h2_broad_k[k] give per-threshold heritability; h2_*_median_k is a
+  // scalar summary for tables. A non-flat h2-vs-k curve is informative:
+  // it tells you which resistance thresholds are more genetically determined.
+  // Horseshoe shrinkage biases V_A_k downward, so h2_narrow_k is a lower
+  // bound in low-signal regimes.
+  vector<lower=0>[K-1] V_A_k;
+  real<lower=0> V_pop;
+  real<lower=0> V_E = pi()^2 / 3;
+  vector<lower=0, upper=1>[K-1] h2_narrow_k;
+  vector<lower=0, upper=1>[K-1] h2_broad_k;
+  real<lower=0, upper=1> h2_narrow_median_k;
+  real<lower=0, upper=1> h2_broad_median_k;
+  {
+    vector[N] g_pop = X_sublineage * beta_sublineage;
+    V_pop = variance(g_pop);
+    for (k in 1:(K-1)) {
+      vector[N] g_variant_k = X_std * beta_variant_std[, k];
+      V_A_k[k] = variance(g_variant_k);
+      real V_tot_k = V_A_k[k] + V_pop + V_E;
+      h2_narrow_k[k] = V_A_k[k] / V_tot_k;
+      h2_broad_k[k]  = (V_A_k[k] + V_pop) / V_tot_k;
+    }
+    h2_narrow_median_k = quantile(h2_narrow_k, 0.5);
+    h2_broad_median_k  = quantile(h2_broad_k,  0.5);
+  }
 }

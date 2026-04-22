@@ -175,4 +175,27 @@ generated quantities {
   vector[V] beta_variant_std_prior;
   for (v in 1:V)
     beta_variant_std_prior[v] = z_variant[v] * tau * lambda_tilde_variant[v];
+
+  // Heritability on the liability (logistic-latent) scale.
+  // V_E = pi^2/3 is the residual variance of the standard logistic latent
+  // implicit in bernoulli_logit. Reported h2 is liability-scale (directly
+  // comparable across cohorts and with GCTA-logit heritability); observed-
+  // scale h2 can be obtained via Dempster-Lerner downstream if desired.
+  // h2_narrow counts only measured variants; h2_broad counts variants
+  // + lineage/sublineage as genetic relatedness. Horseshoe shrinkage biases
+  // V_A downward, so h2_narrow is a lower bound in low-signal regimes.
+  real<lower=0> V_A;
+  real<lower=0> V_pop;
+  real<lower=0> V_E = pi()^2 / 3;
+  real<lower=0, upper=1> h2_narrow;
+  real<lower=0, upper=1> h2_broad;
+  {
+    vector[N] g_variant = X_std * beta_variant_std;
+    vector[N] g_pop     = X_sublineage * beta_sublineage;
+    V_A   = variance(g_variant);
+    V_pop = variance(g_pop);
+    real V_tot = V_A + V_pop + V_E;
+    h2_narrow = V_A / V_tot;
+    h2_broad  = (V_A + V_pop) / V_tot;
+  }
 }

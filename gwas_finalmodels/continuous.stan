@@ -164,4 +164,26 @@ generated quantities {
   vector[V] beta_variant_std_prior;
   for (v in 1:V)
     beta_variant_std_prior[v] = z_variant[v] * tau * lambda_tilde_variant[v];
+
+  // Heritability (observed-scale, Gaussian residual).
+  // V_A   = realised variance of the additive genetic score across samples.
+  // V_pop = realised variance of the lineage/sublineage structure score.
+  // V_E   = sigma^2 (observed-scale residual on log2-MIC).
+  // h2_narrow counts only measured variants; h2_broad counts variants
+  // + lineage/sublineage as genetic relatedness. Horseshoe shrinkage
+  // biases V_A downward, so h2_narrow is a lower bound in low-signal regimes.
+  real<lower=0> V_A;
+  real<lower=0> V_pop;
+  real<lower=0> V_E = square(sigma);
+  real<lower=0, upper=1> h2_narrow;
+  real<lower=0, upper=1> h2_broad;
+  {
+    vector[N] g_variant = X_std * beta_variant_std;
+    vector[N] g_pop     = X_sublineage * beta_sublineage;
+    V_A   = variance(g_variant);
+    V_pop = variance(g_pop);
+    real V_tot = V_A + V_pop + V_E;
+    h2_narrow = V_A / V_tot;
+    h2_broad  = (V_A + V_pop) / V_tot;
+  }
 }
