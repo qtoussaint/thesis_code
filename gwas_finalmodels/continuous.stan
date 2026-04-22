@@ -1,29 +1,23 @@
-// Proportional-odds ordinal logistic (POM) model for MIC GWAS.
+// Continuous (log2-MIC) association model
+
+// Standardized genotype with regularized horseshoe on variant effects
+// (Piironen & Vehtari 2017, eq. 3.12), lineage/sublineage hierarchy with
+// treatment-contrast encoding (reference sublineage = column 1) and
+// within-lineage sum-to-zero centering, and a tight, data-informed alpha prior
+// anchored on the reference sublineage.
 //
-// Fixed structure: cutpoints are pinned at log2(mic_breakpoints) — they are
-// experimental-design constants, not free parameters.
-// Estimated location: alpha (global intercept anchored on the reference
-// sublineage) + beta_lineage/beta_sublineage (population structure) + a
-// regularized-horseshoe beta_variant (Piironen & Vehtari 2017, eq. 3.12).
-//
-// Sublineages use treatment-contrast encoding (reference sublineage = column 1)
-// with within-lineage sum-to-zero centering, so beta_sublineage measures
-// deviation from the parent-lineage mean.
-//
-// Alpha prior is anchored on the empirical MIC-cat-1 fraction of the reference
-// sublineage, which gwas_datasets/utils.R:select_reference_sublineage() picks
-// upstream as the minimum-mean-phenotype sublineage (i.e. deliberately
-// susceptible). This stops alpha from absorbing variant-level signal.
+// Alpha prior is anchored on the empirical mean phenotype of the reference
+// sublineage, which gwas_datasets/utils.R:select_reference_sublineage picks
+// upstream as the minimum-mean-phenotype sublineage (lowest log2 MIC). This
+// stops alpha from absorbing variant-level signal.
 
 data {
   int<lower=1> N;                                  // samples
   int<lower=1> V;                                  // variants
   int<lower=1> L;                                  // lineage clusters
   int<lower=1> S;                                  // lineage subclusters
-  int<lower=1> K;                                  // ordered categories
 
-  array[N] int<lower=1, upper=K> phenotype;        // MICs as ordered categories
-  vector<lower=1e-12>[K-1] mic_breakpoints;        // concentration breakpoints
+  vector[N] phenotype;                             // log2 MIC
 
   matrix[N, V] variant_matrix;                     // genotype
   matrix[N, S] sublineage_matrix;                  // full one-hot, reference in column 1
@@ -53,30 +47,25 @@ transformed data {
       X_std[n, v] = (sd_variant[v] > 0) ? centred[n] / sd_variant[v] : 0;
   }
 
-  // Fixed cutpoints on the log2-MIC scale
-  ordered[K-1] cutpoints = log2(mic_breakpoints);
-
-  // Empirical baseline: Laplace-smoothed fraction of reference-sublineage
-  // samples in MIC category 1. Upstream picks the reference as the
-  // min-mean-phenotype sublineage (guarantees n_ref >= 1). The [0.5, 0.995]
-  // clamp is a numerical guard against logit(1) = inf, not a small-n fallback.
+  // Empirical baseline: mean log2 MIC of the reference sublineage. Upstream
+  // (utils.R:select_reference_sublineage) guarantees n_ref >= 1, so no
+  // small-n fallback is needed. alpha_prior_sd = 0.5 ≈ one log2-dilution at
+  // 95%, matches MIC rounding.
   int n_ref = 0;
-  int n_ref_cat1 = 0;
+  real ref_sum = 0;
   for (n in 1:N) {
     if (sublineage_matrix[n, 1] > 0.5) {
       n_ref += 1;
-      if (phenotype[n] == 1) n_ref_cat1 += 1;
+      ref_sum += phenotype[n];
     }
   }
-  real p_baseline_emp = (n_ref_cat1 + 0.5) / (n_ref + 1.0);
-  p_baseline_emp = fmin(fmax(p_baseline_emp, 0.5), 0.995);
-
-  real alpha_prior_mean = cutpoints[1] - logit(p_baseline_emp);
-  real alpha_prior_sd   = 0.5;   // roughly one log2-dilution at 95%, matches MIC rounding
+  real alpha_prior_mean = ref_sum / n_ref;
+  real alpha_prior_sd = 0.5;
 }
 
 parameters {
   real alpha;
+  real<lower=0> sigma;  // residual std dev on log2-MIC scale
 
   vector[L] beta_lineage;
   real<lower=0> sigma_sublineage;
@@ -131,6 +120,7 @@ model {
   // Tight and data-informed intercept prior to prevent alpha from absorbing
   // variant-level signal while still accounting for reference-cluster noise
   alpha ~ normal(alpha_prior_mean, alpha_prior_sd);
+  sigma ~ normal(0, 1);  // half-normal, one log2-dilution is the MIC-rounding scale
 
   beta_lineage ~ normal(0, 0.1);
   sigma_sublineage ~ normal(0, 0.1);
@@ -139,42 +129,37 @@ model {
   vector[N] mu = X_std * beta_variant_std
                + X_sublineage * beta_sublineage
                + alpha;
-  phenotype ~ ordered_logistic(mu, cutpoints);
+  phenotype ~ normal(mu, sigma);
 }
 
 generated quantities {
-  // Unstandardized variant effects (per 0->1 allele) and cumulative odds ratios
+  // Unstandardized variant effects (log2-MIC change per 0->1 allele)
   vector[V] beta_variant;
-  vector[V] OR_variant_allele;
   for (v in 1:V) {
-    if (sd_variant[v] > 0) {
+    if (sd_variant[v] > 0)
       beta_variant[v] = beta_variant_std[v] / sd_variant[v];
-      OR_variant_allele[v] = exp(beta_variant[v]);
-    } else {
+    else
       beta_variant[v] = 0;
-      OR_variant_allele[v] = 1;
-    }
   }
 
   // Posterior predictive check on a deterministic 20%-of-N subset (capped at 500,
   // chosen upstream in build_stan_inference). y_true_ppc travels alongside so
   // downstream metrics pair predicted and true values without reloading phenotype.
-  array[N_ppc] int y_rep_ppc;
-  array[N_ppc] int y_true_ppc;
+  vector[N_ppc] y_rep_ppc;
+  vector[N_ppc] y_true_ppc;
   {
     for (i in 1:N_ppc) {
       int n = ppc_idx[i];
       real mu_n = X_std[n] * beta_variant_std
                 + X_sublineage[n] * beta_sublineage
                 + alpha;
-      y_rep_ppc[i]  = ordered_logistic_rng(mu_n, cutpoints);
+      y_rep_ppc[i]  = normal_rng(mu_n, sigma);
       y_true_ppc[i] = phenotype[n];
     }
   }
 
   // Expose priors for post-hoc verification
   real alpha_prior_mean_out = alpha_prior_mean;
-  real p_baseline_emp_out   = p_baseline_emp;
 
   vector[V] beta_variant_std_prior;
   for (v in 1:V)

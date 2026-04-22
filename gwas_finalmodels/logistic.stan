@@ -1,29 +1,24 @@
-// Proportional-odds ordinal logistic (POM) model for MIC GWAS.
+// Binary logistic association model
+
+// Standardized genotype with regularized horseshoe on variant effects (Piironen & Vehtari
+// 2017, eq. 3.12), lineage/sublineage hierarchy with treatment-contrast encoding
+// (reference sublineage = column 1) and within-lineage sum-to-zero centering,
+// and a tight, data-informed alpha prior anchored on the reference sublineage.
 //
-// Fixed structure: cutpoints are pinned at log2(mic_breakpoints) — they are
-// experimental-design constants, not free parameters.
-// Estimated location: alpha (global intercept anchored on the reference
-// sublineage) + beta_lineage/beta_sublineage (population structure) + a
-// regularized-horseshoe beta_variant (Piironen & Vehtari 2017, eq. 3.12).
-//
-// Sublineages use treatment-contrast encoding (reference sublineage = column 1)
-// with within-lineage sum-to-zero centering, so beta_sublineage measures
-// deviation from the parent-lineage mean.
-//
-// Alpha prior is anchored on the empirical MIC-cat-1 fraction of the reference
-// sublineage, which gwas_datasets/utils.R:select_reference_sublineage() picks
-// upstream as the minimum-mean-phenotype sublineage (i.e. deliberately
-// susceptible). This stops alpha from absorbing variant-level signal.
+// Alpha prior is anchored on the empirical susceptible fraction (y=0) of the
+// reference sublineage, which gwas_datasets/utils.R:select_reference_sublineage
+// picks upstream as the minimum-mean-phenotype sublineage (fewest resistant for
+// binary). Framed susceptible-side to mirror POM's clamp direction; this is
+// algebraically identical to anchoring on the resistant fraction. Stops alpha
+// from absorbing variant-level signal.
 
 data {
   int<lower=1> N;                                  // samples
   int<lower=1> V;                                  // variants
   int<lower=1> L;                                  // lineage clusters
   int<lower=1> S;                                  // lineage subclusters
-  int<lower=1> K;                                  // ordered categories
 
-  array[N] int<lower=1, upper=K> phenotype;        // MICs as ordered categories
-  vector<lower=1e-12>[K-1] mic_breakpoints;        // concentration breakpoints
+  array[N] int<lower=0, upper=1> phenotype;        // binary outcome
 
   matrix[N, V] variant_matrix;                     // genotype
   matrix[N, S] sublineage_matrix;                  // full one-hot, reference in column 1
@@ -53,26 +48,27 @@ transformed data {
       X_std[n, v] = (sd_variant[v] > 0) ? centred[n] / sd_variant[v] : 0;
   }
 
-  // Fixed cutpoints on the log2-MIC scale
-  ordered[K-1] cutpoints = log2(mic_breakpoints);
-
-  // Empirical baseline: Laplace-smoothed fraction of reference-sublineage
-  // samples in MIC category 1. Upstream picks the reference as the
-  // min-mean-phenotype sublineage (guarantees n_ref >= 1). The [0.5, 0.995]
-  // clamp is a numerical guard against logit(1) = inf, not a small-n fallback.
+  // Empirical baseline: Laplace-smoothed susceptible (y=0) fraction of the
+  // reference sublineage, mirroring POM's susceptible-side framing so both
+  // files share the same clamp direction. Upstream picks the reference as the
+  // min-mean-phenotype sublineage (guarantees n_ref >= 1), so this fraction
+  // is high by construction. The [0.5, 0.995] clamp is a numerical guard
+  // against logit(1) = inf, not a small-n fallback.
+  // alpha_prior_mean = -logit(p_baseline_emp) = logit(p_res_emp), so this is
+  // algebraically identical to anchoring on the resistant fraction.
   int n_ref = 0;
-  int n_ref_cat1 = 0;
+  int n_ref_res = 0;
   for (n in 1:N) {
     if (sublineage_matrix[n, 1] > 0.5) {
       n_ref += 1;
-      if (phenotype[n] == 1) n_ref_cat1 += 1;
+      if (phenotype[n] == 1) n_ref_res += 1;
     }
   }
-  real p_baseline_emp = (n_ref_cat1 + 0.5) / (n_ref + 1.0);
+  real p_baseline_emp = (n_ref - n_ref_res + 0.5) / (n_ref + 1.0);
   p_baseline_emp = fmin(fmax(p_baseline_emp, 0.5), 0.995);
 
-  real alpha_prior_mean = cutpoints[1] - logit(p_baseline_emp);
-  real alpha_prior_sd   = 0.5;   // roughly one log2-dilution at 95%, matches MIC rounding
+  real alpha_prior_mean = -logit(p_baseline_emp);
+  real alpha_prior_sd   = 0.5;
 }
 
 parameters {
@@ -139,11 +135,11 @@ model {
   vector[N] mu = X_std * beta_variant_std
                + X_sublineage * beta_sublineage
                + alpha;
-  phenotype ~ ordered_logistic(mu, cutpoints);
+  phenotype ~ bernoulli_logit(mu);
 }
 
 generated quantities {
-  // Unstandardized variant effects (per 0->1 allele) and cumulative odds ratios
+  // Unstandardized variant effects (per 0->1 allele) and odds ratios
   vector[V] beta_variant;
   vector[V] OR_variant_allele;
   for (v in 1:V) {
@@ -167,7 +163,7 @@ generated quantities {
       real mu_n = X_std[n] * beta_variant_std
                 + X_sublineage[n] * beta_sublineage
                 + alpha;
-      y_rep_ppc[i]  = ordered_logistic_rng(mu_n, cutpoints);
+      y_rep_ppc[i]  = bernoulli_logit_rng(mu_n);
       y_true_ppc[i] = phenotype[n];
     }
   }

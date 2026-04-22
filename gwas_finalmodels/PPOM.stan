@@ -23,6 +23,9 @@ data {
   matrix[N, V] variant_matrix;
   matrix[N, S] sublineage_matrix;
   array[S] int<lower=1, upper=L> parent_lineage;
+
+  int<lower=0, upper=N> N_ppc;                     // PPC subset size (20% of N, capped at 500)
+  array[N_ppc] int<lower=1, upper=N> ppc_idx;      // deterministic indices into 1:N for PPC
 }
 
 transformed data {
@@ -48,9 +51,10 @@ transformed data {
   // Fixed cutpoints on the log2-MIC scale
   ordered[K-1] cutpoints = log2(mic_breakpoints);
 
-  // Empirical baseline for the alpha prior: fraction of reference-sublineage
-  // samples in MIC category 1. Laplace smoothing handles sparse reference
-  // clusters & a 0.9 fallback applies when the reference cluster has <5 samples
+  // Empirical baseline: Laplace-smoothed fraction of reference-sublineage
+  // samples in MIC category 1. Upstream picks the reference as the
+  // min-mean-phenotype sublineage (guarantees n_ref >= 1). The [0.5, 0.995]
+  // clamp is a numerical guard against logit(1) = inf, not a small-n fallback.
   int n_ref = 0;
   int n_ref_cat1 = 0;
   for (n in 1:N) {
@@ -59,12 +63,7 @@ transformed data {
       if (phenotype[n] == 1) n_ref_cat1 += 1;
     }
   }
-  real p_baseline_emp;
-  if (n_ref >= 5)
-    p_baseline_emp = (n_ref_cat1 + 0.5) / (n_ref + 1.0);
-  else
-    p_baseline_emp = 0.9;
-  // clamp to avoid a degenerate logit at 0 or 1
+  real p_baseline_emp = (n_ref_cat1 + 0.5) / (n_ref + 1.0);
   p_baseline_emp = fmin(fmax(p_baseline_emp, 0.5), 0.995);
 
   real alpha_prior_mean = cutpoints[1] - logit(p_baseline_emp);
@@ -90,7 +89,7 @@ transformed parameters {
     beta_lineage[parent_lineage_sub] + sigma_sublineage * z_sub;
 
   // Within-lineage sum-to-zero centering (global centering conflicts
-  // with treatment-contrast encoding and make alpha uninterpretable)
+  // with treatment-contrast encoding and makes alpha uninterpretable)
   vector[S-1] beta_sublineage = beta_sublineage_raw;
   for (l in 1:L) {
     real m = 0;
@@ -167,12 +166,15 @@ generated quantities {
     }
   }
 
-  // Posterior predictive MIC histogram 
-  array[N] int y_rep;
-  vector[K] cat_freq_rep = rep_vector(0, K);
+  // Posterior predictive check on a deterministic 20%-of-N subset (capped at 500,
+  // chosen upstream in build_stan_inference). y_true_ppc travels alongside so
+  // downstream metrics pair predicted and true values without reloading phenotype.
+  array[N_ppc] int y_rep_ppc;
+  array[N_ppc] int y_true_ppc;
   {
     vector[N] sub_eta_gen = X_sublineage * beta_sublineage;
-    for (n in 1:N) {
+    for (i in 1:N_ppc) {
+      int n = ppc_idx[i];
       vector[K-1] cdf_n;
       for (k in 1:(K-1)) {
         real mu_nk = alpha + dot_product(X_std[n], beta_variant_std[, k]) + sub_eta_gen[n];
@@ -184,10 +186,9 @@ generated quantities {
       probs[K] = 1 - cdf_n[K-1];
       for (k in 1:K) if (probs[k] < 0) probs[k] = 0;
       probs /= sum(probs);
-      y_rep[n] = categorical_rng(probs);
+      y_rep_ppc[i]  = categorical_rng(probs);
+      y_true_ppc[i] = phenotype[n];
     }
-    for (n in 1:N) cat_freq_rep[y_rep[n]] += 1;
-    cat_freq_rep /= N;
   }
 
   // Expose priors for post-hoc verification
