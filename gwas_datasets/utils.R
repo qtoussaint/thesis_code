@@ -905,6 +905,14 @@ build_stan_inference <- function(pheno, geno_mat, lin_mat, sublin_mat,
   )
   if (!is.null(K))        d$K               <- as.integer(K)
   if (!is.null(mic_bkpts)) d$mic_breakpoints <- mic_bkpts
+
+  # Deterministic PPC subset: 20% of N capped at 500. All four inference Stan
+  # programs (POM, PPOM, logistic, continuous) declare N_ppc / ppc_idx and emit
+  # y_rep_ppc + y_true_ppc in generated quantities.
+  set.seed(54321L)
+  n_ppc <- as.integer(min(ceiling(0.2 * N), 500L))
+  d$N_ppc   <- n_ppc
+  d$ppc_idx <- as.integer(sort(sample.int(N, n_ppc)))
   d
 }
 

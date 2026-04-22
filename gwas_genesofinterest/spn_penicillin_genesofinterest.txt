@@ -1,0 +1,23 @@
+pbpX, pbp2x
+pbp1A, pbp1a
+pbp1B, pbp1b
+pbp2A, pbp2a
+penA, pbp2b
+mraY,mraY
+mraW,mraW
+murM,murM
+murN,murN
+ftsL,ftsL
+SPN23F03440,gpsB
+clpL,clpL
+clpX,clpX
+ciaH,ciaH
+ciaR,ciaR
+recU,recU
+SPN23F09960,cpoA
+dyr,dhfR
+folP,folP
+spr1178
+stkP
+phpP
+pde1
