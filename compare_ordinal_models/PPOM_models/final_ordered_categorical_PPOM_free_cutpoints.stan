@@ -1,21 +1,43 @@
-// Partial proportional-odds (PPOM) variant of POM.stan.
+// DIAGNOSTIC PPOM variant: estimate cutpoints with a tight prior; drop alpha.
 //
-// Differs from POM.stan in exactly one place: beta_variant_std is a V x (K-1)
-// matrix with an independent horseshoe scale per (variant, cutpoint), so
-// proportional odds is relaxed for variant effects only. Alpha, lineage, and
-// sublineage effects remain proportional across cutpoints.
+// Baseline tight_alpha_tau1 pins cutpoints at log2(mic_breakpoints) and uses a
+// single free scalar alpha (tight prior around cutpoints[1] - logit(p_baseline_emp))
+// to absorb the overall latent-location offset. If the empirical cutpoint spacing
+// does not match the logistic latent's fixed scale, nothing in the baseline can
+// absorb the mismatch except the per-(v, k) variant effects -- the "late-k
+// inflation" failure mode (mechanism 3).
 //
-// All other structure is inherited from POM.stan: fixed cutpoints at
-// log2(mic_breakpoints), data-informed tight alpha prior anchored on the
-// reference sublineage, treatment-contrast sublineage encoding with
-// within-lineage sum-to-zero, regularized horseshoe on variant effects.
+// This variant addresses mechanism (3) differently from latent_scale. Instead of
+// a single sigma_latent rescaling the whole latent uniformly, it lets each of the
+// K-1 cutpoints drift individually under a tight Gaussian prior. The per-cutpoint
+// SD is deliberately small (0.25) so cutpoints cannot absorb variant signal, but
+// collectively they can stretch/compress spacing non-uniformly across the MIC
+// ladder -- a strictly richer family than a single scalar rescaling.
+//
+// alpha is removed because freeing the cutpoints already admits an additive shift
+// in the latent (cutpoints + alpha are jointly non-identified). The overall latent
+// location is anchored via the cutpoint prior mean:
+//
+//   cutpoint_prior_mean[k] = log2(mic_breakpoints[k]) - alpha_prior_mean
+//                          = log2(mic_breakpoints[k]) - log2(mic_breakpoints[1])
+//                            + logit(p_baseline_emp)
+//
+// which positions cutpoints[1] near logit(p_baseline_emp) so that for a reference
+// sublineage sample with no variant effects, P(y <= 1) ~ p_baseline_emp. This
+// matches the identification choice of baseline tight_alpha_tau1.
+//
+// If switching to this variant collapses late-k beta magnitudes and the posterior
+// cutpoints show clear stretching relative to log2(mic_breakpoints), mechanism (3)
+// is present AND is non-uniform across the ladder. If latent_scale relieves
+// inflation but free_cutpoints relieves it further, the MIC spacing is non-linear
+// in logistic-latent units.
 
 data {
-  int<lower=1> N;                                  // samples
-  int<lower=1> V;                                  // variants
-  int<lower=1> L;                                  // lineage clusters
-  int<lower=1> S;                                  // lineage subclusters
-  int<lower=1> K;                                  // ordered categories
+  int<lower=1> N;
+  int<lower=1> V;
+  int<lower=1> L;
+  int<lower=1> S;
+  int<lower=1> K;
 
   array[N] int<lower=1, upper=K> phenotype;
   vector<lower=1e-12>[K-1] mic_breakpoints;
@@ -24,19 +46,17 @@ data {
   matrix[N, S] sublineage_matrix;
   array[S] int<lower=1, upper=L> parent_lineage;
 
-  int<lower=0, upper=N> N_ppc;                     // PPC subset size (20% of N, capped at 500)
-  array[N_ppc] int<lower=1, upper=N> ppc_idx;      // deterministic indices into 1:N for PPC
+  int<lower=0, upper=N> N_ppc;
+  array[N_ppc] int<lower=1, upper=N> ppc_idx;
 }
 
 transformed data {
-  // Treatment-contrast encoding: drop the reference sublineage (column 1)
   matrix[N, S-1] X_sublineage = block(sublineage_matrix, 1, 2, N, S-1);
 
   array[S-1] int parent_lineage_sub;
   for (k in 1:(S-1))
     parent_lineage_sub[k] = parent_lineage[k+1];
 
-  // Centre and scale the genotype matrix (sd=0 columns pinned to 0)
   matrix[N, V] X_std;
   vector[V] mean_variant;
   vector[V] sd_variant;
@@ -48,13 +68,9 @@ transformed data {
       X_std[n, v] = (sd_variant[v] > 0) ? centred[n] / sd_variant[v] : 0;
   }
 
-  // Fixed cutpoints on the log2-MIC scale
-  ordered[K-1] cutpoints = log2(mic_breakpoints);
+  // MIC-grid cutpoint anchors (no longer the cutpoints themselves; used for prior)
+  vector[K-1] mic_cutpoints = log2(mic_breakpoints);
 
-  // Empirical baseline: Laplace-smoothed fraction of reference-sublineage
-  // samples in MIC category 1. Upstream picks the reference as the
-  // min-mean-phenotype sublineage (guarantees n_ref >= 1). The [0.5, 0.995]
-  // clamp is a numerical guard against logit(1) = inf, not a small-n fallback.
   int n_ref = 0;
   int n_ref_cat1 = 0;
   for (n in 1:N) {
@@ -66,18 +82,25 @@ transformed data {
   real p_baseline_emp = (n_ref_cat1 + 0.5) / (n_ref + 1.0);
   p_baseline_emp = fmin(fmax(p_baseline_emp, 0.5), 0.995);
 
-  real alpha_prior_mean = cutpoints[1] - logit(p_baseline_emp);
-  real alpha_prior_sd   = 0.5;  // roughly one log2-dilution at 95%, matches MIC rounding
+  real alpha_prior_mean = mic_cutpoints[1] - logit(p_baseline_emp);
+
+  // Shift MIC-grid anchors down by alpha_prior_mean so cutpoints[1] is centred
+  // near logit(p_baseline_emp). Preserves MIC-ladder spacing.
+  vector[K-1] cutpoint_prior_mean;
+  for (k in 1:(K-1))
+    cutpoint_prior_mean[k] = mic_cutpoints[k] - alpha_prior_mean;
+
+  real cutpoint_prior_sd = 0.25;  // tight: each cutpoint wiggles by ~+/- 0.5 log2 at 95%
 }
 
 parameters {
-  real alpha;
+  // Estimated cutpoints (replacing fixed cutpoints + free alpha)
+  ordered[K-1] cutpoints;
 
   vector[L] beta_lineage;
   real<lower=0> sigma_sublineage;
   vector[S-1] z_sub;
 
-  // Regularized horseshoe, independent per (variant, cutpoint)
   real<lower=0> tau;
   real<lower=0> c2;
   matrix[V, K-1] z_variant;
@@ -88,8 +111,6 @@ transformed parameters {
   vector[S-1] beta_sublineage_raw =
     beta_lineage[parent_lineage_sub] + sigma_sublineage * z_sub;
 
-  // Within-lineage sum-to-zero centering (global centering conflicts
-  // with treatment-contrast encoding and makes alpha uninterpretable)
   vector[S-1] beta_sublineage = beta_sublineage_raw;
   for (l in 1:L) {
     real m = 0;
@@ -102,8 +123,7 @@ transformed parameters {
     }
   }
 
-  // Horseshoe hyperparameters (Piironen & Vehtari 2017, eq. 3.12)
-  real slab_scale = 200;
+  real slab_scale = 5;  // matches other diagnostic variants
   real nu         = 4;
   real tau_0      = 1;
 
@@ -125,20 +145,20 @@ model {
   to_vector(z_variant) ~ normal(0, 1);
   to_vector(lambda_variant) ~ cauchy(0, 2);
 
-  // Tight and data-informed intercept prior to prevent alpha from absorbing
-  // variant-level signal while still accounting for reference-cluster noise
-  alpha ~ normal(alpha_prior_mean, alpha_prior_sd);
+  // Tight prior on each cutpoint around its MIC-grid anchor (shifted so
+  // cutpoints[1] is near logit(p_baseline_emp)). The ordered[K-1] type enforces
+  // ordering; this prior shapes each cutpoint's location within that constraint.
+  cutpoints ~ normal(cutpoint_prior_mean, cutpoint_prior_sd);
 
   beta_lineage ~ normal(0, 0.1);
   sigma_sublineage ~ normal(0, 0.1);
   z_sub ~ normal(0, 1);
 
-  // PPOM likelihood -- one bernoulli per (sample, cutpoint)
   {
     vector[N] sub_eta = X_sublineage * beta_sublineage;
     for (n in 1:N) {
       for (k in 1:(K-1)) {
-        real mu_nk = alpha + dot_product(X_std[n], beta_variant_std[, k]) + sub_eta[n];
+        real mu_nk = dot_product(X_std[n], beta_variant_std[, k]) + sub_eta[n];
         if (phenotype[n] <= k) {
           target += bernoulli_logit_lpmf(1 | cutpoints[k] - mu_nk);
         } else {
@@ -150,8 +170,6 @@ model {
 }
 
 generated quantities {
-  // Unstandardized variant effects (per 0->1 allele) and cumulative odds ratios,
-  // indexed by cutpoint k.
   matrix[V, K-1] beta_variant;
   matrix[V, K-1] OR_variant_allele;
   for (k in 1:(K-1)) {
@@ -166,9 +184,14 @@ generated quantities {
     }
   }
 
-  // Posterior predictive check on a deterministic 20%-of-N subset (capped at 500,
-  // chosen upstream in build_stan_inference). y_true_ppc travels alongside so
-  // downstream metrics pair predicted and true values without reloading phenotype.
+  // Per-cutpoint drift vs MIC-grid anchor (interpretable: how much has each
+  // cutpoint moved from its "known" location, after accounting for the
+  // alpha_prior_mean level shift). Non-zero drift at late k with variant
+  // collapse => non-uniform latent-scale misfit absorbed here.
+  vector[K-1] cutpoint_drift;
+  for (k in 1:(K-1))
+    cutpoint_drift[k] = cutpoints[k] - cutpoint_prior_mean[k];
+
   array[N_ppc] int y_rep_ppc;
   array[N_ppc] int y_true_ppc;
   {
@@ -177,7 +200,7 @@ generated quantities {
       int n = ppc_idx[i];
       vector[K-1] cdf_n;
       for (k in 1:(K-1)) {
-        real mu_nk = alpha + dot_product(X_std[n], beta_variant_std[, k]) + sub_eta_gen[n];
+        real mu_nk = dot_product(X_std[n], beta_variant_std[, k]) + sub_eta_gen[n];
         cdf_n[k] = inv_logit(cutpoints[k] - mu_nk);
       }
       vector[K] probs;
@@ -191,23 +214,9 @@ generated quantities {
     }
   }
 
-  // Expose priors for post-hoc verification
   real alpha_prior_mean_out = alpha_prior_mean;
   real p_baseline_emp_out   = p_baseline_emp;
 
-  matrix[V, K-1] beta_variant_std_prior;
-  for (k in 1:(K-1))
-    for (v in 1:V)
-      beta_variant_std_prior[v, k] = z_variant[v, k] * tau * lambda_tilde_variant[v, k];
-
-  // Heritability on the liability (logistic-latent) scale, per cutpoint k.
-  // beta_variant_std is V x (K-1) under partial proportional odds, so the
-  // additive genetic score variance differs per threshold. h2_narrow_k[k] /
-  // h2_broad_k[k] give per-threshold heritability; h2_*_median_k is a
-  // scalar summary for tables. A non-flat h2-vs-k curve is informative:
-  // it tells you which resistance thresholds are more genetically determined.
-  // Horseshoe shrinkage biases V_A_k downward, so h2_narrow_k is a lower
-  // bound in low-signal regimes.
   vector<lower=0>[K-1] V_A_k;
   real<lower=0> V_pop;
   real<lower=0> V_E = pi()^2 / 3;

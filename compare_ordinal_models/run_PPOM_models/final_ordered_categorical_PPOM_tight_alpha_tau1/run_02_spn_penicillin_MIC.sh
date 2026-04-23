@@ -10,7 +10,8 @@
 
 #################################################################################
 
-#conda activate gwas_pipeline
+source /hps/software/users/jlees/jacqueline/etc/profile.d/conda.sh
+conda activate gwas_pipeline
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
