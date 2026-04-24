@@ -32,6 +32,7 @@ ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/g
 MODEL_TYPE="--model_type ppom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/test_gwas_workflow/genes_of_interest.csv"
 NORATE="--norate"
+RESUME="--resume"
 
 mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_latent_scale/11_spn_penicillin_MIC_large_minbin/logs
 
@@ -51,3 +52,4 @@ $ANNOTATIONS \
 $MODEL_TYPE \
 $GENES_OF_INTEREST \
 $NORATE \
+$RESUME \

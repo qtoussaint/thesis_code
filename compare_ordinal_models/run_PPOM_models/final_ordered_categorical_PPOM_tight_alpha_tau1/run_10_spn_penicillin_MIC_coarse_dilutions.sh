@@ -44,6 +44,7 @@ ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/g
 MODEL_TYPE="--model_type ppom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/test_gwas_workflow/genes_of_interest.csv"
 NORATE="--norate"
+RESUME="--resume"
 
 # ---------------------------------------------------------------------------
 
@@ -65,3 +66,4 @@ $ANNOTATIONS \
 $MODEL_TYPE \
 $GENES_OF_INTEREST \
 $NORATE \
+$RESUME \
