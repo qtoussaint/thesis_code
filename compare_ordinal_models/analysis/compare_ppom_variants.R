@@ -71,9 +71,17 @@ per_model <- lapply(models, load_one)
 names(per_model) <- models
 
 missing <- models[sapply(per_model, function(x) is.null(x$summary))]
-if (length(missing) > 0)
-  stop("diagnose_ppom_cutpoint_inflation.R outputs not found for: ",
-       paste(missing, collapse = ", "))
+if (length(missing) > 0) {
+  warning("diagnose_ppom_cutpoint_inflation.R outputs not found for: ",
+          paste(missing, collapse = ", "),
+          " -- skipping these models for dataset ", opt$dataset)
+  message("SKIPPED (no diagnostic outputs) for dataset '", opt$dataset, "': ",
+          paste(missing, collapse = ", "))
+  per_model <- per_model[setdiff(models, missing)]
+  models    <- setdiff(models, missing)
+  if (length(models) == 0)
+    stop("No models with diagnostic outputs found for dataset ", opt$dataset)
+}
 
 summary_df <- bind_rows(lapply(per_model, `[[`, "summary"))
 metrics_df <- bind_rows(lapply(per_model, `[[`, "metrics"))
