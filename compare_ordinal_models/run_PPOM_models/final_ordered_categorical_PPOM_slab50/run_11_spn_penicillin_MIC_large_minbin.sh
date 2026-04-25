@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=freeCutsPPOM_11_spn_pen_lgbin
+#SBATCH --job-name=slab50_11_spn_pen_lgbin
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=150G
 #SBATCH --time=5:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_slab50/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_slab50/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.out
 
 #################################################################################
 
@@ -16,10 +16,10 @@ conda activate gwas_pipeline
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/11_spn_penicillin_MIC_large_minbin/11_spn_penicillin_MIC_large_minbin.json"
-STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_ordered_categorical_PPOM_free_cutpoints.stan"
+STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_ordered_categorical_PPOM_slab50.stan"
 ANALYSIS_TYPE="--analysis_type inference"
-ANALYSIS_NICKNAME="--analysis_nickname 11_spn_penicillin_MIC_large_minbin_freeCutsPPOM"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints/11_spn_penicillin_MIC_large_minbin"
+ANALYSIS_NICKNAME="--analysis_nickname 11_spn_penicillin_MIC_large_minbin_slab50PPOM"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_slab50/11_spn_penicillin_MIC_large_minbin"
 THREADS="--threads 48"
 
 LD_PRUNING="--ld_pruning true"
@@ -34,7 +34,7 @@ GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_cod
 NORATE="--norate"
 RESUME="--resume"
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints/11_spn_penicillin_MIC_large_minbin/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_slab50/11_spn_penicillin_MIC_large_minbin/logs
 
 Rscript $RSCRIPT_PATH \
 $DATA \
