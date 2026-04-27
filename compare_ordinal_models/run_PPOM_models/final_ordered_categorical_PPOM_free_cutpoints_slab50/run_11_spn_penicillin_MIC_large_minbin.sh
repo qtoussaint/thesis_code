@@ -2,9 +2,9 @@
 
 #SBATCH --job-name=freeCutsS50_11_spn_pen_lgbin
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=150G
-#SBATCH --time=5:00:00
+#SBATCH --cpus-per-task=48
+#SBATCH --mem=350G
+#SBATCH --time=10:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_slab50/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_slab50/11_spn_penicillin_MIC_large_minbin/logs/11_spn_penicillin_MIC_large_minbin.out
 
