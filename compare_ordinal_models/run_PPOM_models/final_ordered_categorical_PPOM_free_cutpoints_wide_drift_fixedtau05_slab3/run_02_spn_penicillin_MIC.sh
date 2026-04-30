@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=freeCutsWDT5S50_02_spn_pen
+#SBATCH --job-name=freeCutsWDFT_02_spn_pen
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=24
-#SBATCH --mem=450G
+#SBATCH --cpus-per-task=48
+#SBATCH --mem=850G
 #SBATCH --time=48:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_tau5_slab50/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_tau5_slab50/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out
 
 #################################################################################
 
-source /hps/software/users/jlees/jacqueline/etc/profile.d/conda.sh
-conda activate gwas_pipeline
+source ~/.bashrc
+mamba activate gwas_pipeline
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC.json"
-STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_tau5_slab50.stan"
+STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3.stan"
 ANALYSIS_TYPE="--analysis_type inference"
-ANALYSIS_NICKNAME="--analysis_nickname 02_spn_penicillin_MIC_freeCutsWDT5S50PPOM"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_tau5_slab50/02_spn_penicillin_MIC"
-THREADS="--threads 24"
+ANALYSIS_NICKNAME="--analysis_nickname 02_spn_penicillin_MIC_freeCutsWDFTPPOM"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3/02_spn_penicillin_MIC"
+THREADS="--threads 48"
 
 LD_PRUNING="--ld_pruning true"
 PRUNING_SOFTWARE="--pruning_software /hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"
@@ -34,7 +34,7 @@ GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_cod
 NORATE="--norate"
 RESUME="--resume"
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_tau5_slab50/02_spn_penicillin_MIC/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3/02_spn_penicillin_MIC/logs
 
 Rscript $RSCRIPT_PATH \
 $DATA \

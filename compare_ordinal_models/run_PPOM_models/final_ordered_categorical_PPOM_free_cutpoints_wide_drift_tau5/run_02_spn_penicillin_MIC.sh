@@ -2,8 +2,8 @@
 
 #SBATCH --job-name=freeCutsWDT5_02_spn_pen
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=48
-#SBATCH --mem=850G
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=450G
 #SBATCH --time=48:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_tau5/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_tau5/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out
@@ -20,7 +20,7 @@ STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordi
 ANALYSIS_TYPE="--analysis_type inference"
 ANALYSIS_NICKNAME="--analysis_nickname 02_spn_penicillin_MIC_freeCutsWDT5PPOM"
 OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_tau5/02_spn_penicillin_MIC"
-THREADS="--threads 48"
+THREADS="--threads 24"
 
 LD_PRUNING="--ld_pruning true"
 PRUNING_SOFTWARE="--pruning_software /hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"

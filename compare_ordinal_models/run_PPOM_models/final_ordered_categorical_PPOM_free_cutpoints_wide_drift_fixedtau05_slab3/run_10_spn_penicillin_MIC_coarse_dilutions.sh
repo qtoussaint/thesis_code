@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=freeCutsPPOM_10_spn_pen_coarse
+#SBATCH --job-name=freeCutsWDFT_10_spn_pen_coarse
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=10
-#SBATCH --mem=100G
-#SBATCH --time=1:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints/10_spn_penicillin_MIC_coarse_dilutions/logs/10_spn_penicillin_MIC_coarse_dilutions.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints/10_spn_penicillin_MIC_coarse_dilutions/logs/10_spn_penicillin_MIC_coarse_dilutions.out
+#SBATCH --cpus-per-task=48
+#SBATCH --mem=400G
+#SBATCH --time=5:00:00
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3/10_spn_penicillin_MIC_coarse_dilutions/logs/10_spn_penicillin_MIC_coarse_dilutions.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3/10_spn_penicillin_MIC_coarse_dilutions/logs/10_spn_penicillin_MIC_coarse_dilutions.out
 
 #################################################################################
 
-source /hps/software/users/jlees/jacqueline/etc/profile.d/conda.sh
-conda activate gwas_pipeline
+source ~/.bashrc
+mamba activate gwas_pipeline
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/10_spn_penicillin_MIC_coarse_dilutions/10_spn_penicillin_MIC_coarse_dilutions.json"
-STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_ordered_categorical_PPOM_free_cutpoints.stan"
+STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/compare_ordinal_models/PPOM_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3.stan"
 ANALYSIS_TYPE="--analysis_type inference"
-ANALYSIS_NICKNAME="--analysis_nickname 10_spn_penicillin_MIC_coarse_dilutions_freeCutsPPOM"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints/10_spn_penicillin_MIC_coarse_dilutions"
+ANALYSIS_NICKNAME="--analysis_nickname 10_spn_penicillin_MIC_coarse_dilutions_freeCutsWDFTPPOM"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3/10_spn_penicillin_MIC_coarse_dilutions"
 THREADS="--threads 48"
 
 LD_PRUNING="--ld_pruning true"
@@ -34,7 +34,7 @@ GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_cod
 NORATE="--norate"
 RESUME="--resume"
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints/10_spn_penicillin_MIC_coarse_dilutions/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_fixedtau05_slab3/10_spn_penicillin_MIC_coarse_dilutions/logs
 
 Rscript $RSCRIPT_PATH \
 $DATA \

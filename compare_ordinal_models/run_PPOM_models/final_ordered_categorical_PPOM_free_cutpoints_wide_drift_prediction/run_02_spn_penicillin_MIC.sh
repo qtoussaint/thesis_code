@@ -3,8 +3,8 @@
 #SBATCH --job-name=freeCutsWD_02_spn_pen_pred
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
-#SBATCH --mem=850G
-#SBATCH --time=48:00:00
+#SBATCH --mem=339G
+#SBATCH --time=06:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_prediction/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_prediction/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out
 
@@ -30,6 +30,7 @@ LD_THRESHOLD="--ld_threshold 1"
 PHANDANGO="--phandango /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv"
 ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
 MODEL_TYPE="--model_type ppom"
+TRUE_PHENOTYPES="--true_phenotypes /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/02_spn_penicillin_MIC/02_spn_penicillin_MIC_test_phenotypes.csv"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt"
 NORATE="--norate"
 RESUME="--resume"
@@ -50,6 +51,7 @@ $LD_THRESHOLD \
 $PHANDANGO \
 $ANNOTATIONS \
 $MODEL_TYPE \
+$TRUE_PHENOTYPES \
 $GENES_OF_INTEREST \
 $NORATE \
 $RESUME \
