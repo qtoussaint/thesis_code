@@ -3,7 +3,7 @@
 #SBATCH --job-name=freeCutsWD_02_spn_pen_pred
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
-#SBATCH --mem=339G
+#SBATCH --mem=600G
 #SBATCH --time=06:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_prediction/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/compare_ordinal_models/final_ordered_categorical_PPOM_free_cutpoints_wide_drift_prediction/02_spn_penicillin_MIC/logs/02_spn_penicillin_MIC.out
