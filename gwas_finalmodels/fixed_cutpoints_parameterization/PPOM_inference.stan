@@ -229,3 +229,4 @@ generated quantities {
     h2_broad_median_k  = quantile(h2_broad_k,  0.5);
   }
 }
+
