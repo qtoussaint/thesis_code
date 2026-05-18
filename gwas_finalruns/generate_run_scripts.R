@@ -101,7 +101,7 @@ RESOURCES <- list(
   spn_light = list(cpus = 32, mem = 200, time = 6),
   spn_heavy = list(cpus = 80, mem = 650, time = 12),
   tb_light  = list(cpus = 48, mem = 400, time = 12),
-  tb_heavy  = list(cpus = 96, mem = 900, time = 24)
+  tb_heavy  = list(cpus = 80, mem = 800, time = 24)
 )
 
 species_kind <- function(species) if (startsWith(species, "tb_")) "tb" else "spn"

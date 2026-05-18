@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=tbrif_14_PPOM_pred_random
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=96
-#SBATCH --mem=900G
+#SBATCH --cpus-per-task=80
+#SBATCH --mem=800G
 #SBATCH --time=24:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random/logs/14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random/logs/14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random.out
@@ -21,7 +21,7 @@ STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmo
 ANALYSIS_TYPE="--analysis_type prediction"
 ANALYSIS_NICKNAME="--analysis_nickname 14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random"
 OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random"
-THREADS="--threads 96"
+THREADS="--threads 80"
 
 LD_PRUNING="--ld_pruning true"
 PRUNING_SOFTWARE="--pruning_software /hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"

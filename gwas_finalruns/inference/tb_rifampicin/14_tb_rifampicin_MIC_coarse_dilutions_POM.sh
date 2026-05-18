@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=tbrif_14_POM_infe
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=96
-#SBATCH --mem=900G
+#SBATCH --cpus-per-task=80
+#SBATCH --mem=800G
 #SBATCH --time=24:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/14_tb_rifampicin_MIC_coarse_dilutions_POM/logs/14_tb_rifampicin_MIC_coarse_dilutions_POM.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/14_tb_rifampicin_MIC_coarse_dilutions_POM/logs/14_tb_rifampicin_MIC_coarse_dilutions_POM.out
@@ -21,7 +21,7 @@ STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmo
 ANALYSIS_TYPE="--analysis_type inference"
 ANALYSIS_NICKNAME="--analysis_nickname 14_tb_rifampicin_MIC_coarse_dilutions_POM"
 OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/14_tb_rifampicin_MIC_coarse_dilutions_POM"
-THREADS="--threads 96"
+THREADS="--threads 80"
 
 LD_PRUNING="--ld_pruning true"
 PRUNING_SOFTWARE="--pruning_software /hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"
