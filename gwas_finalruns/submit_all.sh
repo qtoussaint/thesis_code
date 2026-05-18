@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Submits every generated SLURM script under gwas_finalruns/<species>/{inference,prediction}/.
+# Submits every generated SLURM script under gwas_finalruns/{inference,prediction}/<species>/.
 # Usage:
 #   bash submit_all.sh            # submit every .sh
 #   bash submit_all.sh --dry-run  # list what would be submitted
-#   bash submit_all.sh spn_penicillin/inference  # limit to one subdir
+#   bash submit_all.sh inference/spn_penicillin  # limit to one subdir
 
 set -euo pipefail
 
@@ -22,12 +22,12 @@ if [[ $# -gt 0 ]]; then
   done
 else
   SEARCH_DIRS=(
-    "$ROOT/spn_penicillin/inference"
-    "$ROOT/spn_penicillin/prediction"
-    "$ROOT/spn_trimethoprim/inference"
-    "$ROOT/spn_trimethoprim/prediction"
-    "$ROOT/tb_rifampicin/inference"
-    "$ROOT/tb_rifampicin/prediction"
+    "$ROOT/inference/spn_penicillin"
+    "$ROOT/inference/spn_trimethoprim"
+    "$ROOT/inference/tb_rifampicin"
+    "$ROOT/prediction/spn_penicillin"
+    "$ROOT/prediction/spn_trimethoprim"
+    "$ROOT/prediction/tb_rifampicin"
   )
 fi
 

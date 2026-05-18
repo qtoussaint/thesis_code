@@ -206,7 +206,7 @@ for (i in seq_len(nrow(DATASETS))) {
 
   for (m in models) {
     # Inference (single split)
-    inf_dir <- file.path(ROOT, species, "inference")
+    inf_dir <- file.path(ROOT, "inference", species)
     dir.create(inf_dir, recursive = TRUE, showWarnings = FALSE)
     inf_path <- file.path(inf_dir, sprintf("%s_%s.sh", dataset, m$model))
     writeLines(build_script(species, dataset, m$model, m$model_type,
@@ -216,7 +216,7 @@ for (i in seq_len(nrow(DATASETS))) {
     written <- written + 1L
 
     # Prediction: base + LOSO
-    pred_dir <- file.path(ROOT, species, "prediction")
+    pred_dir <- file.path(ROOT, "prediction", species)
     dir.create(pred_dir, recursive = TRUE, showWarnings = FALSE)
 
     for (split in c("random", "loso")) {
