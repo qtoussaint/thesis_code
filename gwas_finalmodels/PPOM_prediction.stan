@@ -1,50 +1,61 @@
-// Partial proportional-odds (PPOM) variant of POM_inference.stan.
+// Partial proportional-odds model (PPOM) for phenotype prediction.
 
-// Differs from POM.stan in exactly one place: beta_variant_std is a V x (K-1)
-// matrix with an independent horseshoe scale per (variant, cutpoint), so
-// proportional odds is relaxed for variant effects only. Alpha, lineage, and
+// Fits on N_train samples with the same likelihood, priors, free cutpoints, and
+// generated summaries as the inference model, then generates predicted_phenotype on
+// N_test held-out samples as an N_test x K probability matrix
+
+// Needed to use the per-category probability draws for the predicted phenotype
+// as there's no categorical RNG that supports PPOMs
+
+// Differs from POM_prediction.stan in exactly one place: beta_variant_std is a
+// V x (K-1) matrix with an independent horseshoe scale per (variant, cutpoint),
+// so proportional odds is relaxed for variant effects only. Lineage and
 // sublineage effects remain proportional across cutpoints.
 
-// All other structure is inherited from POM.stan: data-informed
-// alpha_prior_mean used to shift the cutpoint anchor, treatment-contrast
-// sublineage encoding with within-lineage sum-to-zero, etc.
-
 data {
-  int<lower=1> N;                                  // samples
-  int<lower=1> V;                                  // variants
-  int<lower=1> L;                                  // lineage clusters
-  int<lower=1> S;                                  // lineage subclusters
-  int<lower=1> K;                                  // ordered categories
+  int<lower=1> N_train;                                          // training samples
+  int<lower=1> N_test;                                           // test samples
+  int<lower=1> V;                                                // variants
+  int<lower=1> L;                                                // lineage clusters
+  int<lower=1> S;                                                // lineage subclusters
+  int<lower=1> K;                                                // ordered categories
 
-  array[N] int<lower=1, upper=K> phenotype;
+  array[N_train] int<lower=1, upper=K> training_phenotype;
   vector<lower=1e-12>[K-1] mic_breakpoints;
 
-  matrix[N, V] variant_matrix;
-  matrix[N, S] sublineage_matrix;
+  matrix[N_train, V] training_variants;
+  matrix[N_test,  V] test_variants;
+  matrix[N_train, S] training_sublineages;
+  matrix[N_test,  S] test_sublineages;
   array[S] int<lower=1, upper=L> parent_lineage;
-
-  int<lower=0, upper=N> N_ppc;                     // PPC subset size (20% of N, capped at 500)
-  array[N_ppc] int<lower=1, upper=N> ppc_idx;      // deterministic indices into 1:N for PPC
 }
 
 transformed data {
   // Treatment-contrast encoding: drop the reference sublineage (column 1)
-  matrix[N, S-1] X_sublineage = block(sublineage_matrix, 1, 2, N, S-1);
+  matrix[N_train, S-1] X_sublineage_train =
+    block(training_sublineages, 1, 2, N_train, S-1);
+  matrix[N_test,  S-1] X_sublineage_test  =
+    block(test_sublineages,     1, 2, N_test,  S-1);
 
   array[S-1] int parent_lineage_sub;
   for (k in 1:(S-1))
     parent_lineage_sub[k] = parent_lineage[k+1];
 
-  // Center and scale the genotype matrix (sd=0 columns pinned to 0)
-  matrix[N, V] X_std;
+  // Standardize genotype using TRAINING column mean/SD; apply the same
+  // transform to test. (sd=0 columns pinned to 0)
+  matrix[N_train, V] X_std_train;
+  matrix[N_test,  V] X_std_test;
   vector[V] mean_variant;
   vector[V] sd_variant;
   for (v in 1:V) {
-    mean_variant[v] = mean(variant_matrix[, v]);
-    vector[N] centred = variant_matrix[, v] - mean_variant[v];
-    sd_variant[v] = sd(centred);
-    for (n in 1:N)
-      X_std[n, v] = (sd_variant[v] > 0) ? centred[n] / sd_variant[v] : 0;
+    mean_variant[v] = mean(training_variants[, v]);
+    vector[N_train] centred_train = training_variants[, v] - mean_variant[v];
+    sd_variant[v] = sd(centred_train);
+    for (n in 1:N_train)
+      X_std_train[n, v] = (sd_variant[v] > 0) ? centred_train[n] / sd_variant[v] : 0;
+    for (n in 1:N_test)
+      X_std_test[n, v] = (sd_variant[v] > 0)
+        ? (test_variants[n, v] - mean_variant[v]) / sd_variant[v] : 0;
   }
 
   // MIC breakpoints on the log2 scale (used to build the cutpoint prior)
@@ -56,10 +67,10 @@ transformed data {
   // The [0.5, 0.995] clamp just guards against logit(1) = inf
   int n_ref = 0;
   int n_ref_cat1 = 0;
-  for (n in 1:N) {
-    if (sublineage_matrix[n, 1] > 0.5) {
+  for (n in 1:N_train) {
+    if (training_sublineages[n, 1] > 0.5) {
       n_ref += 1;
-      if (phenotype[n] == 1) n_ref_cat1 += 1;
+      if (training_phenotype[n] == 1) n_ref_cat1 += 1;
     }
   }
   real p_baseline_emp = (n_ref_cat1 + 0.5) / (n_ref + 1.0);
@@ -142,13 +153,13 @@ model {
   sigma_sublineage ~ normal(0, 0.1);
   z_sub ~ normal(0, 1);
 
-  // PPOM likelihood -- one bernoulli per (sample, cutpoint)
+  // PPOM likelihood -- one bernoulli per (sample, cutpoint), training only
   {
-    vector[N] sub_eta = X_sublineage * beta_sublineage;
-    for (n in 1:N) {
+    vector[N_train] sub_eta = X_sublineage_train * beta_sublineage;
+    for (n in 1:N_train) {
       for (k in 1:(K-1)) {
-        real mu_nk = dot_product(X_std[n], beta_variant_std[, k]) + sub_eta[n];
-        if (phenotype[n] <= k) {
+        real mu_nk = dot_product(X_std_train[n], beta_variant_std[, k]) + sub_eta[n];
+        if (training_phenotype[n] <= k) {
           target += bernoulli_logit_lpmf(1 | cutpoints[k] - mu_nk);
         } else {
           target += bernoulli_logit_lpmf(0 | cutpoints[k] - mu_nk);
@@ -175,35 +186,23 @@ generated quantities {
     }
   }
 
-  // Per-cutpoint drift vs the shifted MIC-grid anchor. Interpretable as how
-  // much each cutpoint has moved from its "known" location after accounting
-  // for the level shift in cutpoint_prior_mean; large drifts at specific k
-  // pinpoint categories where the MIC anchor may be uninformative/misspecified
-  vector[K-1] cutpoint_drift;
-  for (k in 1:(K-1))
-    cutpoint_drift[k] = cutpoints[k] - cutpoint_prior_mean[k];
-
-  // Posterior predictive check on the specified subset of N
-  // y_true_ppc just included to make downstream analysis less annoying
-  array[N_ppc] int y_rep_ppc;
-  array[N_ppc] int y_true_ppc;
+  // Held-out per-category probabilities (since no categorical RNG exists for PPOMs in Stan)
+  matrix[N_test, K] predicted_phenotype;
   {
-    vector[N] sub_eta_gen = X_sublineage * beta_sublineage;
-    for (i in 1:N_ppc) {
-      int n = ppc_idx[i];
+    vector[N_test] sub_eta_test = X_sublineage_test * beta_sublineage;
+    for (n in 1:N_test) {
       vector[K-1] cdf_n;
       for (k in 1:(K-1)) {
-        real mu_nk = dot_product(X_std[n], beta_variant_std[, k]) + sub_eta_gen[n];
+        real mu_nk = dot_product(X_std_test[n], beta_variant_std[, k]) + sub_eta_test[n];
         cdf_n[k] = inv_logit(cutpoints[k] - mu_nk);
       }
       vector[K] probs;
       probs[1] = cdf_n[1];
       for (k in 2:(K-1)) probs[k] = cdf_n[k] - cdf_n[k-1];
       probs[K] = 1 - cdf_n[K-1];
-      for (k in 1:K) if (probs[k] < 0) probs[k] = 0;
+      for (k in 1:K) if (probs[k] < 1e-12) probs[k] = 1e-12;
       probs /= sum(probs);
-      y_rep_ppc[i]  = categorical_rng(probs);
-      y_true_ppc[i] = phenotype[n];
+      for (k in 1:K) predicted_phenotype[n, k] = probs[k];
     }
   }
 
@@ -219,18 +218,18 @@ generated quantities {
   // Heritability, on the liability (logistic-latent) scale, per cutpoint k
   
   // Some tips on interpreting these:
-  
+
     // The reason we get per-threshold (K-1) additive genetic score variances/heritabilities
     // is because beta_variant_std is V x (K-1) under partial proportional odds
-  
+
     // h2_narrow_k[k] / h2_broad_k[k] are per-threshold heritability
     // h2_*_median_k is a scalar summary for tables etc.
-  
+
     // h2 differing across K can help you understand which resistance breakpoints are better
     // predicted by the model (and therefore possibly more genetically determined/meaningful)
 
     // Horseshoe shrinkage biases V_A_k downward, so h2_narrow_k is a lower bound
-  
+
   vector<lower=0>[K-1] V_A_k;
   real<lower=0> V_pop;
   real<lower=0> V_E = pi()^2 / 3;
@@ -239,10 +238,10 @@ generated quantities {
   real<lower=0, upper=1> h2_narrow_median_k;
   real<lower=0, upper=1> h2_broad_median_k;
   {
-    vector[N] g_pop = X_sublineage * beta_sublineage;
+    vector[N_train] g_pop = X_sublineage_train * beta_sublineage;
     V_pop = variance(g_pop);
     for (k in 1:(K-1)) {
-      vector[N] g_variant_k = X_std * beta_variant_std[, k];
+      vector[N_train] g_variant_k = X_std_train * beta_variant_std[, k];
       V_A_k[k] = variance(g_variant_k);
       real V_tot_k = V_A_k[k] + V_pop + V_E;
       h2_narrow_k[k] = V_A_k[k] / V_tot_k;
