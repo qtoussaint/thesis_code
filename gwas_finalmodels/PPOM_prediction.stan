@@ -200,6 +200,7 @@ generated quantities {
       probs[1] = cdf_n[1];
       for (k in 2:(K-1)) probs[k] = cdf_n[k] - cdf_n[k-1];
       probs[K] = 1 - cdf_n[K-1];
+      // Prevent tiny negative probabilities due to rounding
       for (k in 1:K) if (probs[k] < 1e-12) probs[k] = 1e-12;
       probs /= sum(probs);
       for (k in 1:K) predicted_phenotype[n, k] = probs[k];

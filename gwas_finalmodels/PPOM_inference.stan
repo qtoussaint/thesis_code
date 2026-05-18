@@ -1,11 +1,11 @@
 // Partial proportional-odds (PPOM) variant of POM_inference.stan.
 
-// Differs from POM.stan in exactly one place: beta_variant_std is a V x (K-1)
-// matrix with an independent horseshoe scale per (variant, cutpoint), so
-// proportional odds is relaxed for variant effects only. Alpha, lineage, and
+// Differs from POM_inference.stan in exactly one place: beta_variant_std is a
+// V x (K-1) matrix with an independent horseshoe scale per (variant, cutpoint),
+// so proportional odds is relaxed for variant effects only. Lineage and
 // sublineage effects remain proportional across cutpoints.
 
-// All other structure is inherited from POM.stan: data-informed
+// All other structure is inherited from POM_inference.stan: data-informed
 // alpha_prior_mean used to shift the cutpoint anchor, treatment-contrast
 // sublineage encoding with within-lineage sum-to-zero, etc.
 

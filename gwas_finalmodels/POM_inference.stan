@@ -7,8 +7,10 @@
 // with within-lineage sum-to-zero centering, so beta_sublineage measures
 // deviation from the parent-lineage mean.
 
-// Cutpoints are estimated with a wide normal prior on log2(mic_breakpoints), shifted
-// by the reference sublineage, which should be the minimum-mean-phenotype sublineage (e.g. highly susceptible).
+// Cutpoints are estimated with a wide normal prior centered at log2(mic_breakpoints),
+// shifted by alpha_prior_mean so that cutpoint 1 sits near logit(p_baseline_emp),
+// the susceptible fraction of the reference sublineage. The reference sublineage
+// should be the minimum-mean-phenotype sublineage.
 
 data {
   int<lower=1> N;                                  // samples
