@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=tbrif_15_PPOM_pred
+#SBATCH --job-name=tbrif_15_PPOM_pred_random
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=96
 #SBATCH --mem=900G
 #SBATCH --time=24:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/15_tb_rifampicin_MIC_large_minbin_PPOM/logs/15_tb_rifampicin_MIC_large_minbin_PPOM.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/15_tb_rifampicin_MIC_large_minbin_PPOM/logs/15_tb_rifampicin_MIC_large_minbin_PPOM.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/15_tb_rifampicin_MIC_large_minbin_PPOM_random/logs/15_tb_rifampicin_MIC_large_minbin_PPOM_random.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/15_tb_rifampicin_MIC_large_minbin_PPOM_random/logs/15_tb_rifampicin_MIC_large_minbin_PPOM_random.out
 
 #################################################################################
 
 source ~/.bashrc
 mamba activate gwas_pipeline
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/15_tb_rifampicin_MIC_large_minbin_PPOM/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/15_tb_rifampicin_MIC_large_minbin_PPOM_random/logs
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/15_tb_rifampicin_MIC_large_minbin/15_tb_rifampicin_MIC_large_minbin.json"
 STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmodels/PPOM_prediction.stan"
 ANALYSIS_TYPE="--analysis_type prediction"
-ANALYSIS_NICKNAME="--analysis_nickname 15_tb_rifampicin_MIC_large_minbin_PPOM"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/15_tb_rifampicin_MIC_large_minbin_PPOM"
+ANALYSIS_NICKNAME="--analysis_nickname 15_tb_rifampicin_MIC_large_minbin_PPOM_random"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/15_tb_rifampicin_MIC_large_minbin_PPOM_random"
 THREADS="--threads 96"
 
 LD_PRUNING="--ld_pruning true"

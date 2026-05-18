@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=spnpen_03_continuous_pred
+#SBATCH --job-name=spnpen_03_continuous_pred_random
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=200G
 #SBATCH --time=06:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/03_spn_penicillin_continuous_continuous/logs/03_spn_penicillin_continuous_continuous.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/03_spn_penicillin_continuous_continuous/logs/03_spn_penicillin_continuous_continuous.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/03_spn_penicillin_continuous_continuous_random/logs/03_spn_penicillin_continuous_continuous_random.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/03_spn_penicillin_continuous_continuous_random/logs/03_spn_penicillin_continuous_continuous_random.out
 
 #################################################################################
 
 source ~/.bashrc
 mamba activate gwas_pipeline
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/03_spn_penicillin_continuous_continuous/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/03_spn_penicillin_continuous_continuous_random/logs
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/03_spn_penicillin_continuous/03_spn_penicillin_continuous.json"
 STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmodels/continuous_prediction.stan"
 ANALYSIS_TYPE="--analysis_type prediction"
-ANALYSIS_NICKNAME="--analysis_nickname 03_spn_penicillin_continuous_continuous"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/03_spn_penicillin_continuous_continuous"
+ANALYSIS_NICKNAME="--analysis_nickname 03_spn_penicillin_continuous_continuous_random"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/03_spn_penicillin_continuous_continuous_random"
 THREADS="--threads 32"
 
 LD_PRUNING="--ld_pruning true"

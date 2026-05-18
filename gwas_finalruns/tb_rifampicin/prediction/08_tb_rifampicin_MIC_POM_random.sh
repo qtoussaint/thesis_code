@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=tbrif_08_PPOM_pred
+#SBATCH --job-name=tbrif_08_POM_pred_random
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=96
 #SBATCH --mem=900G
 #SBATCH --time=24:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/08_tb_rifampicin_MIC_PPOM/logs/08_tb_rifampicin_MIC_PPOM.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/08_tb_rifampicin_MIC_PPOM/logs/08_tb_rifampicin_MIC_PPOM.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/08_tb_rifampicin_MIC_POM_random/logs/08_tb_rifampicin_MIC_POM_random.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/08_tb_rifampicin_MIC_POM_random/logs/08_tb_rifampicin_MIC_POM_random.out
 
 #################################################################################
 
 source ~/.bashrc
 mamba activate gwas_pipeline
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/08_tb_rifampicin_MIC_PPOM/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/08_tb_rifampicin_MIC_POM_random/logs
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC.json"
-STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmodels/PPOM_prediction.stan"
+STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmodels/POM_prediction.stan"
 ANALYSIS_TYPE="--analysis_type prediction"
-ANALYSIS_NICKNAME="--analysis_nickname 08_tb_rifampicin_MIC_PPOM"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/08_tb_rifampicin_MIC_PPOM"
+ANALYSIS_NICKNAME="--analysis_nickname 08_tb_rifampicin_MIC_POM_random"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/08_tb_rifampicin_MIC_POM_random"
 THREADS="--threads 96"
 
 LD_PRUNING="--ld_pruning true"
@@ -30,7 +30,7 @@ LD_THRESHOLD="--ld_threshold 1"
 
 PHANDANGO="--phandango /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv"
 ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/cryptic_regeno_fields_filtered.txt"
-MODEL_TYPE="--model_type ppom"
+MODEL_TYPE="--model_type pom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt"
 RESUME="--resume"
 Rscript $RSCRIPT_PATH \

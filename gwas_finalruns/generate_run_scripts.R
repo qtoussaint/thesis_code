@@ -117,12 +117,16 @@ build_script <- function(species, dataset, model, model_type, analysis_type, spl
   meta <- SPECIES_META[[species]]
   res  <- resources_for(species, model)
 
-  # Prediction LOSO uses the _loso dataset variant, but the same stan model + annotations.
-  json_dataset    <- if (analysis_type == "prediction" && split == "loso")
+  # Prediction LOSO uses the _loso dataset variant; random uses the base dataset.
+  json_dataset <- if (analysis_type == "prediction" && split == "loso")
     paste0(dataset, "_loso") else dataset
-  slug_suffix     <- if (analysis_type == "prediction" && split == "loso")
-    paste0("_", model, "_loso") else paste0("_", model)
-  slug            <- paste0(dataset, slug_suffix)
+
+  slug_suffix <- if (analysis_type == "prediction") {
+    paste0("_", model, "_", split)   # split is "random" or "loso"
+  } else {
+    paste0("_", model)
+  }
+  slug <- paste0(dataset, slug_suffix)
 
   analysis_subdir <- analysis_type  # "inference" or "prediction"
   results_dir     <- file.path(meta$results_dir, analysis_subdir, slug)
@@ -134,8 +138,8 @@ build_script <- function(species, dataset, model, model_type, analysis_type, spl
 
   job_name <- glue("{meta$job_tag}_{substr(dataset,1,2)}_{model}_{substr(analysis_type,1,4)}",
                    .trim = FALSE)
-  if (analysis_type == "prediction" && split == "loso") {
-    job_name <- paste0(job_name, "_loso")
+  if (analysis_type == "prediction") {
+    job_name <- paste0(job_name, "_", split)
   }
 
   header <- glue("#!/usr/bin/env bash
@@ -215,12 +219,9 @@ for (i in seq_len(nrow(DATASETS))) {
     pred_dir <- file.path(ROOT, species, "prediction")
     dir.create(pred_dir, recursive = TRUE, showWarnings = FALSE)
 
-    for (split in c("base", "loso")) {
-      fname <- if (split == "loso")
-        sprintf("%s_%s_loso.sh", dataset, m$model)
-      else
-        sprintf("%s_%s.sh", dataset, m$model)
-      path <- file.path(pred_dir, fname)
+    for (split in c("random", "loso")) {
+      fname <- sprintf("%s_%s_%s.sh", dataset, m$model, split)
+      path  <- file.path(pred_dir, fname)
       writeLines(build_script(species, dataset, m$model, m$model_type,
                               analysis_type = "prediction", split = split),
                  path)

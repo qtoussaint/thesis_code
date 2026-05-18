@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=spnpen_01_logistic_pred
+#SBATCH --job-name=spnpen_01_logistic_pred_random
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=200G
 #SBATCH --time=06:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic/logs/01_spn_penicillin_binary_logistic.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic/logs/01_spn_penicillin_binary_logistic.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic_random/logs/01_spn_penicillin_binary_logistic_random.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic_random/logs/01_spn_penicillin_binary_logistic_random.out
 
 #################################################################################
 
 source ~/.bashrc
 mamba activate gwas_pipeline
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic_random/logs
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/01_spn_penicillin_binary/01_spn_penicillin_binary.json"
 STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmodels/logistic_prediction.stan"
 ANALYSIS_TYPE="--analysis_type prediction"
-ANALYSIS_NICKNAME="--analysis_nickname 01_spn_penicillin_binary_logistic"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic"
+ANALYSIS_NICKNAME="--analysis_nickname 01_spn_penicillin_binary_logistic_random"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic_random"
 THREADS="--threads 32"
 
 LD_PRUNING="--ld_pruning true"

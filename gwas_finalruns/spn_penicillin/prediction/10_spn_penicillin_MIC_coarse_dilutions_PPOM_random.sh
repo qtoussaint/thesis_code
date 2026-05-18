@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=spnpen_02_PPOM_pred
+#SBATCH --job-name=spnpen_10_PPOM_pred_random
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=80
 #SBATCH --mem=650G
 #SBATCH --time=12:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/02_spn_penicillin_MIC_PPOM/logs/02_spn_penicillin_MIC_PPOM.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/02_spn_penicillin_MIC_PPOM/logs/02_spn_penicillin_MIC_PPOM.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/10_spn_penicillin_MIC_coarse_dilutions_PPOM_random/logs/10_spn_penicillin_MIC_coarse_dilutions_PPOM_random.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/10_spn_penicillin_MIC_coarse_dilutions_PPOM_random/logs/10_spn_penicillin_MIC_coarse_dilutions_PPOM_random.out
 
 #################################################################################
 
 source ~/.bashrc
 mamba activate gwas_pipeline
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/02_spn_penicillin_MIC_PPOM/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/10_spn_penicillin_MIC_coarse_dilutions_PPOM_random/logs
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
-DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/02_spn_penicillin_MIC/02_spn_penicillin_MIC.json"
+DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/10_spn_penicillin_MIC_coarse_dilutions/10_spn_penicillin_MIC_coarse_dilutions.json"
 STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmodels/PPOM_prediction.stan"
 ANALYSIS_TYPE="--analysis_type prediction"
-ANALYSIS_NICKNAME="--analysis_nickname 02_spn_penicillin_MIC_PPOM"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/02_spn_penicillin_MIC_PPOM"
+ANALYSIS_NICKNAME="--analysis_nickname 10_spn_penicillin_MIC_coarse_dilutions_PPOM_random"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/10_spn_penicillin_MIC_coarse_dilutions_PPOM_random"
 THREADS="--threads 80"
 
 LD_PRUNING="--ld_pruning true"
@@ -28,7 +28,7 @@ PRUNING_SOFTWARE="--pruning_software /hps/software/users/jlees/jacqueline/manual
 MAF_CUTOFF="--maf_cutoff 0"
 LD_THRESHOLD="--ld_threshold 1"
 
-PHANDANGO="--phandango /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv"
+PHANDANGO="--phandango /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/10_spn_penicillin_MIC_coarse_dilutions/10_spn_penicillin_MIC_coarse_dilutions_variant_index.csv"
 ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
 MODEL_TYPE="--model_type ppom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt"

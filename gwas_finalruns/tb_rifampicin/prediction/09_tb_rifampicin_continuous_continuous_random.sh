@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=tbrif_09_continuous_pred
+#SBATCH --job-name=tbrif_09_continuous_pred_random
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=400G
 #SBATCH --time=12:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous/logs/09_tb_rifampicin_continuous_continuous.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous/logs/09_tb_rifampicin_continuous_continuous.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random/logs/09_tb_rifampicin_continuous_continuous_random.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random/logs/09_tb_rifampicin_continuous_continuous_random.out
 
 #################################################################################
 
 source ~/.bashrc
 mamba activate gwas_pipeline
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random/logs
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/09_tb_rifampicin_continuous/09_tb_rifampicin_continuous.json"
 STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmodels/continuous_prediction.stan"
 ANALYSIS_TYPE="--analysis_type prediction"
-ANALYSIS_NICKNAME="--analysis_nickname 09_tb_rifampicin_continuous_continuous"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous"
+ANALYSIS_NICKNAME="--analysis_nickname 09_tb_rifampicin_continuous_continuous_random"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random"
 THREADS="--threads 48"
 
 LD_PRUNING="--ld_pruning true"
