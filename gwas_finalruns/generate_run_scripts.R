@@ -149,8 +149,8 @@ build_script <- function(species, dataset, model, model_type, analysis_type, spl
 #SBATCH --cpus-per-task={res$cpus}
 #SBATCH --mem={res$mem}G
 #SBATCH --time={sprintf('%02d', res$time)}:00:00
-#SBATCH --error={results_dir}/logs/{slug}.err
-#SBATCH --output={results_dir}/logs/{slug}.out
+#SBATCH --error={results_dir}/logs/{slug}_%j.err
+#SBATCH --output={results_dir}/logs/{slug}_%j.out
 
 #################################################################################
 

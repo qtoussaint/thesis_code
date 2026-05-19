@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=650G
 #SBATCH --time=12:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/11_spn_penicillin_MIC_large_minbin_POM_random/logs/11_spn_penicillin_MIC_large_minbin_POM_random.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/11_spn_penicillin_MIC_large_minbin_POM_random/logs/11_spn_penicillin_MIC_large_minbin_POM_random.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/11_spn_penicillin_MIC_large_minbin_POM_random/logs/11_spn_penicillin_MIC_large_minbin_POM_random_%j.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/11_spn_penicillin_MIC_large_minbin_POM_random/logs/11_spn_penicillin_MIC_large_minbin_POM_random_%j.out
 
 #################################################################################
 

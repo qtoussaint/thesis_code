@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=200G
 #SBATCH --time=06:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic_loso/logs/01_spn_penicillin_binary_logistic_loso.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic_loso/logs/01_spn_penicillin_binary_logistic_loso.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic_loso/logs/01_spn_penicillin_binary_logistic_loso_%j.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/01_spn_penicillin_binary_logistic_loso/logs/01_spn_penicillin_binary_logistic_loso_%j.out
 
 #################################################################################
 

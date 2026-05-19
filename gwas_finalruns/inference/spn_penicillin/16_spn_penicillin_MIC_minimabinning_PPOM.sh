@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=650G
 #SBATCH --time=12:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/16_spn_penicillin_MIC_minimabinning_PPOM/logs/16_spn_penicillin_MIC_minimabinning_PPOM.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/16_spn_penicillin_MIC_minimabinning_PPOM/logs/16_spn_penicillin_MIC_minimabinning_PPOM.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/16_spn_penicillin_MIC_minimabinning_PPOM/logs/16_spn_penicillin_MIC_minimabinning_PPOM_%j.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/16_spn_penicillin_MIC_minimabinning_PPOM/logs/16_spn_penicillin_MIC_minimabinning_PPOM_%j.out
 
 #################################################################################
 

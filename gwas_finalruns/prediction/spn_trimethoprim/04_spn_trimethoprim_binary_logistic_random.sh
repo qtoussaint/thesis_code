@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=200G
 #SBATCH --time=06:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/prediction/04_spn_trimethoprim_binary_logistic_random/logs/04_spn_trimethoprim_binary_logistic_random.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/prediction/04_spn_trimethoprim_binary_logistic_random/logs/04_spn_trimethoprim_binary_logistic_random.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/prediction/04_spn_trimethoprim_binary_logistic_random/logs/04_spn_trimethoprim_binary_logistic_random_%j.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/prediction/04_spn_trimethoprim_binary_logistic_random/logs/04_spn_trimethoprim_binary_logistic_random_%j.out
 
 #################################################################################
 

@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=650G
 #SBATCH --time=12:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_POM/logs/02_spn_penicillin_MIC_POM.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_POM/logs/02_spn_penicillin_MIC_POM.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_POM/logs/02_spn_penicillin_MIC_POM_%j.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_POM/logs/02_spn_penicillin_MIC_POM_%j.out
 
 #################################################################################
 

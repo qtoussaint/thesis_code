@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=800G
 #SBATCH --time=24:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/15_tb_rifampicin_MIC_large_minbin_PPOM/logs/15_tb_rifampicin_MIC_large_minbin_PPOM.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/15_tb_rifampicin_MIC_large_minbin_PPOM/logs/15_tb_rifampicin_MIC_large_minbin_PPOM.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/15_tb_rifampicin_MIC_large_minbin_PPOM/logs/15_tb_rifampicin_MIC_large_minbin_PPOM_%j.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/15_tb_rifampicin_MIC_large_minbin_PPOM/logs/15_tb_rifampicin_MIC_large_minbin_PPOM_%j.out
 
 #################################################################################
 

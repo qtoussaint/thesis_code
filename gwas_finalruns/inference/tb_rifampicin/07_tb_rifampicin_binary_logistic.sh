@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=400G
 #SBATCH --time=12:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/07_tb_rifampicin_binary_logistic/logs/07_tb_rifampicin_binary_logistic.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/07_tb_rifampicin_binary_logistic/logs/07_tb_rifampicin_binary_logistic.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/07_tb_rifampicin_binary_logistic/logs/07_tb_rifampicin_binary_logistic_%j.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/07_tb_rifampicin_binary_logistic/logs/07_tb_rifampicin_binary_logistic_%j.out
 
 #################################################################################
 

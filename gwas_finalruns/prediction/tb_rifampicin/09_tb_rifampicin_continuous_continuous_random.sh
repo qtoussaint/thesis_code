@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=400G
 #SBATCH --time=12:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random/logs/09_tb_rifampicin_continuous_continuous_random.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random/logs/09_tb_rifampicin_continuous_continuous_random.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random/logs/09_tb_rifampicin_continuous_continuous_random_%j.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random/logs/09_tb_rifampicin_continuous_continuous_random_%j.out
 
 #################################################################################
 
