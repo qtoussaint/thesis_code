@@ -14,7 +14,7 @@ RESULTS_BASE     <- "/nfs/research/jlees/jacqueline/thesis_results"
 GENES_DIR        <- "/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest"
 PIPELINE_RSCRIPT <- "/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 PRUNING_BIN      <- "/hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"
-CPPRATE_BIN      <- "/hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate/build/bin/cpprate"
+CPPRATE_BIN      <- "/hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate-0.2.0/build/bin/cpprate"
 
 SPN_ANNOT <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
 TB_ANNOT  <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/cryptic_regeno_fields_filtered.txt"
