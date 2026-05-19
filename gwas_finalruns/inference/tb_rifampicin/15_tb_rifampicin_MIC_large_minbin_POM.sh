@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=tbrif_15_POM_infe
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=80
+#SBATCH --cpus-per-task=48
 #SBATCH --mem=800G
 #SBATCH --time=24:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/15_tb_rifampicin_MIC_large_minbin_POM/logs/15_tb_rifampicin_MIC_large_minbin_POM.err
@@ -21,7 +21,7 @@ STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmo
 ANALYSIS_TYPE="--analysis_type inference"
 ANALYSIS_NICKNAME="--analysis_nickname 15_tb_rifampicin_MIC_large_minbin_POM"
 OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/15_tb_rifampicin_MIC_large_minbin_POM"
-THREADS="--threads 80"
+THREADS="--threads 48"
 
 LD_PRUNING="--ld_pruning true"
 PRUNING_SOFTWARE="--pruning_software /hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"
@@ -33,6 +33,7 @@ ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/tuberculosis
 MODEL_TYPE="--model_type pom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt"
 RESUME="--resume"
+CPPRATE="--cpprate_bin /hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate/build/bin/cpprate"
 Rscript $RSCRIPT_PATH \
 $DATA \
 $STAN_MODEL \
@@ -48,5 +49,6 @@ $PHANDANGO \
 $ANNOTATIONS \
 $MODEL_TYPE \
 $GENES_OF_INTEREST \
-$RESUME
+$RESUME \
+$CPPRATE
 

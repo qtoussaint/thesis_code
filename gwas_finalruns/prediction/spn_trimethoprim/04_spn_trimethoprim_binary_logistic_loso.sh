@@ -33,6 +33,7 @@ ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/g
 MODEL_TYPE="--model_type binary"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt"
 RESUME="--resume"
+CPPRATE="--cpprate_bin /hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate/build/bin/cpprate"
 Rscript $RSCRIPT_PATH \
 $DATA \
 $STAN_MODEL \
@@ -48,5 +49,6 @@ $PHANDANGO \
 $ANNOTATIONS \
 $MODEL_TYPE \
 $GENES_OF_INTEREST \
-$RESUME
+$RESUME \
+$CPPRATE
 

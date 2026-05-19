@@ -14,6 +14,7 @@ RESULTS_BASE     <- "/nfs/research/jlees/jacqueline/thesis_results"
 GENES_DIR        <- "/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest"
 PIPELINE_RSCRIPT <- "/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 PRUNING_BIN      <- "/hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"
+CPPRATE_BIN      <- "/hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate/build/bin/cpprate"
 
 SPN_ANNOT <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
 TB_ANNOT  <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/cryptic_regeno_fields_filtered.txt"
@@ -99,9 +100,9 @@ BINNING_MODELS <- list(
 # species_kind: spn or tb. model_kind: light (logistic/continuous) or heavy (POM/PPOM).
 RESOURCES <- list(
   spn_light = list(cpus = 32, mem = 200, time = 6),
-  spn_heavy = list(cpus = 80, mem = 650, time = 12),
+  spn_heavy = list(cpus = 48, mem = 650, time = 12),
   tb_light  = list(cpus = 48, mem = 400, time = 12),
-  tb_heavy  = list(cpus = 80, mem = 800, time = 24)
+  tb_heavy  = list(cpus = 48, mem = 800, time = 24)
 )
 
 species_kind <- function(species) if (startsWith(species, "tb_")) "tb" else "spn"
@@ -177,6 +178,7 @@ ANNOTATIONS=\"--annotations {meta$annotations}\"
 MODEL_TYPE=\"--model_type {model_type}\"
 GENES_OF_INTEREST=\"--genes_of_interest {meta$genes}\"
 RESUME=\"--resume\"
+CPPRATE=\"--cpprate_bin {CPPRATE_BIN}\"
 ")
 
   # Build the Rscript invocation outside glue so the backslash-newline
@@ -184,7 +186,7 @@ RESUME=\"--resume\"
   args <- c("$DATA", "$STAN_MODEL", "$ANALYSIS_TYPE", "$ANALYSIS_NICKNAME",
             "$OUTPUT_DIR", "$THREADS", "$LD_PRUNING", "$PRUNING_SOFTWARE",
             "$MAF_CUTOFF", "$LD_THRESHOLD", "$PHANDANGO", "$ANNOTATIONS",
-            "$MODEL_TYPE", "$GENES_OF_INTEREST", "$RESUME")
+            "$MODEL_TYPE", "$GENES_OF_INTEREST", "$RESUME", "$CPPRATE")
   bs <- "\\"
   invocation <- c(
     paste("Rscript $RSCRIPT_PATH", bs),

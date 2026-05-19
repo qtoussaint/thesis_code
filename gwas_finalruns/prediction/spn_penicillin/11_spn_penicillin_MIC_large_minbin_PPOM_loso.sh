@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=spnpen_11_PPOM_pred_loso
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=80
+#SBATCH --cpus-per-task=48
 #SBATCH --mem=650G
 #SBATCH --time=12:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/11_spn_penicillin_MIC_large_minbin_PPOM_loso/logs/11_spn_penicillin_MIC_large_minbin_PPOM_loso.err
@@ -21,7 +21,7 @@ STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmo
 ANALYSIS_TYPE="--analysis_type prediction"
 ANALYSIS_NICKNAME="--analysis_nickname 11_spn_penicillin_MIC_large_minbin_PPOM_loso"
 OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/11_spn_penicillin_MIC_large_minbin_PPOM_loso"
-THREADS="--threads 80"
+THREADS="--threads 48"
 
 LD_PRUNING="--ld_pruning true"
 PRUNING_SOFTWARE="--pruning_software /hps/software/users/jlees/jacqueline/manual_installs/bin/BacPrune-Rust/"
@@ -33,6 +33,7 @@ ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/g
 MODEL_TYPE="--model_type ppom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt"
 RESUME="--resume"
+CPPRATE="--cpprate_bin /hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate/build/bin/cpprate"
 Rscript $RSCRIPT_PATH \
 $DATA \
 $STAN_MODEL \
@@ -48,5 +49,6 @@ $PHANDANGO \
 $ANNOTATIONS \
 $MODEL_TYPE \
 $GENES_OF_INTEREST \
-$RESUME
+$RESUME \
+$CPPRATE
 
