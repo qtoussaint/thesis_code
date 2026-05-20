@@ -134,6 +134,7 @@ build_script <- function(species, dataset, model, model_type, analysis_type, spl
   json_dir        <- file.path(DATASETS_DIR, analysis_subdir, json_dataset)
   json_file       <- file.path(json_dir, paste0(json_dataset, ".json"))
   variant_index   <- file.path(json_dir, paste0(json_dataset, "_variant_index.csv"))
+  test_phenotypes <- file.path(json_dir, paste0(json_dataset, "_test_phenotypes.csv"))
 
   stan_model <- file.path(MODELS_DIR, paste0(model, "_", analysis_type, ".stan"))
 
@@ -142,6 +143,12 @@ build_script <- function(species, dataset, model, model_type, analysis_type, spl
   if (analysis_type == "prediction") {
     job_name <- paste0(job_name, "_", split)
   }
+
+  # Prediction runs skip cppRATE; inference runs leave it on.
+  norate_var_line <- if (analysis_type == "prediction") "\nNORATE=\"--norate\"" else ""
+  # Prediction runs score against held-out true phenotypes; inference has none.
+  true_pheno_var_line <- if (analysis_type == "prediction")
+    paste0("\nTRUE_PHENOTYPES=\"--true_phenotypes ", test_phenotypes, "\"") else ""
 
   header <- glue("#!/usr/bin/env bash
 #SBATCH --job-name={job_name}
@@ -178,7 +185,7 @@ ANNOTATIONS=\"--annotations {meta$annotations}\"
 MODEL_TYPE=\"--model_type {model_type}\"
 GENES_OF_INTEREST=\"--genes_of_interest {meta$genes}\"
 RESUME=\"--resume\"
-CPPRATE=\"--cpprate_bin {CPPRATE_BIN}\"
+CPPRATE=\"--cpprate_bin {CPPRATE_BIN}\"{norate_var_line}{true_pheno_var_line}
 ")
 
   # Build the Rscript invocation outside glue so the backslash-newline
@@ -187,6 +194,9 @@ CPPRATE=\"--cpprate_bin {CPPRATE_BIN}\"
             "$OUTPUT_DIR", "$THREADS", "$LD_PRUNING", "$PRUNING_SOFTWARE",
             "$MAF_CUTOFF", "$LD_THRESHOLD", "$PHANDANGO", "$ANNOTATIONS",
             "$MODEL_TYPE", "$GENES_OF_INTEREST", "$RESUME", "$CPPRATE")
+  if (analysis_type == "prediction") {
+    args <- c(args, "$TRUE_PHENOTYPES", "$NORATE")
+  }
   bs <- "\\"
   invocation <- c(
     paste("Rscript $RSCRIPT_PATH", bs),

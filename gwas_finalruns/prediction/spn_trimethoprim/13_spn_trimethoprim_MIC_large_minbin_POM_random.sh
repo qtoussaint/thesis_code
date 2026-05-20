@@ -34,6 +34,8 @@ MODEL_TYPE="--model_type pom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt"
 RESUME="--resume"
 CPPRATE="--cpprate_bin /hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate-0.2.0/build/bin/cpprate"
+NORATE="--norate"
+TRUE_PHENOTYPES="--true_phenotypes /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/13_spn_trimethoprim_MIC_large_minbin/13_spn_trimethoprim_MIC_large_minbin_test_phenotypes.csv"
 Rscript $RSCRIPT_PATH \
 $DATA \
 $STAN_MODEL \
@@ -50,5 +52,7 @@ $ANNOTATIONS \
 $MODEL_TYPE \
 $GENES_OF_INTEREST \
 $RESUME \
-$CPPRATE
+$CPPRATE \
+$TRUE_PHENOTYPES \
+$NORATE
 
