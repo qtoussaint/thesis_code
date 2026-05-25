@@ -29,7 +29,7 @@ MAF_CUTOFF="--maf_cutoff 0"
 LD_THRESHOLD="--ld_threshold 1"
 
 PHANDANGO="--phandango /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/08_tb_rifampicin_MIC_loso/08_tb_rifampicin_MIC_loso_variant_index.csv"
-ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/cryptic_regeno_fields_filtered.txt"
+ANNOTATIONS="--annotations /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/fields_filtered.txt"
 MODEL_TYPE="--model_type ppom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt"
 RESUME="--resume"

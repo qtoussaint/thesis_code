@@ -1,27 +1,34 @@
 #!/usr/bin/env Rscript
 # make_locuszoom_plot.R
 # LocusZoom-style regional association plots for bacterial GWAS results.
-# Pure ggplot2 + patchwork implementation — no locuszoomr or Bioconductor
-# packages required. Gene track is drawn directly from the reference GFF3.
+# Pure ggplot2 + patchwork implementation; gene track is drawn directly
+# from the reference GFF3.
 #
-# Usage:
+# The y-axis quantity is selectable via --y_metric:
+#   rate            relative centrality (RATE) from cppRATE output
+#   abs_median      absolute median posterior effect from variant_effects
+#   exp_abs_median  exp() of the absolute median effect
+#
+# PPOM runs supply per-cutpoint inputs. All cutpoints are overlaid on a
+# single plot: color = r² with lead, shape = cutpoint, purple diamond on
+# the (variant, cutpoint) pair with the maximum metric value.
+#
+# Usage (RATE, single cutpoint):
 #   Rscript make_locuszoom_plot.R \
-#     --rate_file        results/cppRATE_results/RATE_values.txt \
+#     --y_metric         rate \
+#     --rate_files       results/cppRATE_results/RATE_values_depruned.txt \
 #     --positions_file   data/variant_positions.csv \
 #     --genotype_matrix  results/cppRATE_matrices/design_matrix.csv \
 #     --gff              reference/genomic.gff \
 #     --lead_variant     4521 \
-#     --window           250000 \
+#     --window           25000 \
 #     --output           locus_plot.png
 #
-# OR specify a region directly:
-#   --region NC_011900.1:1900000-2000000
+# Usage (RATE, multiple cutpoints overlaid):
+#   --rate_files RATE_values_cutpoint1_depruned.txt,RATE_values_cutpoint2_depruned.txt,...
 #
-# Optional:
-#   --variant_effects    results/fitted_model/depruned_variant_effects.csv
-#   --annotations        data/snpeff_annotations.tsv
-#   --title              "S. pneumoniae GWAS — pbp2x locus"
-#   --width 10 --height 7
+# Usage (|median| or exp|median| from variant_effects):
+#   --y_metric abs_median --variant_effects fitted_model/depruned_variant_effects.csv
 
 suppressPackageStartupMessages({
   library(optparse)
@@ -35,9 +42,21 @@ suppressPackageStartupMessages({
 # CLI arguments
 # ---------------------------------------------------------------------------
 option_list <- list(
+  make_option("--y_metric",
+    type = "character", default = "rate",
+    help = "Y-axis metric: rate | abs_median | exp_abs_median [default: rate]"
+  ),
+  make_option("--rate_files",
+    type = "character", default = NULL,
+    help = paste(
+      "Comma-separated RATE files (one per cutpoint). Required when",
+      "--y_metric=rate. Cutpoint is parsed from the filename token",
+      "'cutpoint<K>'; if absent, cutpoint = 1."
+    )
+  ),
   make_option("--rate_file",
     type = "character", default = NULL,
-    help = "Path to RATE_values.txt or RATE_values_depruned.txt [required]"
+    help = "DEPRECATED alias for --rate_files (single file)."
   ),
   make_option("--positions_file",
     type = "character", default = NULL,
@@ -61,31 +80,41 @@ option_list <- list(
     type = "integer", default = NULL,
     help = "Variant index (integer) of the lead/index variant"
   ),
+  make_option("--lead_cutpoint",
+    type = "integer", default = 1L,
+    help = "Cutpoint stratum of the lead variant [default: 1]"
+  ),
   make_option("--region",
     type = "character", default = NULL,
-    help = "Genomic region as 'seqname:start-end' (e.g. 'NC_011900.1:1900000-2000000')"
+    help = "Genomic region as 'seqname:start-end'"
   ),
   make_option("--window",
-    type = "integer", default = 500000L,
-    help = "Window size (bp) around lead variant [default: 500000]"
+    type = "integer", default = 25000L,
+    help = "Window size (bp) around lead variant [default: 25000]"
   ),
   make_option("--variant_effects",
     type = "character", default = NULL,
     help = paste(
-      "Optional: path to depruned_variant_effects.csv — marks variants",
-      "whose 89% CI excludes zero with filled triangles"
+      "Path to depruned_variant_effects.csv. Required when",
+      "--y_metric is abs_median or exp_abs_median. Also used (when",
+      "available) to mark CI-significant variants with filled triangles."
     )
   ),
   make_option("--annotations",
     type = "character", default = NULL,
+    help = "Optional: SNPEff annotations TSV with POS + ANN....GENE columns"
+  ),
+  make_option("--genes_of_interest",
+    type = "character", default = NULL,
     help = paste(
-      "Optional: path to SNPEff annotations TSV with POS and ANN....GENE",
-      "columns — labels top RATE variants with gene names"
+      "Optional 2-col file (annotation_name, display_name) -- e.g.",
+      "spn_penicillin_genesofinterest.txt. Gene labels matching col 1 are",
+      "rendered using col 2 (e.g. penA -> pbp2b)."
     )
   ),
   make_option("--top_n_labels",
-    type = "integer", default = 5L,
-    help = "Number of top RATE variants to label with gene names [default: 5]"
+    type = "integer", default = 40L,
+    help = "Number of top variants to label with gene names [default: 40]"
   ),
   make_option("--output",
     type = "character", default = "locuszoom_plot.png",
@@ -107,13 +136,13 @@ option_list <- list(
 
 opt <- parse_args(OptionParser(
   usage = "%prog [options]",
-  option_list = option_list,
-  description = paste(
-    "LocusZoom-style regional association plot for bacterial GWAS.",
-    "Y-axis = RATE values. Points coloured by r² with lead variant.",
-    "Gene track drawn directly from reference GFF3."
-  )
+  option_list = option_list
 ))
+
+valid_metrics <- c("rate", "abs_median", "exp_abs_median")
+if (!opt$y_metric %in% valid_metrics) {
+  stop("--y_metric must be one of: ", paste(valid_metrics, collapse = ", "))
+}
 
 # ---------------------------------------------------------------------------
 # Validate inputs
@@ -123,13 +152,25 @@ stop_if_missing <- function(path, flag) {
   if (!file.exists(path)) stop("File not found: ", path, " (", flag, ")")
 }
 
-stop_if_missing(opt$rate_file,       "--rate_file")
 stop_if_missing(opt$positions_file,  "--positions_file")
 stop_if_missing(opt$genotype_matrix, "--genotype_matrix")
 stop_if_missing(opt$gff,             "--gff")
 
+# Fold --rate_file (legacy) into --rate_files
+if (is.null(opt$rate_files) && !is.null(opt$rate_file)) {
+  opt$rate_files <- opt$rate_file
+}
+
+if (opt$y_metric == "rate") {
+  if (is.null(opt$rate_files)) stop("--rate_files is required when --y_metric=rate")
+} else {
+  if (is.null(opt$variant_effects)) {
+    stop("--variant_effects is required when --y_metric=", opt$y_metric)
+  }
+}
+
 if (is.null(opt$lead_variant) && is.null(opt$region)) {
-  stop("Specify either --lead_variant (variant index) or --region (seqname:start-end)")
+  stop("Specify either --lead_variant (integer) or --region (seqname:start-end)")
 }
 if (!is.null(opt$variant_effects) && !file.exists(opt$variant_effects)) {
   stop("File not found: ", opt$variant_effects, " (--variant_effects)")
@@ -139,55 +180,89 @@ if (!is.null(opt$annotations) && !file.exists(opt$annotations)) {
 }
 
 # ---------------------------------------------------------------------------
-# Step 1: Load RATE values
-# ---------------------------------------------------------------------------
-message("Loading RATE values: ", opt$rate_file)
-
-rate_df <- read.table(opt$rate_file, comment.char = "#", header = FALSE)
-
-# ---------------------------------------------------------------------------
-# Step 2: Load genomic positions
+# Step 1: Load positions
 # ---------------------------------------------------------------------------
 message("Loading positions: ", opt$positions_file)
 pos_df    <- fread(opt$positions_file, header = TRUE)
 positions <- as.integer(pos_df[[2]])
-message("  Loaded ", length(positions), " variant positions")
+n_variants_pos <- length(positions)
+message("  Loaded ", n_variants_pos, " variant positions")
 
-# Original cpprate format: single column (RATE only)
-# Depruned format: 3 columns (SNP_ID, RATE, KLD)
-rate_col    <- ifelse(ncol(rate_df) >= 2, 2, 1)
-rate_values <- as.numeric(rate_df[, rate_col])
-if (length(rate_values) != length(positions)) {
-  stop("Mismatch: ", length(rate_values), " RATE values but ", length(positions), " positions.")
+# ---------------------------------------------------------------------------
+# Step 2: Build long-format Y values (one row per variant per cutpoint)
+# ---------------------------------------------------------------------------
+parse_cutpoint <- function(path) {
+  m <- regmatches(basename(path),
+                  regexpr("cutpoint([0-9]+)", basename(path), perl = TRUE))
+  if (!length(m) || !nzchar(m)) return(1L)
+  as.integer(sub("cutpoint", "", m))
 }
-message("  Loaded ", length(rate_values), " RATE values")
+
+if (opt$y_metric == "rate") {
+  rate_paths <- trimws(strsplit(opt$rate_files, ",")[[1]])
+  for (p in rate_paths) stop_if_missing(p, "--rate_files entry")
+
+  long_list <- lapply(rate_paths, function(p) {
+    cp <- parse_cutpoint(p)
+    rate_raw <- read.table(p, comment.char = "#", header = FALSE)
+    # depruned files have 3 cols (SNP_ID, RATE, KLD); original has 1 (RATE)
+    rate_col <- ifelse(ncol(rate_raw) >= 2, 2, 1)
+    rate_values <- as.numeric(rate_raw[, rate_col])
+    if (length(rate_values) != n_variants_pos) {
+      stop("Mismatch reading ", p, ": ", length(rate_values),
+           " RATE values but ", n_variants_pos, " positions")
+    }
+    data.table(SNP = seq_along(rate_values), BP = positions,
+               cutpoint = cp, Y = rate_values)
+  })
+  gwas_long <- rbindlist(long_list)
+  y_label   <- "relative centrality (RATE)"
+  message("  Loaded RATE values for ", length(rate_paths),
+          " cutpoint(s): ", paste(sort(unique(gwas_long$cutpoint)), collapse = ", "))
+} else {
+  message("Loading variant effects: ", opt$variant_effects)
+  eff_dt <- fread(opt$variant_effects)
+  need <- c("variant_id", "median")
+  if (!all(need %in% names(eff_dt))) {
+    stop("variant_effects file missing required columns: ",
+         paste(setdiff(need, names(eff_dt)), collapse = ", "))
+  }
+  if (!"cutpoint" %in% names(eff_dt)) eff_dt[, cutpoint := 1L]
+
+  abs_med <- abs(eff_dt$median)
+  y_vals  <- if (opt$y_metric == "abs_median") abs_med else exp(abs_med)
+  gwas_long <- data.table(
+    SNP      = as.integer(eff_dt$variant_id),
+    BP       = positions[as.integer(eff_dt$variant_id)],
+    cutpoint = as.integer(eff_dt$cutpoint),
+    Y        = y_vals
+  )
+  gwas_long <- gwas_long[!is.na(BP)]
+  y_label <- if (opt$y_metric == "abs_median") {
+    expression(abs(tilde(beta)))
+  } else {
+    expression("e"^{abs(tilde(beta))})
+  }
+  message("  Loaded ", nrow(gwas_long), " (variant, cutpoint) rows from variant_effects",
+          " — ", length(unique(gwas_long$cutpoint)), " cutpoint(s)")
+}
+
+n_cutpoints <- length(unique(gwas_long$cutpoint))
 
 # ---------------------------------------------------------------------------
-# Step 3: Build full GWAS data frame
-# ---------------------------------------------------------------------------
-gwas_df <- data.table(
-  SNP  = seq_along(rate_values),
-  BP   = positions,
-  RATE = rate_values
-)
-
-# ---------------------------------------------------------------------------
-# Step 4: Optionally load variant effects for significance annotation
+# Step 3: Optional CI-significance flag (purely for the diamond layer below)
 # ---------------------------------------------------------------------------
 sig_variants <- NULL
 if (!is.null(opt$variant_effects)) {
-  message("Loading variant effects: ", opt$variant_effects)
-  eff_df <- fread(opt$variant_effects)
-  if (!"signif" %in% names(eff_df) || !"variant_id" %in% names(eff_df)) {
-    warning("--variant_effects file missing 'signif' or 'variant_id' column; skipping")
-  } else {
-    sig_variants <- eff_df[signif == TRUE, variant_id]
+  eff_sig <- fread(opt$variant_effects)
+  if ("signif" %in% names(eff_sig) && "variant_id" %in% names(eff_sig)) {
+    sig_variants <- eff_sig[signif == TRUE, unique(variant_id)]
     message("  ", length(sig_variants), " variants with 89% CI excluding zero")
   }
 }
 
 # ---------------------------------------------------------------------------
-# Step 5: Optionally load SNPEff annotations
+# Step 4: Optionally load SNPEff annotations
 # ---------------------------------------------------------------------------
 ann_df <- NULL
 if (!is.null(opt$annotations)) {
@@ -199,8 +274,36 @@ if (!is.null(opt$annotations)) {
   }
 }
 
+# Optional genes-of-interest display-name map (col1 = annotation name,
+# col2 = display name).
+goi_df <- NULL
+if (!is.null(opt$genes_of_interest)) {
+  stop_if_missing(opt$genes_of_interest, "--genes_of_interest")
+  message("Loading genes_of_interest: ", opt$genes_of_interest)
+  goi_df <- fread(opt$genes_of_interest, header = FALSE, sep = ",",
+                  strip.white = TRUE)
+  if (ncol(goi_df) < 2) {
+    warning("--genes_of_interest needs >=2 columns; ignoring file")
+    goi_df <- NULL
+  } else {
+    setnames(goi_df, c("annot_name", "display_name")[seq_len(ncol(goi_df))])
+    goi_df[, annot_name   := trimws(annot_name)]
+    goi_df[, display_name := trimws(display_name)]
+  }
+}
+
+apply_display_names <- function(x) {
+  if (is.null(goi_df) || is.null(x)) return(x)
+  m <- match(x, goi_df$annot_name)
+  hit <- !is.na(m)
+  x[hit] <- goi_df$display_name[m[hit]]
+  x
+}
+
+italic_gene_expr <- function(x) paste0("italic('", gsub("'", "", x), "')")
+
 # ---------------------------------------------------------------------------
-# Step 6: Determine region
+# Step 5: Determine region and lead pair (variant, cutpoint)
 # ---------------------------------------------------------------------------
 if (!is.null(opt$region)) {
   parts        <- strsplit(opt$region, ":")[[1]]
@@ -208,59 +311,80 @@ if (!is.null(opt$region)) {
   coords       <- as.integer(strsplit(parts[2], "-")[[1]])
   region_start <- coords[1]
   region_end   <- coords[2]
-  in_region    <- gwas_df[BP >= region_start & BP <= region_end]
+  in_region    <- gwas_long[BP >= region_start & BP <= region_end]
   if (nrow(in_region) == 0) stop("No variants found in region: ", opt$region)
-  lead_idx <- in_region[which.max(RATE), SNP]
-  lead_pos <- in_region[which.max(RATE), BP]
+  top_row       <- in_region[which.max(Y)]
+  lead_idx      <- as.integer(top_row$SNP)
+  lead_pos      <- as.integer(top_row$BP)
+  lead_cutpoint <- as.integer(top_row$cutpoint)
 } else {
-  lead_idx     <- opt$lead_variant
-  lead_pos_row <- gwas_df[SNP == lead_idx]
-  if (nrow(lead_pos_row) == 0) stop("Lead variant not found: ", lead_idx)
-  lead_pos     <- lead_pos_row$BP
-  seqname      <- NA_character_   # will be filled after GFF load
+  lead_idx      <- opt$lead_variant
+  lead_cutpoint <- opt$lead_cutpoint
+  if (!(lead_idx %in% gwas_long$SNP)) {
+    stop("Lead variant not found in y-axis data: ", lead_idx)
+  }
+  lead_pos     <- gwas_long[SNP == lead_idx, BP[1]]
+  seqname      <- NA_character_   # filled after GFF load
   region_start <- max(1L, lead_pos - opt$window)
   region_end   <- lead_pos + opt$window
 }
 
 message(sprintf(
-  "Region: %s:%d-%d  |  Lead variant: %d (pos %d)",
+  "Region: %s:%d-%d  |  Lead variant: %d (pos %d, cutpoint %d)",
   if (is.na(seqname)) "?" else seqname,
-  region_start, region_end, lead_idx, lead_pos
+  region_start, region_end, lead_idx, lead_pos, lead_cutpoint
 ))
 
-regional_df <- gwas_df[BP >= region_start & BP <= region_end]
-if (nrow(regional_df) == 0) stop("No variants in region after filtering")
-message("  ", nrow(regional_df), " variants in region")
+regional_long <- gwas_long[BP >= region_start & BP <= region_end]
+if (nrow(regional_long) == 0) stop("No variants in region after filtering")
+message("  ", nrow(regional_long), " (variant, cutpoint) rows in region — ",
+        length(unique(regional_long$SNP)), " distinct variants")
 
 # ---------------------------------------------------------------------------
-# Step 7: Compute r² with lead variant from genotype matrix
+# Step 6: Compute r² with lead variant from genotype matrix
 # ---------------------------------------------------------------------------
 message("Computing r² from genotype matrix: ", opt$genotype_matrix)
-message("  (This may take a moment for large matrices...)")
 
-# No header row: column i corresponds to variant index i
-first_row       <- fread(opt$genotype_matrix, nrows = 1, header = FALSE)
-n_variants      <- ncol(first_row)
-all_variant_ids <- seq_len(n_variants)
-
-regional_ids  <- regional_df$SNP
-cols_needed   <- unique(c(lead_idx, regional_ids))
-col_positions <- which(all_variant_ids %in% cols_needed)
-
-if (length(col_positions) == 0) {
-  stop("No regional variant columns found in genotype matrix.")
+# design_matrix.csv is the LD-pruned genotype matrix; column k holds the
+# genotype for the k-th *representative* variant, not variant k. Use the
+# companion cppRATE files to translate depruned variant IDs to columns:
+#   bacprune_rust_results.csv — header row lists rep IDs in column order
+#   direction_of_correlation.csv — every variant ID → its representative
+geno_dir       <- dirname(opt$genotype_matrix)
+bacprune_path  <- file.path(geno_dir, "bacprune_rust_results.csv")
+direction_path <- file.path(geno_dir, "direction_of_correlation.csv")
+for (p in c(bacprune_path, direction_path)) {
+  if (!file.exists(p)) {
+    stop("Required cppRATE companion file not found next to genotype matrix: ", p)
+  }
 }
 
-geno_sub      <- fread(opt$genotype_matrix, header = FALSE, select = col_positions)
-sub_ids       <- all_variant_ids[col_positions]
-names(geno_sub) <- as.character(sub_ids)
+design_col_ids <- as.integer(strsplit(readLines(bacprune_path, n = 1), ",")[[1]])
 
-lead_col_name <- as.character(lead_idx)
-if (!lead_col_name %in% names(geno_sub)) {
-  stop("Lead variant column '", lead_col_name, "' not found in genotype matrix")
+dir_dt <- fread(direction_path)
+setnames(dir_dt, c("Variant", "Representative Variant"), c("variant_id", "rep_id"))
+rep_of_variant <- integer(max(dir_dt$variant_id))
+rep_of_variant[dir_dt$variant_id] <- as.integer(dir_dt$rep_id)
+
+regional_ids  <- unique(regional_long$SNP)
+lead_rep      <- rep_of_variant[lead_idx]
+regional_reps <- rep_of_variant[regional_ids]
+needed_reps   <- unique(c(lead_rep, regional_reps))
+col_positions <- match(needed_reps, design_col_ids)
+if (anyNA(col_positions)) {
+  stop("Representative IDs missing from design_matrix header: ",
+       paste(needed_reps[is.na(col_positions)], collapse = ", "))
 }
 
-lead_geno <- as.numeric(geno_sub[[lead_col_name]])
+# Read selected columns in file order so column-to-rep alignment is unambiguous.
+ord           <- order(col_positions)
+col_positions <- col_positions[ord]
+needed_reps   <- needed_reps[ord]
+
+geno_sub        <- fread(opt$genotype_matrix, header = FALSE, select = col_positions)
+names(geno_sub) <- as.character(needed_reps)
+
+lead_geno <- as.numeric(geno_sub[[as.character(lead_rep)]])
 
 compute_r2 <- function(x, y) {
   r <- suppressWarnings(cor(x, y, use = "complete.obs"))
@@ -268,26 +392,27 @@ compute_r2 <- function(x, y) {
   r^2
 }
 
-r2_vals <- vapply(
-  as.character(regional_ids),
-  function(vid) {
-    if (!vid %in% names(geno_sub)) return(NA_real_)
-    compute_r2(as.numeric(geno_sub[[vid]]), lead_geno)
-  },
+r2_per_rep <- vapply(
+  as.character(needed_reps),
+  function(r) compute_r2(as.numeric(geno_sub[[r]]), lead_geno),
   FUN.VALUE = numeric(1)
 )
+r2_dt <- data.table(
+  SNP = regional_ids,
+  r2  = unname(r2_per_rep[as.character(regional_reps)])
+)
+r2_dt[SNP == lead_idx, r2 := 1.0]
 
-regional_df[, r2 := r2_vals]
-regional_df[SNP == lead_idx, r2 := 1.0]
+regional_long <- merge(regional_long, r2_dt, by = "SNP", all.x = TRUE)
 
 message(sprintf(
-  "  r² range: %.3f – %.3f (median %.3f)",
-  min(regional_df$r2, na.rm = TRUE),
-  max(regional_df$r2, na.rm = TRUE),
-  median(regional_df$r2, na.rm = TRUE)
+  "  r² range (per variant): %.3f – %.3f (median %.3f)",
+  min(r2_dt$r2, na.rm = TRUE),
+  max(r2_dt$r2, na.rm = TRUE),
+  median(r2_dt$r2, na.rm = TRUE)
 ))
 
-high_ld_frac <- mean(regional_df$r2 > 0.8, na.rm = TRUE)
+high_ld_frac <- mean(r2_dt$r2 > 0.8, na.rm = TRUE)
 if (high_ld_frac > 0.9) {
   message(sprintf(
     "  NOTE: %.0f%% of variants have r² > 0.8 (high clonality / low recombination).",
@@ -296,29 +421,41 @@ if (high_ld_frac > 0.9) {
 }
 
 # ---------------------------------------------------------------------------
-# Step 8: Add gene name labels from SNPEff annotations (optional)
+# Step 7: Gene-name labels on top-N variants (one label per variant)
 # ---------------------------------------------------------------------------
-regional_df[, gene_label := NA_character_]
+regional_long[, gene_label := NA_character_]
 if (!is.null(ann_df)) {
   gene_col <- grep("GENE", names(ann_df), value = TRUE)[1]
   if (!is.na(gene_col)) {
-    regional_df[, gene_label := ann_df[[gene_col]][match(BP, ann_df$POS)]]
+    regional_long[, gene_label := ann_df[[gene_col]][match(BP, ann_df$POS)]]
+    regional_long[, gene_label := apply_display_names(gene_label)]
   }
 }
 
-regional_df[, significant := FALSE]
+regional_long[, significant := FALSE]
 if (!is.null(sig_variants)) {
-  regional_df[SNP %in% sig_variants, significant := TRUE]
+  regional_long[SNP %in% sig_variants, significant := TRUE]
 }
 
-# Keep only top N labels to avoid overplotting
-if (!all(is.na(regional_df$gene_label))) {
-  top_snps <- regional_df[order(-RATE)][seq_len(min(opt$top_n_labels, .N)), SNP]
-  regional_df[!SNP %in% top_snps, gene_label := NA_character_]
+# Pick the top-N labels within the lead-cutpoint stratum to avoid the same
+# variant being labeled K times.
+if (!all(is.na(regional_long$gene_label))) {
+  cp_for_ranking <- if (lead_cutpoint %in% regional_long$cutpoint) {
+    lead_cutpoint
+  } else {
+    regional_long$cutpoint[1]
+  }
+  top_snps <- regional_long[cutpoint == cp_for_ranking
+                            ][order(-Y)
+                            ][seq_len(min(opt$top_n_labels, .N)), SNP]
+  regional_long[!SNP %in% top_snps, gene_label := NA_character_]
+  # When a variant is labeled, keep the label only on its lead-cutpoint row
+  regional_long[SNP %in% top_snps & cutpoint != cp_for_ranking,
+                gene_label := NA_character_]
 }
 
 # ---------------------------------------------------------------------------
-# Step 9: Parse GFF3 for gene track
+# Step 8: Parse GFF3 for gene track
 # ---------------------------------------------------------------------------
 message("Parsing GFF3: ", opt$gff)
 
@@ -333,7 +470,6 @@ gff_raw <- fread(
   showProgress = FALSE
 )
 
-# Detect seqname from GFF if not already known
 if (is.na(seqname)) {
   seqname <- gff_raw$seqname[1]
   message("  Auto-detected seqname from GFF: ", seqname)
@@ -354,41 +490,56 @@ if (nrow(genes_region) == 0) {
   message("  ", nrow(genes_region), " genes in region")
 }
 
-# Extract gene name: prefer Name= attribute, fall back to gene= then locus_tag=
 extract_attr <- function(attrs, key) {
   pattern <- paste0("(?:^|;)", key, "=([^;]+)")
-  m <- regmatches(attrs, regexpr(pattern, attrs, perl = TRUE))
-  ifelse(nzchar(m),
-         sub(paste0(".*", key, "=([^;]+).*"), "\\1", m),
-         NA_character_)
+  out <- rep(NA_character_, length(attrs))
+  hit <- regexpr(pattern, attrs, perl = TRUE) > 0
+  if (any(hit)) {
+    out[hit] <- sub(paste0(".*(?:^|;)", key, "=([^;]+).*"), "\\1",
+                    attrs[hit], perl = TRUE)
+  }
+  out
 }
 
 if (nrow(genes_region) > 0) {
   genes_region[, name := extract_attr(attributes, "Name")]
-  genes_region[is.na(name), name := extract_attr(attributes[is.na(name)], "gene")]
-  genes_region[is.na(name), name := extract_attr(attributes[is.na(name)], "locus_tag")]
+  genes_region[is.na(name), name := extract_attr(attributes, "gene")]
+  genes_region[is.na(name), name := extract_attr(attributes, "locus_tag")]
   genes_region[is.na(name), name := paste0("gene_", seq_len(sum(is.na(name))))]
 
-  # Clip gene coordinates to the plot window
+  genes_region[, name := apply_display_names(name)]
+
   genes_region[, draw_start := pmax(start, region_start)]
   genes_region[, draw_end   := pmin(end,   region_end)]
   genes_region[, mid        := (draw_start + draw_end) / 2]
 }
 
 # ---------------------------------------------------------------------------
-# Step 10: Build scatter panel
+# Step 9: LD palette (locuszoomr-style) + bin assignment
 # ---------------------------------------------------------------------------
 message("Building plot...")
 
 ld_breaks <- c(0, 0.2, 0.4, 0.6, 0.8, 1.001)
 ld_labels <- c("0.0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1.0")
-ld_colors <- c("grey75", "royalblue", "cyan3", "green3", "orange", "red2")
+ld_colors <- c("grey80", "lightskyblue", "darkgreen", "orange", "red")
 
-regional_df[, ld_bin := cut(r2, breaks = ld_breaks, labels = ld_labels,
-                             include.lowest = TRUE, right = TRUE)]
-# Lead variant and NAs get their own category
-regional_df[is.na(r2), ld_bin := factor(NA, levels = ld_labels)]
+regional_long[, ld_bin := cut(r2, breaks = ld_breaks, labels = ld_labels,
+                              include.lowest = TRUE, right = TRUE)]
+regional_long[is.na(r2), ld_bin := factor(NA, levels = ld_labels)]
 
+# Stable cutpoint → shape mapping (point shape codes)
+cutpoint_levels <- sort(unique(c(regional_long$cutpoint, lead_cutpoint)))
+cutpoint_shapes <- c(16, 17, 15, 18, 3, 4, 8, 1, 2, 0)
+if (length(cutpoint_levels) > length(cutpoint_shapes)) {
+  cutpoint_shapes <- rep_len(cutpoint_shapes, length(cutpoint_levels))
+}
+shape_values <- setNames(cutpoint_shapes[seq_along(cutpoint_levels)],
+                         as.character(cutpoint_levels))
+regional_long[, cutpoint_f := factor(cutpoint, levels = cutpoint_levels)]
+
+# ---------------------------------------------------------------------------
+# Step 10: Build scatter panel
+# ---------------------------------------------------------------------------
 plot_title <- if (!is.null(opt$title)) {
   opt$title
 } else {
@@ -396,31 +547,38 @@ plot_title <- if (!is.null(opt$title)) {
 }
 
 subtitle_parts <- c(
-  sprintf("Lead variant: position %d (index %d)", lead_pos, lead_idx),
-  sprintf("n = %d variants in window", nrow(regional_df))
+  sprintf("Lead variant: position %d (index %d, cutpoint %d)",
+          lead_pos, lead_idx, lead_cutpoint),
+  sprintf("n = %d variants in window", length(unique(regional_long$SNP)))
 )
 if (high_ld_frac > 0.9) {
   subtitle_parts <- c(subtitle_parts,
-    sprintf("%.0f%% variants r² > 0.8 with lead (high clonality)", high_ld_frac * 100))
+    sprintf("%.0f%% variants r² > 0.8 with lead (high clonality)",
+            high_ld_frac * 100))
 }
 
-# Background (non-lead) points
-p_scatter <- ggplot(
-    regional_df[SNP != lead_idx],
-    aes(x = BP, y = RATE, colour = ld_bin)
+lead_row <- regional_long[SNP == lead_idx & cutpoint == lead_cutpoint]
+
+p_scatter_base <- ggplot(
+    regional_long[!(SNP == lead_idx & cutpoint == lead_cutpoint)],
+    aes(x = BP, y = Y, colour = ld_bin, shape = cutpoint_f)
   ) +
-  geom_point(size = 1.5, alpha = 0.85) +
+  geom_point(size = 1.7, alpha = 0.85) +
   scale_colour_manual(
-    values  = stats::setNames(ld_colors, ld_labels),
-    name    = expression(r^2),
-    na.value = "grey60",
-    drop    = FALSE
+    values   = setNames(ld_colors, ld_labels),
+    name     = expression(r^2),
+    na.value = "grey70",
+    drop     = FALSE
   ) +
-  # Lead variant as filled diamond
+  scale_shape_manual(
+    values = shape_values,
+    name   = "cutpoint",
+    guide  = if (n_cutpoints > 1) "legend" else "none"
+  ) +
   geom_point(
-    data   = regional_df[SNP == lead_idx],
-    aes(x  = BP, y = RATE),
-    shape  = 23, size = 3.5, fill = "purple", colour = "black",
+    data   = lead_row,
+    aes(x  = BP, y = Y),
+    shape  = 23, size = 4, fill = "purple", colour = "black",
     inherit.aes = FALSE
   ) +
   scale_x_continuous(
@@ -428,11 +586,7 @@ p_scatter <- ggplot(
     expand = expansion(mult = 0.01),
     labels = scales::comma
   ) +
-  labs(
-    y        = "relative centrality (RATE)",
-    title    = plot_title,
-    subtitle = paste(subtitle_parts, collapse = "  |  ")
-  ) +
+  labs(y = y_label) +
   theme_bw(base_size = 11) +
   theme(
     axis.title.x     = element_blank(),
@@ -444,16 +598,21 @@ p_scatter <- ggplot(
     legend.position  = "right"
   )
 
-# Add gene name labels if available
-if (!all(is.na(regional_df$gene_label))) {
-  label_data <- regional_df[!is.na(gene_label)]
-  p_scatter <- p_scatter +
+p_scatter_labeled <- p_scatter_base +
+  labs(
+    title    = plot_title,
+    subtitle = paste(subtitle_parts, collapse = "  |  ")
+  )
+if (!all(is.na(regional_long$gene_label))) {
+  label_data <- regional_long[!is.na(gene_label)]
+  label_data[, gene_expr := italic_gene_expr(gene_label)]
+  p_scatter_labeled <- p_scatter_labeled +
     geom_text_repel(
       data         = as.data.frame(label_data),
-      aes(x = BP, y = RATE, label = gene_label),
+      aes(x = BP, y = Y, label = gene_expr),
+      parse        = TRUE,
       size         = 3,
       colour       = "black",
-      fontface     = "italic",
       inherit.aes  = FALSE,
       max.overlaps = 20,
       box.padding  = 0.4,
@@ -463,11 +622,9 @@ if (!all(is.na(regional_df$gene_label))) {
 }
 
 # ---------------------------------------------------------------------------
-# Step 11: Build gene track panel
+# Step 11: Gene track panel
 # ---------------------------------------------------------------------------
 if (nrow(genes_region) > 0) {
-  # y position: stagger overlapping genes to reduce label collisions
-  # simple approach: alternate between y = 0 and y = 1 for dense loci
   genes_region[, y_level := 0]
   if (nrow(genes_region) > 1) {
     for (i in seq(2, nrow(genes_region))) {
@@ -481,11 +638,34 @@ if (nrow(genes_region) > 0) {
   genes_region[, ymin := y_level - gene_height]
   genes_region[, ymax := y_level + gene_height]
 
-  # Identify variants that fall within a gene's drawn coordinates
+  # Stagger labels across 4 rows (2 above + 2 below) cycling in genomic order
+  # so neighbouring genes never share a row. "Near" rows sit just outside the
+  # rectangles, "far" rows fill the panel's expand(add = ...) padding.
+  setorder(genes_region, mid)
+  gene_panel_top    <- max(genes_region$ymax)
+  gene_panel_bottom <- min(genes_region$ymin)
+  slot_offset <- c(above_near =  0.20,
+                   above_far  =  0.95,
+                   below_near = -0.20,
+                   below_far  = -0.95)
+  genes_region[, label_slot := rep_len(names(slot_offset), .N)]
+  genes_region[, label_side := ifelse(startsWith(label_slot, "above"),
+                                       "above", "below")]
+  genes_region[, label_y := ifelse(label_side == "above",
+                                    gene_panel_top    + slot_offset[label_slot],
+                                    gene_panel_bottom + slot_offset[label_slot])]
+
+  # For the gene-track tick layer, use one row per variant (the lead-cutpoint
+  # stratum if available, else the first cutpoint) so we don't draw K coloured
+  # ticks per variant.
+  cp_for_ticks <- if (lead_cutpoint %in% regional_long$cutpoint) lead_cutpoint
+                  else regional_long$cutpoint[1]
+  tick_rows <- regional_long[cutpoint == cp_for_ticks]
+
   variant_ticks <- rbindlist(lapply(seq_len(nrow(genes_region)), function(gi) {
     g <- genes_region[gi]
-    hits <- regional_df[BP >= g$draw_start & BP <= g$draw_end,
-                        .(BP, ld_bin, SNP)]
+    hits <- tick_rows[BP >= g$draw_start & BP <= g$draw_end,
+                      .(BP, ld_bin, SNP)]
     if (nrow(hits) == 0) return(NULL)
     hits[, `:=`(tick_ymin = g$ymin, tick_ymax = g$ymax)]
     hits
@@ -497,7 +677,6 @@ if (nrow(genes_region) > 0) {
           ymin = ymin, ymax = ymax, fill = strand),
       colour = "grey30", linewidth = 0.3
     ) +
-    # Tick marks showing variant positions within genes, coloured by LD r²
     {if (nrow(variant_ticks) > 0)
       geom_segment(
         data      = as.data.frame(variant_ticks[SNP != lead_idx]),
@@ -514,22 +693,37 @@ if (nrow(genes_region) > 0) {
       )
     }} +
     scale_colour_manual(
-      values   = stats::setNames(ld_colors, ld_labels),
+      values   = setNames(ld_colors, ld_labels),
       name     = expression(r^2),
-      na.value = "grey60",
+      na.value = "grey70",
       drop     = FALSE,
       guide    = "none"
     ) +
     geom_text_repel(
-      aes(x = mid, y = ymax, label = name),
-      size           = 2.8,
+      data           = as.data.frame(genes_region[label_side == "above"]),
+      aes(x = mid, y = label_y, label = italic_gene_expr(name)),
+      parse          = TRUE,
+      size           = 2.4,
       vjust          = 0,
-      nudge_y        = 0.2,
-      fontface       = "italic",
+      direction      = "x",
       segment.colour = "grey60",
       segment.size   = 0.3,
       max.overlaps   = Inf,
-      direction      = "x"
+      force          = 1.5,
+      force_pull     = 0.2
+    ) +
+    geom_text_repel(
+      data           = as.data.frame(genes_region[label_side == "below"]),
+      aes(x = mid, y = label_y, label = italic_gene_expr(name)),
+      parse          = TRUE,
+      size           = 2.4,
+      vjust          = 1,
+      direction      = "x",
+      segment.colour = "grey60",
+      segment.size   = 0.3,
+      max.overlaps   = Inf,
+      force          = 1.5,
+      force_pull     = 0.2
     ) +
     scale_fill_manual(
       values = c("+" = "steelblue3", "-" = "tomato3"),
@@ -542,7 +736,7 @@ if (nrow(genes_region) > 0) {
       labels = scales::comma,
       name   = "genomic position"
     ) +
-    scale_y_continuous(expand = expansion(add = 0.5)) +
+    scale_y_continuous(expand = expansion(add = 1.5)) +
     theme_bw(base_size = 11) +
     theme(
       axis.text.y      = element_blank(),
@@ -552,7 +746,6 @@ if (nrow(genes_region) > 0) {
       legend.position  = "right"
     )
 } else {
-  # Empty gene track placeholder
   p_genes <- ggplot() +
     annotate("text", x = (region_start + region_end) / 2, y = 0,
              label = "No gene features found in region", colour = "grey50") +
@@ -567,15 +760,29 @@ if (nrow(genes_region) > 0) {
 # ---------------------------------------------------------------------------
 # Step 12: Assemble and save
 # ---------------------------------------------------------------------------
-combined <- p_scatter / p_genes + plot_layout(heights = c(3, 1))
+combined_labeled   <- p_scatter_labeled / p_genes + plot_layout(heights = c(3, 1.5))
+combined_unlabeled <- p_scatter_base    / p_genes + plot_layout(heights = c(3, 1.5))
+
+ext  <- tools::file_ext(opt$output)
+stem <- tools::file_path_sans_ext(opt$output)
+nolabels_path <- paste0(stem, "_nolabels.", if (nzchar(ext)) ext else "png")
 
 out_dir <- dirname(opt$output)
 if (!dir.exists(out_dir) && out_dir != ".") dir.create(out_dir, recursive = TRUE)
 
-message("Saving plot to: ", opt$output)
+message("Saving labeled plot to:   ", opt$output)
 ggsave(
   filename = opt$output,
-  plot     = combined,
+  plot     = combined_labeled,
+  width    = opt$width,
+  height   = opt$height,
+  dpi      = 300
+)
+
+message("Saving unlabeled plot to: ", nolabels_path)
+ggsave(
+  filename = nolabels_path,
+  plot     = combined_unlabeled,
   width    = opt$width,
   height   = opt$height,
   dpi      = 300

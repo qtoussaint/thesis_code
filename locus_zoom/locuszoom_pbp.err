@@ -1,0 +1,232 @@
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+Loading RATE values from 7 file(s)
+Parsing GFF: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+Wrote 5 rows to /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/lead_variants_rate.tsv
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+  Loaded RATE values for 7 cutpoint(s): 1, 2, 3, 4, 5, 6, 7
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:269433-319433  |  Lead variant: 4755 (pos 294433, cutpoint 5)
+  8981 (variant, cutpoint) rows in region — 1283 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.015)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  46 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/pbp2X_rate.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+  Loaded RATE values for 7 cutpoint(s): 1, 2, 3, 4, 5, 6, 7
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:307973-357973  |  Lead variant: 5844 (pos 332973, cutpoint 5)
+  6888 (variant, cutpoint) rows in region — 984 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.027)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  41 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/pbp1a_rate.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+  Loaded RATE values for 7 cutpoint(s): 1, 2, 3, 4, 5, 6, 7
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:2062154-2112154  |  Lead variant: 30569 (pos 2087154, cutpoint 1)
+  3689 (variant, cutpoint) rows in region — 527 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+Error: No regional variant columns found in genotype matrix.
+Execution halted
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+  Loaded RATE values for 7 cutpoint(s): 1, 2, 3, 4, 5, 6, 7
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:1957430-2007430  |  Lead variant: 29229 (pos 1982430, cutpoint 1)
+  5138 (variant, cutpoint) rows in region — 734 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+Error: No regional variant columns found in genotype matrix.
+Execution halted
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+  Loaded RATE values for 7 cutpoint(s): 1, 2, 3, 4, 5, 6, 7
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:1589704-1639704  |  Lead variant: 24272 (pos 1614704, cutpoint 6)
+  7861 (variant, cutpoint) rows in region — 1123 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.022)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  45 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/pbp2b_rate.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+Parsing GFF: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+Wrote 5 rows to /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/lead_variants_abs_median.tsv
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:269613-319613  |  Lead variant: 4769 (pos 294613, cutpoint 4)
+  9051 (variant, cutpoint) rows in region — 1293 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.008)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  46 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/pbp2X_abs_median.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:308282-358282  |  Lead variant: 5848 (pos 333282, cutpoint 5)
+  6783 (variant, cutpoint) rows in region — 969 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.017)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  41 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/pbp1a_abs_median.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:2022005-2072005  |  Lead variant: 30164 (pos 2047005, cutpoint 6)
+  4424 (variant, cutpoint) rows in region — 632 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+Error: No regional variant columns found in genotype matrix.
+Execution halted
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:1927499-1977499  |  Lead variant: 28754 (pos 1952499, cutpoint 7)
+  6188 (variant, cutpoint) rows in region — 884 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+Error: No regional variant columns found in genotype matrix.
+Execution halted
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:1588379-1638379  |  Lead variant: 24226 (pos 1613379, cutpoint 5)
+  7826 (variant, cutpoint) rows in region — 1118 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.037)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  45 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/pbp2b_abs_median.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+Parsing GFF: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+Wrote 5 rows to /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/lead_variants_exp_abs_median.tsv
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:269613-319613  |  Lead variant: 4769 (pos 294613, cutpoint 4)
+  9051 (variant, cutpoint) rows in region — 1293 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.008)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  46 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/pbp2X_exp_abs_median.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:308282-358282  |  Lead variant: 5848 (pos 333282, cutpoint 5)
+  6783 (variant, cutpoint) rows in region — 969 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.017)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  41 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/pbp1a_exp_abs_median.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:2022005-2072005  |  Lead variant: 30164 (pos 2047005, cutpoint 6)
+  4424 (variant, cutpoint) rows in region — 632 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+Error: No regional variant columns found in genotype matrix.
+Execution halted
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:1927499-1977499  |  Lead variant: 28754 (pos 1952499, cutpoint 7)
+  6188 (variant, cutpoint) rows in region — 884 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+Error: No regional variant columns found in genotype matrix.
+Execution halted
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 226842 (variant, cutpoint) rows from variant_effects — 7 cutpoint(s)
+  9 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt
+Region: ?:1588379-1638379  |  Lead variant: 24226 (pos 1613379, cutpoint 5)
+  7826 (variant, cutpoint) rows in region — 1118 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.037)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/genomic.gff
+  Auto-detected seqname from GFF: NC_011900.1
+  45 genes in region
+Building plot...
+Saving plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5/pbp2b_exp_abs_median.png
+Done.

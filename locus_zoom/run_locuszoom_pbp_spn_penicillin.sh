@@ -12,10 +12,10 @@
 # LocusZoom plots for the top 5 pbp genes in the spn_penicillin
 # 02_spn_penicillin_MIC_PPOM inference run.
 #
-# For each gene we pick the variant with the largest |median| effect across all
-# cutpoints (depruned_variant_effects.csv); that variant becomes the lead, its
-# cutpoint determines which RATE_values_cutpointN_depruned.txt feeds the
-# y-axis, and the window extends 50 kb either side.
+# Each gene is plotted three times — once per y-axis metric (rate, abs_median,
+# exp_abs_median). Within a plot, all cutpoints are overlaid (color = r² with
+# lead, shape = cutpoint). The lead pair (variant, cutpoint) is the peak of the
+# chosen metric inside the gene. Window: 25 kb either side of the lead.
 #################################################################################
 
 source ~/.bashrc
@@ -40,9 +40,10 @@ POSITIONS_FILE="$DATASET_DIR/02_spn_penicillin_MIC_variant_index.csv"
 GENOTYPE_MATRIX="$PIPELINE_OUTPUT_DIR/cppRATE_matrices/design_matrix.csv"
 VARIANT_EFFECTS="$PIPELINE_OUTPUT_DIR/fitted_model/depruned_variant_effects.csv"
 ANNOTATIONS="/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
+RATE_DIR="$PIPELINE_OUTPUT_DIR/cppRATE_results"
+GENES_OF_INTEREST="/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt"
 
-# Top 5 pbp genes from spn_penicillin_genesofinterest.txt
-# (GFF Name= values; case-insensitive match in pbp_lead_variants.R)
+# Top 5 pbp genes -- names as they appear in the GFF (which already uses display names here).
 GENES="pbp2X,pbp1a,pbp1b,pbp2a,pbp2b"
 
 # ---------------------------------------------------------------------------
@@ -50,58 +51,75 @@ GENES="pbp2X,pbp1a,pbp1b,pbp2a,pbp2b"
 # ---------------------------------------------------------------------------
 OUTPUT_DIR="$SPECIES_OUTPUT_DIR/plots/02_spn_penicillin_MIC_PPOM_pbp_top5"
 mkdir -p "$OUTPUT_DIR"
-LEAD_TSV="$OUTPUT_DIR/lead_variants.tsv"
 
-# ---------------------------------------------------------------------------
-# 1. Identify the lead variant per gene
-# ---------------------------------------------------------------------------
-echo "=== Identifying lead variants for: $GENES ==="
-Rscript "$LEAD_FINDER" \
-  --variant_effects "$VARIANT_EFFECTS" \
-  --positions_file  "$POSITIONS_FILE" \
-  --gff             "$GFF" \
-  --genes           "$GENES" \
-  --output          "$LEAD_TSV"
-
-if [[ ! -s "$LEAD_TSV" ]]; then
-  echo "ERROR: lead variant TSV is empty: $LEAD_TSV"
+# Comma-separated list of per-cutpoint RATE files, for --rate_files
+RATE_FILES_CSV=$(ls "$RATE_DIR"/RATE_values_cutpoint*_depruned.txt | paste -sd,)
+if [[ -z "$RATE_FILES_CSV" ]]; then
+  echo "ERROR: No RATE_values_cutpoint*_depruned.txt files in $RATE_DIR"
   exit 1
 fi
 
 # ---------------------------------------------------------------------------
-# 2. One locus zoom plot per gene, using its (variant, cutpoint) pair
+# One pass per metric
 # ---------------------------------------------------------------------------
-# TSV columns: gene  lead_variant  lead_pos  lead_cutpoint  lead_abs_median
-{
-  read -r _header  # skip header
-  while IFS=$'\t' read -r gene vid pos cp absmed; do
-    if [[ -z "$vid" || "$vid" == "NA" ]]; then
-      echo "WARNING: no lead variant for ${gene}; skipping"
-      continue
-    fi
+for METRIC in rate abs_median exp_abs_median; do
+  echo ""
+  echo "============================================================"
+  echo "=== Metric: ${METRIC}"
+  echo "============================================================"
 
-    RATE_FILE="$PIPELINE_OUTPUT_DIR/cppRATE_results/RATE_values_cutpoint${cp}_depruned.txt"
-    if [[ ! -f "$RATE_FILE" ]]; then
-      echo "WARNING: RATE file missing for ${gene} (cutpoint ${cp}): $RATE_FILE"
-      continue
-    fi
+  LEAD_TSV="$OUTPUT_DIR/lead_variants_${METRIC}.tsv"
 
-    echo "=== ${gene}: lead variant ${vid} at ${pos} bp (cutpoint ${cp}, |median|=${absmed}) ==="
-    Rscript "$MAKE_PLOT" \
-      --rate_file       "$RATE_FILE" \
-      --positions_file  "$POSITIONS_FILE" \
-      --genotype_matrix "$GENOTYPE_MATRIX" \
-      --gff             "$GFF" \
-      --variant_effects "$VARIANT_EFFECTS" \
-      --annotations     "$ANNOTATIONS" \
-      --lead_variant    "$vid" \
-      --window          50000 \
-      --title           "S. pneumoniae penicillin PPOM — ${gene} (cutpoint ${cp})" \
-      --output          "$OUTPUT_DIR/${gene}.png" \
-      --width           10 \
-      --height          7
-  done
-} < "$LEAD_TSV"
+  echo "--- Identifying lead variants per gene ---"
+  Rscript "$LEAD_FINDER" \
+    --variant_effects "$VARIANT_EFFECTS" \
+    --positions_file  "$POSITIONS_FILE" \
+    --gff             "$GFF" \
+    --genes           "$GENES" \
+    --y_metric        "$METRIC" \
+    --rate_dir        "$RATE_DIR" \
+    --output          "$LEAD_TSV"
+
+  if [[ ! -s "$LEAD_TSV" ]]; then
+    echo "ERROR: lead variant TSV is empty: $LEAD_TSV"
+    exit 1
+  fi
+
+  # TSV cols: gene  lead_variant  lead_pos  lead_cutpoint  lead_metric  lead_metric_value
+  {
+    read -r _header
+    while IFS=$'\t' read -r gene vid pos cp _metric metric_value; do
+      if [[ -z "$vid" || "$vid" == "NA" ]]; then
+        echo "WARNING: no lead variant for ${gene}; skipping"
+        continue
+      fi
+
+      echo "--- ${gene}: lead variant ${vid} at ${pos} bp (cutpoint ${cp}, ${METRIC}=${metric_value}) ---"
+
+      if [[ "$METRIC" == "rate" ]]; then
+        Y_FLAG=(--rate_files "$RATE_FILES_CSV")
+      else
+        Y_FLAG=(--variant_effects "$VARIANT_EFFECTS")
+      fi
+
+      Rscript "$MAKE_PLOT" \
+        --y_metric         "$METRIC" \
+        --positions_file   "$POSITIONS_FILE" \
+        --genotype_matrix  "$GENOTYPE_MATRIX" \
+        --gff              "$GFF" \
+        --variant_effects  "$VARIANT_EFFECTS" \
+        --annotations      "$ANNOTATIONS" \
+        --genes_of_interest "$GENES_OF_INTEREST" \
+        --lead_variant     "$vid" \
+        --lead_cutpoint    "$cp" \
+        --window           5000 \
+        "${Y_FLAG[@]}" \
+        --title            "S. pneumoniae penicillin PPOM — ${gene} (${METRIC})" \
+        --output           "$OUTPUT_DIR/${gene}_${METRIC}.png" \
+        --width 10 --height 7
+    done
+  } < "$LEAD_TSV"
+done
 
 echo ""
 echo "Done. Plots written to: $OUTPUT_DIR"

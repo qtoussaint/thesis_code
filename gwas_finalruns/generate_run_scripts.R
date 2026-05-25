@@ -17,7 +17,7 @@ PRUNING_BIN      <- "/hps/software/users/jlees/jacqueline/manual_installs/bin/Ba
 CPPRATE_BIN      <- "/hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate-0.2.0/build/bin/cpprate"
 
 SPN_ANNOT <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
-TB_ANNOT  <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/cryptic_regeno_fields_filtered.txt"
+TB_ANNOT  <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/fields_filtered.txt"
 
 SPECIES_META <- list(
   spn_penicillin = list(

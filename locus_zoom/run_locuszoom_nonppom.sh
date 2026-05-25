@@ -1,104 +1,113 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=locuszoom_bacterial             # job name
-#SBATCH --nodes=1                                  # number of nodes
-#SBATCH --cpus-per-task=4                          # CPUs (r² computation is single-threaded)
-#SBATCH --mem=32G                                  # memory (genotype matrix can be large)
-#SBATCH --time=1:00:00                             # time limit
+#SBATCH --job-name=locuszoom_bacterial
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=32G
+#SBATCH --time=1:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/locuszoom.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/locuszoom.out
 
 #################################################################################
-# LocusZoom-style regional association plots for bacterial GWAS
+# LocusZoom-style regional association plots for non-PPOM bacterial GWAS
+# (binary / continuous phenotypes — single cutpoint).
 #
-# make_locuszoom_plot.R: pure ggplot2 + patchwork implementation.
-# Reads the reference GFF3 directly — no SQLite database build step needed.
-# No Bioconductor packages required.
+# Three plots are produced (one per y-axis metric: rate, abs_median,
+# exp_abs_median). Lead variant is auto-picked as the global peak of the
+# chosen metric. Window: 25 kb either side.
 #
 # Prerequisite (run once):
 #   mamba activate gwas_pipeline
 #   mamba install -c conda-forge r-patchwork
-#
-# conda activate gwas_pipeline   # (activate your environment if needed)
 #################################################################################
 
+source ~/.bashrc
+mamba activate gwas_pipeline
+
 MAKE_PLOT="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/make_locuszoom_plot.R"
+LEAD_FINDER="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/pbp_lead_variants.R"
 
 # ---------------------------------------------------------------------------
-# Species / reference paths
+# Reference (S. pneumoniae ATCC 700669, seqname NC_011900.1)
 # ---------------------------------------------------------------------------
-
-# S. pneumoniae ATCC 700669 (GCF_000026665.1, assembly ASM2666v1)
-# Seqname in GFF: NC_011900.1
 SPECIES_OUTPUT_DIR="/nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae"
 GFF="$SPECIES_OUTPUT_DIR/reference/genomic.gff"
-SEQNAME="NC_011900.1"   # chromosome seqname from GFF header; used in --region below
 
 # ---------------------------------------------------------------------------
-# GWAS pipeline output paths (S. pneumoniae penicillin resistance analysis)
-# Edit these to point to your specific pipeline output directory
+# Pipeline output
 # ---------------------------------------------------------------------------
-
 PIPELINE_OUTPUT_DIR="/nfs/research/jlees/jacqueline/thesis_results/test_gwas_workflow"
 
-RATE_FILE="$PIPELINE_OUTPUT_DIR/cppRATE_results/RATE_values_depruned.txt"
 POSITIONS_FILE="/nfs/research/jlees/jacqueline/bayesian_gwas_paper/00_data/inference/01_spn_penicillin_subclusters_K5_variant_index.csv"
 GENOTYPE_MATRIX="$PIPELINE_OUTPUT_DIR/cppRATE_matrices/design_matrix.csv"
 VARIANT_EFFECTS="$PIPELINE_OUTPUT_DIR/fitted_model/depruned_variant_effects.csv"
 ANNOTATIONS="/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
+RATE_DIR="$PIPELINE_OUTPUT_DIR/cppRATE_results"
+GENES_OF_INTEREST="/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt"
+
+# Single-cutpoint RATE file (binary / continuous run, no per-cutpoint suffix)
+RATE_FILE="$RATE_DIR/RATE_values_depruned.txt"
+if [[ ! -f "$RATE_FILE" ]]; then
+  # Fall back to RATE_values.txt if the depruned variant doesn't exist
+  RATE_FILE="$RATE_DIR/RATE_values.txt"
+fi
 
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
-
 OUTPUT_DIR="$SPECIES_OUTPUT_DIR/plots"
 mkdir -p "$OUTPUT_DIR"
 
 # ---------------------------------------------------------------------------
-# Make LocusZoom plot(s)
-#
-# Specify either:
-#   --lead_variant <integer index>   peak variant index from RATE output
-#   --region <seqname:start-end>     explicit genomic window
-#
-# The seqname in --region MUST match the sequence name in the GFF (NC_011900.1).
-#
-# Example A — by lead variant index (e.g. top RATE hit):
-#   Rscript "$MAKE_PLOT" --lead_variant 4521 ...
-#
-# Example B — by genomic region (e.g. pbp2x locus in S. pneumoniae):
-#   --region NC_011900.1:1900000-2000000
+# One plot per metric
 # ---------------------------------------------------------------------------
+for METRIC in rate abs_median exp_abs_median; do
+  echo ""
+  echo "============================================================"
+  echo "=== Metric: ${METRIC}"
+  echo "============================================================"
 
-echo "=== Making LocusZoom plot ==="
-Rscript "$MAKE_PLOT" \
-  --rate_file        "$RATE_FILE" \
-  --positions_file   "$POSITIONS_FILE" \
-  --genotype_matrix  "$GENOTYPE_MATRIX" \
-  --gff              "$GFF" \
-  --lead_variant     4521 \
-  --window           250000 \
-  --variant_effects  "$VARIANT_EFFECTS" \
-  --annotations      "$ANNOTATIONS" \
-  --title            "S. pneumoniae GWAS — penicillin resistance" \
-  --output           "$OUTPUT_DIR/spneu_penicillin_locus.png" \
-  --width            10 \
-  --height           7
+  LEAD_TSV="$OUTPUT_DIR/nonppom_lead_${METRIC}.tsv"
 
-# ---------------------------------------------------------------------------
-# To plot a second locus, repeat with a new --lead_variant / --region and --output
-# ---------------------------------------------------------------------------
+  Rscript "$LEAD_FINDER" \
+    --variant_effects "$VARIANT_EFFECTS" \
+    --positions_file  "$POSITIONS_FILE" \
+    --y_metric        "$METRIC" \
+    --rate_dir        "$RATE_DIR" \
+    --whole_genome \
+    --output          "$LEAD_TSV"
 
-# Rscript "$MAKE_PLOT" \
-#   --rate_file        "$RATE_FILE" \
-#   --positions_file   "$POSITIONS_FILE" \
-#   --genotype_matrix  "$GENOTYPE_MATRIX" \
-#   --gff              "$GFF" \
-#   --region           "${SEQNAME}:800000-1100000" \
-#   --variant_effects  "$VARIANT_EFFECTS" \
-#   --annotations      "$ANNOTATIONS" \
-#   --title            "S. pneumoniae GWAS — second locus" \
-#   --output           "$OUTPUT_DIR/spneu_locus2.png"
+  read -r LEAD_VID LEAD_POS LEAD_CP < <(
+    awk -F'\t' 'NR==2 {print $2, $3, $4}' "$LEAD_TSV"
+  )
+  if [[ -z "$LEAD_VID" || "$LEAD_VID" == "NA" ]]; then
+    echo "ERROR: no global lead variant for metric ${METRIC}"
+    continue
+  fi
+  echo "Global lead: variant ${LEAD_VID} at ${LEAD_POS} bp, cutpoint ${LEAD_CP}"
+
+  if [[ "$METRIC" == "rate" ]]; then
+    Y_FLAG=(--rate_files "$RATE_FILE")
+  else
+    Y_FLAG=(--variant_effects "$VARIANT_EFFECTS")
+  fi
+
+  Rscript "$MAKE_PLOT" \
+    --y_metric         "$METRIC" \
+    --positions_file   "$POSITIONS_FILE" \
+    --genotype_matrix  "$GENOTYPE_MATRIX" \
+    --gff              "$GFF" \
+    --variant_effects  "$VARIANT_EFFECTS" \
+    --annotations      "$ANNOTATIONS" \
+    --genes_of_interest "$GENES_OF_INTEREST" \
+    --lead_variant     "$LEAD_VID" \
+    --lead_cutpoint    "$LEAD_CP" \
+    --window           5000 \
+    "${Y_FLAG[@]}" \
+    --title            "S. pneumoniae GWAS — penicillin resistance (${METRIC})" \
+    --output           "$OUTPUT_DIR/spneu_penicillin_nonppom_${METRIC}.png" \
+    --width 10 --height 7
+done
 
 echo ""
 echo "Done. Plots written to: $OUTPUT_DIR"

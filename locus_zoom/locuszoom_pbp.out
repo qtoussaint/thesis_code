@@ -1,0 +1,53 @@
+
+============================================================
+=== Metric: rate
+============================================================
+--- Identifying lead variants per gene ---
+     gene lead_variant lead_pos lead_cutpoint lead_metric lead_metric_value
+   <char>        <int>    <int>         <int>      <char>             <num>
+1:  pbp2X         4755   294433             5        rate        0.01842550
+2:  pbp1a         5844   332973             5        rate        0.00581888
+3:  pbp1b        30569  2087154             1        rate        0.00620853
+4:  pbp2a        29229  1982430             1        rate        0.00101655
+5:  pbp2b        24272  1614704             6        rate        0.23585400
+--- pbp2X: lead variant 4755 at 294433 bp (cutpoint 5, rate=0.0184255) ---
+--- pbp1a: lead variant 5844 at 332973 bp (cutpoint 5, rate=0.00581888) ---
+--- pbp1b: lead variant 30569 at 2087154 bp (cutpoint 1, rate=0.00620853) ---
+--- pbp2a: lead variant 29229 at 1982430 bp (cutpoint 1, rate=0.00101655) ---
+--- pbp2b: lead variant 24272 at 1614704 bp (cutpoint 6, rate=0.235854) ---
+
+============================================================
+=== Metric: abs_median
+============================================================
+--- Identifying lead variants per gene ---
+     gene lead_variant lead_pos lead_cutpoint lead_metric lead_metric_value
+   <char>        <int>    <int>         <int>      <char>             <num>
+1:  pbp2X         4769   294613             4  abs_median       0.079620652
+2:  pbp1a         5848   333282             5  abs_median       0.009470140
+3:  pbp1b        30164  2047005             6  abs_median       0.001128371
+4:  pbp2a        28754  1952499             7  abs_median       0.001816080
+5:  pbp2b        24226  1613379             5  abs_median       0.049487085
+--- pbp2X: lead variant 4769 at 294613 bp (cutpoint 4, abs_median=0.0796206525) ---
+--- pbp1a: lead variant 5848 at 333282 bp (cutpoint 5, abs_median=0.00947014025) ---
+--- pbp1b: lead variant 30164 at 2047005 bp (cutpoint 6, abs_median=0.00112837115) ---
+--- pbp2a: lead variant 28754 at 1952499 bp (cutpoint 7, abs_median=0.00181608) ---
+--- pbp2b: lead variant 24226 at 1613379 bp (cutpoint 5, abs_median=0.0494870855) ---
+
+============================================================
+=== Metric: exp_abs_median
+============================================================
+--- Identifying lead variants per gene ---
+     gene lead_variant lead_pos lead_cutpoint    lead_metric lead_metric_value
+   <char>        <int>    <int>         <int>         <char>             <num>
+1:  pbp2X         4769   294613             4 exp_abs_median          1.082876
+2:  pbp1a         5848   333282             5 exp_abs_median          1.009515
+3:  pbp1b        30164  2047005             6 exp_abs_median          1.001129
+4:  pbp2a        28754  1952499             7 exp_abs_median          1.001818
+5:  pbp2b        24226  1613379             5 exp_abs_median          1.050732
+--- pbp2X: lead variant 4769 at 294613 bp (cutpoint 4, exp_abs_median=1.08287620336915) ---
+--- pbp1a: lead variant 5848 at 333282 bp (cutpoint 5, exp_abs_median=1.00951512391659) ---
+--- pbp1b: lead variant 30164 at 2047005 bp (cutpoint 6, exp_abs_median=1.00112900800024) ---
+--- pbp2a: lead variant 28754 at 1952499 bp (cutpoint 7, exp_abs_median=1.00181773007202) ---
+--- pbp2b: lead variant 24226 at 1613379 bp (cutpoint 5, exp_abs_median=1.0507320224485) ---
+
+Done. Plots written to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5
