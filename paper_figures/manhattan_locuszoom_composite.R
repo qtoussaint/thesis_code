@@ -2,10 +2,10 @@
 # Compose one PPOM paper figure from a manhattan_short directory and a locus-zoom directory.
 #
 # Usage:
-#   Rscript manhattan_locuszoom_composite.R <manhattan_dir> <locuszoom_dir> [--output-dir <dir>]
+#   Rscript manhattan_locuszoom_composite.R <manhattan_dir> <locuszoom_dir> [--output-dir <dir>] [--analysis-name <name>]
 #
 # Output: <output_dir>/figure_<analysis_name>.png
-# where <analysis_name> is the parent directory name of <manhattan_dir>.
+# where <analysis_name> defaults to the parent directory name of <manhattan_dir>.
 
 suppressPackageStartupMessages({
   library(cowplot)
@@ -17,6 +17,7 @@ DEFAULT_OUTPUT_DIR <- "/nfs/research/jlees/jacqueline/thesis_results/paper_figur
 
 parse_args <- function(argv) {
   output_dir <- DEFAULT_OUTPUT_DIR
+  analysis_name <- NULL
   positional <- character(0)
   i <- 1
   while (i <= length(argv)) {
@@ -25,18 +26,23 @@ parse_args <- function(argv) {
       if (i == length(argv)) stop("--output-dir requires a value")
       output_dir <- argv[i + 1]
       i <- i + 2
+    } else if (a == "--analysis-name") {
+      if (i == length(argv)) stop("--analysis-name requires a value")
+      analysis_name <- argv[i + 1]
+      i <- i + 2
     } else {
       positional <- c(positional, a)
       i <- i + 1
     }
   }
   if (length(positional) != 2) {
-    stop("Usage: Rscript manhattan_locuszoom_composite.R <manhattan_dir> <locuszoom_dir> [--output-dir <dir>]")
+    stop("Usage: Rscript manhattan_locuszoom_composite.R <manhattan_dir> <locuszoom_dir> [--output-dir <dir>] [--analysis-name <name>]")
   }
   list(
     manhattan_dir = positional[1],
     locuszoom_dir = positional[2],
-    output_dir = output_dir
+    output_dir = output_dir,
+    analysis_name = analysis_name
   )
 }
 
@@ -46,7 +52,12 @@ require_file <- function(path) {
 }
 
 panel_from_png <- function(path) {
-  ggdraw() + draw_image(path)
+  trimmed <- magick::image_trim(magick::image_read(path))
+  info <- magick::image_info(trimmed)
+  list(
+    plot = ggdraw() + draw_image(trimmed),
+    aspect = info$height / info$width
+  )
 }
 
 main <- function() {
@@ -56,42 +67,53 @@ main <- function() {
   locuszoom_dir <- normalizePath(args$locuszoom_dir, mustWork = TRUE)
 
   panel_a_path <- require_file(file.path(manhattan_dir, "manhattan_all_cutpoints_overlayed_median_effects.png"))
-  panel_c_path <- require_file(file.path(manhattan_dir, "manhattan_all_cutpoints_overlayed_exp_abs_median.png"))
+  panel_b_path <- require_file(file.path(manhattan_dir, "manhattan_all_cutpoints_overlayed_exp_abs_median.png"))
   panel_d_path <- require_file(file.path(manhattan_dir, "manhattan_all_cutpoints_overlayed_RATE.png"))
 
-  lz_files <- sort(list.files(locuszoom_dir, pattern = "\\.png$", full.names = TRUE, ignore.case = TRUE))
-  if (length(lz_files) == 0) stop("No PNG files found in locus-zoom directory: ", locuszoom_dir)
+  lz_genes <- c("pbp2X", "pbp1a", "pbp2b")
+  lz_files <- file.path(locuszoom_dir, paste0(lz_genes, "_exp_abs_median_nolabels.png"))
+  missing <- lz_files[!file.exists(lz_files)]
+  if (length(missing) > 0) stop("Missing locus-zoom PNG(s): ", paste(missing, collapse = ", "))
 
-  analysis_name <- basename(dirname(manhattan_dir))
+  analysis_name <- if (!is.null(args$analysis_name)) args$analysis_name else basename(dirname(manhattan_dir))
   dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
   output_path <- file.path(args$output_dir, paste0("figure_", analysis_name, ".png"))
 
   message("Panel A: ", panel_a_path)
-  message("Panel B: ", length(lz_files), " locus-zoom plots from ", locuszoom_dir)
-  message("Panel C: ", panel_c_path)
+  message("Panel B: ", panel_b_path)
+  message("Panel C: ", length(lz_files), " locus-zoom plots from ", locuszoom_dir)
   message("Panel D: ", panel_d_path)
   message("Output:  ", output_path)
 
   panel_a <- panel_from_png(panel_a_path)
-  panel_c <- panel_from_png(panel_c_path)
+  panel_b <- panel_from_png(panel_b_path)
   panel_d <- panel_from_png(panel_d_path)
   lz_panels <- lapply(lz_files, panel_from_png)
-  row_b <- plot_grid(plotlist = lz_panels, nrow = 1)
+  row_c <- plot_grid(plotlist = lapply(lz_panels, `[[`, "plot"), nrow = 1)
+
+  fig_width <- 16
+  h_a <- fig_width * panel_a$aspect
+  h_b <- fig_width * panel_b$aspect
+  h_d <- fig_width * panel_d$aspect
+  h_c <- (fig_width / length(lz_panels)) *
+    max(vapply(lz_panels, `[[`, numeric(1), "aspect"))
 
   figure <- plot_grid(
-    panel_a, row_b, panel_c, panel_d,
+    panel_a$plot, panel_b$plot, row_c, panel_d$plot,
     ncol = 1,
     labels = c("A", "B", "C", "D"),
     label_size = 28,
     label_fontface = "bold",
-    rel_heights = c(8, 3, 8, 8)
+    label_x = -0.01,
+    hjust = 0,
+    rel_heights = c(h_a, h_b, h_c, h_d)
   )
 
   ggsave(
     output_path,
     figure,
-    width = 16,
-    height = 27,
+    width = fig_width,
+    height = h_a + h_b + h_c + h_d,
     dpi = 300,
     limitsize = FALSE,
     bg = "white"
