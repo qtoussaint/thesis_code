@@ -112,6 +112,14 @@ option_list <- list(
       "rendered using col 2 (e.g. penA -> pbp2b)."
     )
   ),
+  make_option("--genes_of_interest_gff",
+    type = "character", default = NULL,
+    help = paste(
+      "Optional 2-col file (gff_name, display_name) used to remap GFF",
+      "gene-track labels. Mirrors --genes_of_interest but keyed against the",
+      "GFF Name attribute (e.g. pbp2X -> pbp2x, SPN23F_RS01610 -> clpL)."
+    )
+  ),
   make_option("--top_n_labels",
     type = "integer", default = 40L,
     help = "Number of top variants to label with gene names [default: 40]"
@@ -298,6 +306,37 @@ apply_display_names <- function(x) {
   hit <- !is.na(m)
   x[hit] <- goi_df$display_name[m[hit]]
   x
+}
+
+# Parallel map keyed against GFF Name (e.g. pbp2X, SPN23F_RS01610). Used to
+# remap gene-track labels so they match the SNP-label display names.
+goi_gff_df <- NULL
+if (!is.null(opt$genes_of_interest_gff)) {
+  stop_if_missing(opt$genes_of_interest_gff, "--genes_of_interest_gff")
+  message("Loading genes_of_interest_gff: ", opt$genes_of_interest_gff)
+  goi_gff_df <- fread(opt$genes_of_interest_gff, header = FALSE, sep = ",",
+                      strip.white = TRUE)
+  if (ncol(goi_gff_df) < 2) {
+    warning("--genes_of_interest_gff needs >=2 columns; ignoring file")
+    goi_gff_df <- NULL
+  } else {
+    setnames(goi_gff_df,
+             c("gff_name", "display_name")[seq_len(ncol(goi_gff_df))])
+    goi_gff_df[, gff_name     := trimws(gff_name)]
+    goi_gff_df[, display_name := trimws(display_name)]
+  }
+}
+
+apply_gff_display_names <- function(x) {
+  if (is.null(x)) return(x)
+  if (!is.null(goi_gff_df)) {
+    m <- match(x, goi_gff_df$gff_name)
+    hit <- !is.na(m)
+    x[hit] <- goi_gff_df$display_name[m[hit]]
+  }
+  # Fall back to the SNPEff-keyed map for any names that happen to overlap
+  # (e.g. clpX, ciaH) so a single-file setup still works.
+  apply_display_names(x)
 }
 
 italic_gene_expr <- function(x) paste0("italic('", gsub("'", "", x), "')")
@@ -507,7 +546,7 @@ if (nrow(genes_region) > 0) {
   genes_region[is.na(name), name := extract_attr(attributes, "locus_tag")]
   genes_region[is.na(name), name := paste0("gene_", seq_len(sum(is.na(name))))]
 
-  genes_region[, name := apply_display_names(name)]
+  genes_region[, name := apply_gff_display_names(name)]
 
   genes_region[, draw_start := pmax(start, region_start)]
   genes_region[, draw_end   := pmin(end,   region_end)]
@@ -638,23 +677,6 @@ if (nrow(genes_region) > 0) {
   genes_region[, ymin := y_level - gene_height]
   genes_region[, ymax := y_level + gene_height]
 
-  # Stagger labels across 4 rows (2 above + 2 below) cycling in genomic order
-  # so neighbouring genes never share a row. "Near" rows sit just outside the
-  # rectangles, "far" rows fill the panel's expand(add = ...) padding.
-  setorder(genes_region, mid)
-  gene_panel_top    <- max(genes_region$ymax)
-  gene_panel_bottom <- min(genes_region$ymin)
-  slot_offset <- c(above_near =  0.20,
-                   above_far  =  0.95,
-                   below_near = -0.20,
-                   below_far  = -0.95)
-  genes_region[, label_slot := rep_len(names(slot_offset), .N)]
-  genes_region[, label_side := ifelse(startsWith(label_slot, "above"),
-                                       "above", "below")]
-  genes_region[, label_y := ifelse(label_side == "above",
-                                    gene_panel_top    + slot_offset[label_slot],
-                                    gene_panel_bottom + slot_offset[label_slot])]
-
   # For the gene-track tick layer, use one row per variant (the lead-cutpoint
   # stratum if available, else the first cutpoint) so we don't draw K coloured
   # ticks per variant.
@@ -700,30 +722,15 @@ if (nrow(genes_region) > 0) {
       guide    = "none"
     ) +
     geom_text_repel(
-      data           = as.data.frame(genes_region[label_side == "above"]),
-      aes(x = mid, y = label_y, label = italic_gene_expr(name)),
-      parse          = TRUE,
-      size           = 2.4,
+      aes(x = mid, y = ymax, label = name),
+      size           = 2.8,
       vjust          = 0,
-      direction      = "x",
+      nudge_y        = 0.2,
+      fontface       = "italic",
       segment.colour = "grey60",
       segment.size   = 0.3,
       max.overlaps   = Inf,
-      force          = 1.5,
-      force_pull     = 0.2
-    ) +
-    geom_text_repel(
-      data           = as.data.frame(genes_region[label_side == "below"]),
-      aes(x = mid, y = label_y, label = italic_gene_expr(name)),
-      parse          = TRUE,
-      size           = 2.4,
-      vjust          = 1,
-      direction      = "x",
-      segment.colour = "grey60",
-      segment.size   = 0.3,
-      max.overlaps   = Inf,
-      force          = 1.5,
-      force_pull     = 0.2
+      direction      = "x"
     ) +
     scale_fill_manual(
       values = c("+" = "steelblue3", "-" = "tomato3"),
@@ -736,7 +743,7 @@ if (nrow(genes_region) > 0) {
       labels = scales::comma,
       name   = "genomic position"
     ) +
-    scale_y_continuous(expand = expansion(add = 1.5)) +
+    scale_y_continuous(expand = expansion(add = 0.5)) +
     theme_bw(base_size = 11) +
     theme(
       axis.text.y      = element_blank(),
@@ -760,8 +767,8 @@ if (nrow(genes_region) > 0) {
 # ---------------------------------------------------------------------------
 # Step 12: Assemble and save
 # ---------------------------------------------------------------------------
-combined_labeled   <- p_scatter_labeled / p_genes + plot_layout(heights = c(3, 1.5))
-combined_unlabeled <- p_scatter_base    / p_genes + plot_layout(heights = c(3, 1.5))
+combined_labeled   <- p_scatter_labeled / p_genes + plot_layout(heights = c(3, 1))
+combined_unlabeled <- p_scatter_base    / p_genes + plot_layout(heights = c(3, 1))
 
 ext  <- tools::file_ext(opt$output)
 stem <- tools::file_path_sans_ext(opt$output)

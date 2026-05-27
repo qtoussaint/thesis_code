@@ -42,6 +42,7 @@ VARIANT_EFFECTS="$PIPELINE_OUTPUT_DIR/fitted_model/depruned_variant_effects.csv"
 ANNOTATIONS="/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
 RATE_DIR="$PIPELINE_OUTPUT_DIR/cppRATE_results"
 GENES_OF_INTEREST="/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt"
+GENES_OF_INTEREST_GFF="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/spn_penicillin_genesofinterest_updatedrefseq.txt"
 
 # Top 5 pbp genes -- names as they appear in the GFF (which already uses display names here).
 GENES="pbp2X,pbp1a,pbp1b,pbp2a,pbp2b"
@@ -110,6 +111,7 @@ for METRIC in rate abs_median exp_abs_median; do
         --variant_effects  "$VARIANT_EFFECTS" \
         --annotations      "$ANNOTATIONS" \
         --genes_of_interest "$GENES_OF_INTEREST" \
+        --genes_of_interest_gff "$GENES_OF_INTEREST_GFF" \
         --lead_variant     "$vid" \
         --lead_cutpoint    "$cp" \
         --window           5000 \

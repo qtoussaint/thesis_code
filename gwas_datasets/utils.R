@@ -35,8 +35,10 @@ load_tb_genotype <- function(presabs_path, variant_idx_path) {
   message("Loading TB genotype from: ", presabs_path)
   geno <- fread(presabs_path, sep = "\t", header = FALSE,
                 na.strings = "", colClasses = "numeric")
-  variant_names <- fread(variant_idx_path, sep = "\t", header = FALSE,
-                         na.strings = "")[[1]]
+  # Variant index TSV is a single row with one variant per column; scan reads
+  # it as a flat character vector regardless of row vs. column orientation.
+  variant_names <- scan(variant_idx_path, what = character(), sep = "\t",
+                        quiet = TRUE, na.strings = "")
   message("  Loaded: ", nrow(geno), " samples x ", ncol(geno), " variants")
   list(genotype = geno, variant_names = as.character(variant_names))
 }
