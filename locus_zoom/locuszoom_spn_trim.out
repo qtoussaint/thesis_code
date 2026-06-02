@@ -1,0 +1,43 @@
+
+============================================================
+=== Metric: rate
+============================================================
+--- Identifying lead variants per gene ---
+     gene lead_variant lead_pos lead_cutpoint lead_metric lead_metric_value
+   <char>        <int>    <int>         <int>      <char>             <num>
+1:   folP         4036   265137             2        rate         0.0190784
+2:    dyr        22781  1532458             3        rate         0.0337136
+--- folP: lead variant 4036 at 265137 bp (cutpoint 2, rate=0.0190784) ---
+--- dyr: lead variant 22781 at 1532458 bp (cutpoint 3, rate=0.0337136) ---
+
+============================================================
+=== Metric: abs_median
+============================================================
+--- Identifying lead variants per gene ---
+     gene lead_variant lead_pos lead_cutpoint lead_metric lead_metric_value
+   <char>        <int>    <int>         <int>      <char>             <num>
+1:   folP         4084   265608             2  abs_median          4.547748
+2:    dyr        22781  1532458             3  abs_median          6.841252
+--- folP: lead variant 4084 at 265608 bp (cutpoint 2, abs_median=4.54774755) ---
+--- dyr: lead variant 22781 at 1532458 bp (cutpoint 3, abs_median=6.84125235) ---
+
+============================================================
+=== Metric: exp_abs_median
+============================================================
+--- Identifying lead variants per gene ---
+     gene lead_variant lead_pos lead_cutpoint    lead_metric lead_metric_value
+   <char>        <int>    <int>         <int>         <char>             <num>
+1:   folP         4084   265608             2 exp_abs_median          94.41949
+2:    dyr        22781  1532458             3 exp_abs_median         935.66018
+--- folP: lead variant 4084 at 265608 bp (cutpoint 2, exp_abs_median=94.4194934269041) ---
+--- dyr: lead variant 22781 at 1532458 bp (cutpoint 3, exp_abs_median=935.660175320378) ---
+
+=== Renaming PNGs to display names from /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt ===
+  rename dyr_abs_median_nolabels.png -> folA_abs_median_nolabels.png
+  rename dyr_abs_median.png -> folA_abs_median.png
+  rename dyr_exp_abs_median_nolabels.png -> folA_exp_abs_median_nolabels.png
+  rename dyr_exp_abs_median.png -> folA_exp_abs_median.png
+  rename dyr_rate_nolabels.png -> folA_rate_nolabels.png
+  rename dyr_rate.png -> folA_rate.png
+
+Done. Plots written to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2

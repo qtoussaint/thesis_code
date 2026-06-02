@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 
-#SBATCH --job-name=locuszoom_pbp_spn_pen
+#SBATCH --job-name=locuszoom_spn_trim
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
 #SBATCH --time=2:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/locuszoom_pbp.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/locuszoom_pbp.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/locuszoom_spn_trim.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/locuszoom_spn_trim.out
 
 #################################################################################
-# LocusZoom plots for the top 5 pbp genes in the spn_penicillin
-# 02_spn_penicillin_MIC_PPOM inference run.
+# LocusZoom plots for the genes of interest in the spn_trimethoprim
+# 05_spn_trimethoprim_MIC_PPOM inference run.
 #
 # Each gene is plotted three times — once per y-axis metric (rate, abs_median,
 # exp_abs_median). Within a plot, all cutpoints are overlaid (color = r² with
 # lead, shape = cutpoint). The lead pair (variant, cutpoint) is the peak of the
 # chosen metric inside the gene. Window: 25 kb either side of the lead.
+#
+# Gene names passed to the lead finder must match the GFF. After the loop we
+# rename per-gene PNGs to the display names in spn_trimethoprim_genesofinterest.txt
+# (col2, with text in parens stripped) — e.g. dyr -> folA.
 #################################################################################
 
 source ~/.bashrc
@@ -25,8 +29,7 @@ MAKE_PLOT="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/make_locuszoom_
 LEAD_FINDER="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/pbp_lead_variants.R"
 
 # ---------------------------------------------------------------------------
-# Reference (S. pneumoniae ATCC 700669, GenBank assembly GCA_000026665.1_ASM2666v1,
-# seqname FM211187.1 — same genome as the GBFF in gwas_data/spn_pneumo/genotype/).
+# Reference (S. pneumoniae ATCC 700669, seqname NC_011900.1)
 # ---------------------------------------------------------------------------
 SPECIES_OUTPUT_DIR="/nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae"
 GFF="$SPECIES_OUTPUT_DIR/reference/GCA_000026665.1_ASM2666v1_genomic.gff"
@@ -34,28 +37,27 @@ GFF="$SPECIES_OUTPUT_DIR/reference/GCA_000026665.1_ASM2666v1_genomic.gff"
 # ---------------------------------------------------------------------------
 # Pipeline run
 # ---------------------------------------------------------------------------
-PIPELINE_OUTPUT_DIR="/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM"
-DATASET_DIR="/nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/02_spn_penicillin_MIC"
+PIPELINE_OUTPUT_DIR="/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM"
+DATASET_DIR="/nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC"
 
-POSITIONS_FILE="$DATASET_DIR/02_spn_penicillin_MIC_variant_index.csv"
+POSITIONS_FILE="$DATASET_DIR/05_spn_trimethoprim_MIC_variant_index.csv"
 GENOTYPE_MATRIX="$PIPELINE_OUTPUT_DIR/cppRATE_matrices/design_matrix.csv"
 VARIANT_EFFECTS="$PIPELINE_OUTPUT_DIR/fitted_model/depruned_variant_effects.csv"
 ANNOTATIONS="/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
 RATE_DIR="$PIPELINE_OUTPUT_DIR/cppRATE_results"
-GENES_OF_INTEREST="/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt"
-GENES_OF_INTEREST_GFF="/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt"
+GENES_OF_INTEREST="/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt"
+GENES_OF_INTEREST_GFF="/nfs/research/jlees/jacqueline/thesis_code/locus_zoom/spn_penicillin_genesofinterest_updatedrefseq.txt"
 
-# Top 5 pbp genes -- names as they appear in the EMBL GFF.
-# Post-rename below maps pbpX->pbp2X, pbp1A->pbp1a, pbp1B->pbp1b, pbp2A->pbp2a, penA->pbp2b.
-GENES="pbpX,pbp1A,pbp1B,pbp2A,penA"
+# Genes — names as they appear in the GFF. Post-rename below maps dyr -> folA.
+GENES="folP,dyr"
 
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
-OUTPUT_DIR="$SPECIES_OUTPUT_DIR/plots/02_spn_penicillin_MIC_PPOM_pbp_top5"
+OUTPUT_DIR="$SPECIES_OUTPUT_DIR/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2"
 mkdir -p "$OUTPUT_DIR"
 
-# Comma-separated list of per-cutpoint RATE files, for --rate_files
+# Comma-separated list of per-cutpoint RATE files
 RATE_FILES_CSV=$(ls "$RATE_DIR"/RATE_values_cutpoint*_depruned.txt | paste -sd,)
 if [[ -z "$RATE_FILES_CSV" ]]; then
   echo "ERROR: No RATE_values_cutpoint*_depruned.txt files in $RATE_DIR"
@@ -88,7 +90,6 @@ for METRIC in rate abs_median exp_abs_median; do
     exit 1
   fi
 
-  # TSV cols: gene  lead_variant  lead_pos  lead_cutpoint  lead_metric  lead_metric_value
   {
     read -r _header
     while IFS=$'\t' read -r gene vid pos cp _metric metric_value; do
@@ -118,7 +119,7 @@ for METRIC in rate abs_median exp_abs_median; do
         --lead_cutpoint    "$cp" \
         --window           5000 \
         "${Y_FLAG[@]}" \
-        --title            "S. pneumoniae penicillin PPOM — ${gene} (${METRIC})" \
+        --title            "S. pneumoniae trimethoprim PPOM — ${gene} (${METRIC})" \
         --output           "$OUTPUT_DIR/${gene}_${METRIC}.png" \
         --width 10 --height 7
     done

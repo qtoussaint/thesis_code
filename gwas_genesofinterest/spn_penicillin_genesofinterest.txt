@@ -1,4 +1,4 @@
-pbpX, pbp2x
+pbpX, pbp2X
 pbp1A, pbp1a
 pbp1B, pbp1b
 pbp2A, pbp2a

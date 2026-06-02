@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=800G
-#SBATCH --time=24:00:00
+#SBATCH --time=72:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random/logs/14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random_%j.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random/logs/14_tb_rifampicin_MIC_coarse_dilutions_PPOM_random_%j.out
 
@@ -35,6 +35,8 @@ GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_cod
 RESUME="--resume"
 CPPRATE="--cpprate_bin /hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate-0.2.0/build/bin/cpprate"
 NORATE="--norate"
+GRAD_SAMPLES="--grad_samples 3"
+VI_SEED="--vi_seed 192837465"
 TRUE_PHENOTYPES="--true_phenotypes /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/14_tb_rifampicin_MIC_coarse_dilutions/14_tb_rifampicin_MIC_coarse_dilutions_test_phenotypes.csv"
 Rscript $RSCRIPT_PATH \
 $DATA \
@@ -53,6 +55,8 @@ $MODEL_TYPE \
 $GENES_OF_INTEREST \
 $RESUME \
 $CPPRATE \
+$GRAD_SAMPLES \
+$VI_SEED \
 $TRUE_PHENOTYPES \
 $NORATE
 

@@ -1,0 +1,183 @@
+V (total variants): 75272
+Parsing LD pruning summary and correlation directions...
+  kept variants: 40941  |  representatives with pruned neighbours: 3266
+Loading fitted model: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/08_tb_rifampicin_MIC_POM_2172b323b81380.RDS
+Computing per-variant posterior medians and 89% CI...
+Warning messages:
+1: In total_med[-pruned] <- medians_kept :
+  number of items to replace is not a multiple of replacement length
+2: In total_sig[-pruned] <- signif_kept :
+  number of items to replace is not a multiple of replacement length
+Writing /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/depruned_variant_effects.csv
+Done. 75272 variant rows written.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+Loading RATE values from 1 file(s)
+Parsing GFF: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+Wrote 3 rows to /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/lead_variants_rate.tsv
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+  Loaded 75272 variant positions
+  Loaded RATE values for 1 cutpoint(s): 1
+  14 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/genotype/snpEff/fields_filtered.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt
+Region: ?:3873555-3883555  |  Lead variant: 64959 (pos 3878555, cutpoint 1)
+  153 (variant, cutpoint) rows in region — 153 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.000)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+  Auto-detected seqname from GFF: NC_000962.3
+  13 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoA_rate.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoA_rate_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+  Loaded 75272 variant positions
+  Loaded RATE values for 1 cutpoint(s): 1
+  14 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/genotype/snpEff/fields_filtered.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt
+Region: ?:756155-766155  |  Lead variant: 12523 (pos 761155, cutpoint 1)
+  199 (variant, cutpoint) rows in region — 199 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.001)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+  Auto-detected seqname from GFF: NC_000962.3
+  6 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoB_rate.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoB_rate_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+  Loaded 75272 variant positions
+  Loaded RATE values for 1 cutpoint(s): 1
+  14 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/genotype/snpEff/fields_filtered.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt
+Region: ?:756155-766155  |  Lead variant: 12523 (pos 761155, cutpoint 1)
+  199 (variant, cutpoint) rows in region — 199 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.001)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+  Auto-detected seqname from GFF: NC_000962.3
+  6 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoC_rate.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoC_rate_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/depruned_variant_effects.csv
+Parsing GFF: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+Wrote 3 rows to /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/lead_variants_abs_median.tsv
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+  Loaded 75272 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/depruned_variant_effects.csv
+  Loaded 75272 (variant, cutpoint) rows from variant_effects — 1 cutpoint(s)
+  14 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/genotype/snpEff/fields_filtered.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt
+Region: ?:3868195-3878195  |  Lead variant: 64863 (pos 3873195, cutpoint 1)
+  161 (variant, cutpoint) rows in region — 161 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.000)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+  Auto-detected seqname from GFF: NC_000962.3
+  9 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoA_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoA_abs_median_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+  Loaded 75272 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/depruned_variant_effects.csv
+  Loaded 75272 (variant, cutpoint) rows from variant_effects — 1 cutpoint(s)
+  14 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/genotype/snpEff/fields_filtered.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt
+Region: ?:756155-766155  |  Lead variant: 12523 (pos 761155, cutpoint 1)
+  199 (variant, cutpoint) rows in region — 199 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.001)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+  Auto-detected seqname from GFF: NC_000962.3
+  6 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoB_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoB_abs_median_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+  Loaded 75272 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/depruned_variant_effects.csv
+  Loaded 75272 (variant, cutpoint) rows from variant_effects — 1 cutpoint(s)
+  14 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/genotype/snpEff/fields_filtered.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt
+Region: ?:756155-766155  |  Lead variant: 12523 (pos 761155, cutpoint 1)
+  199 (variant, cutpoint) rows in region — 199 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.001)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+  Auto-detected seqname from GFF: NC_000962.3
+  6 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoC_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoC_abs_median_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/depruned_variant_effects.csv
+Parsing GFF: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+Wrote 3 rows to /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/lead_variants_exp_abs_median.tsv
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+  Loaded 75272 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/depruned_variant_effects.csv
+  Loaded 75272 (variant, cutpoint) rows from variant_effects — 1 cutpoint(s)
+  14 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/genotype/snpEff/fields_filtered.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt
+Region: ?:3868195-3878195  |  Lead variant: 64863 (pos 3873195, cutpoint 1)
+  161 (variant, cutpoint) rows in region — 161 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.000)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+  Auto-detected seqname from GFF: NC_000962.3
+  9 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoA_exp_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoA_exp_abs_median_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+  Loaded 75272 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/depruned_variant_effects.csv
+  Loaded 75272 (variant, cutpoint) rows from variant_effects — 1 cutpoint(s)
+  14 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/genotype/snpEff/fields_filtered.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt
+Region: ?:756155-766155  |  Lead variant: 12523 (pos 761155, cutpoint 1)
+  199 (variant, cutpoint) rows in region — 199 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.001)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+  Auto-detected seqname from GFF: NC_000962.3
+  6 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoB_exp_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoB_exp_abs_median_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/08_tb_rifampicin_MIC/08_tb_rifampicin_MIC_variant_index.csv
+  Loaded 75272 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/fitted_model/depruned_variant_effects.csv
+  Loaded 75272 (variant, cutpoint) rows from variant_effects — 1 cutpoint(s)
+  14 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/tuberculosis/genotype/snpEff/fields_filtered.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt
+Region: ?:756155-766155  |  Lead variant: 12523 (pos 761155, cutpoint 1)
+  199 (variant, cutpoint) rows in region — 199 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_POM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.001)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/reference/tb_ref_NC_000962.3.gff3
+  Auto-detected seqname from GFF: NC_000962.3
+  6 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoC_exp_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/08_tb_rifampicin_MIC_POM_genes_top3/rpoC_exp_abs_median_nolabels.png
+Done.

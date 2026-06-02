@@ -1,0 +1,124 @@
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC/05_spn_trimethoprim_MIC_variant_index.csv
+Loading RATE values from 4 file(s)
+Parsing GFF: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/GCA_000026665.1_ASM2666v1_genomic.gff
+Wrote 2 rows to /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/lead_variants_rate.tsv
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC/05_spn_trimethoprim_MIC_variant_index.csv
+  Loaded 32406 variant positions
+  Loaded RATE values for 4 cutpoint(s): 1, 2, 3, 4
+  10 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt
+Loading genes_of_interest_gff: /nfs/research/jlees/jacqueline/thesis_code/locus_zoom/spn_penicillin_genesofinterest_updatedrefseq.txt
+Region: ?:260137-270137  |  Lead variant: 4036 (pos 265137, cutpoint 2)
+  1320 (variant, cutpoint) rows in region — 330 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.024)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/GCA_000026665.1_ASM2666v1_genomic.gff
+  Auto-detected seqname from GFF: FM211187.1
+  11 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/folP_rate.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/folP_rate_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC/05_spn_trimethoprim_MIC_variant_index.csv
+  Loaded 32406 variant positions
+  Loaded RATE values for 4 cutpoint(s): 1, 2, 3, 4
+  10 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt
+Loading genes_of_interest_gff: /nfs/research/jlees/jacqueline/thesis_code/locus_zoom/spn_penicillin_genesofinterest_updatedrefseq.txt
+Region: ?:1527458-1537458  |  Lead variant: 22781 (pos 1532458, cutpoint 3)
+  676 (variant, cutpoint) rows in region — 169 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.025)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/GCA_000026665.1_ASM2666v1_genomic.gff
+  Auto-detected seqname from GFF: FM211187.1
+  13 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/dyr_rate.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/dyr_rate_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC/05_spn_trimethoprim_MIC_variant_index.csv
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+Parsing GFF: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/GCA_000026665.1_ASM2666v1_genomic.gff
+Wrote 2 rows to /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/lead_variants_abs_median.tsv
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC/05_spn_trimethoprim_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 129624 (variant, cutpoint) rows from variant_effects — 4 cutpoint(s)
+  10 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt
+Loading genes_of_interest_gff: /nfs/research/jlees/jacqueline/thesis_code/locus_zoom/spn_penicillin_genesofinterest_updatedrefseq.txt
+Region: ?:260608-270608  |  Lead variant: 4084 (pos 265608, cutpoint 2)
+  1288 (variant, cutpoint) rows in region — 322 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.182)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/GCA_000026665.1_ASM2666v1_genomic.gff
+  Auto-detected seqname from GFF: FM211187.1
+  11 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/folP_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/folP_abs_median_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC/05_spn_trimethoprim_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 129624 (variant, cutpoint) rows from variant_effects — 4 cutpoint(s)
+  10 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt
+Loading genes_of_interest_gff: /nfs/research/jlees/jacqueline/thesis_code/locus_zoom/spn_penicillin_genesofinterest_updatedrefseq.txt
+Region: ?:1527458-1537458  |  Lead variant: 22781 (pos 1532458, cutpoint 3)
+  676 (variant, cutpoint) rows in region — 169 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.025)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/GCA_000026665.1_ASM2666v1_genomic.gff
+  Auto-detected seqname from GFF: FM211187.1
+  13 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/dyr_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/dyr_abs_median_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC/05_spn_trimethoprim_MIC_variant_index.csv
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+Parsing GFF: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/GCA_000026665.1_ASM2666v1_genomic.gff
+Wrote 2 rows to /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/lead_variants_exp_abs_median.tsv
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC/05_spn_trimethoprim_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 129624 (variant, cutpoint) rows from variant_effects — 4 cutpoint(s)
+  10 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt
+Loading genes_of_interest_gff: /nfs/research/jlees/jacqueline/thesis_code/locus_zoom/spn_penicillin_genesofinterest_updatedrefseq.txt
+Region: ?:260608-270608  |  Lead variant: 4084 (pos 265608, cutpoint 2)
+  1288 (variant, cutpoint) rows in region — 322 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.182)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/GCA_000026665.1_ASM2666v1_genomic.gff
+  Auto-detected seqname from GFF: FM211187.1
+  11 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/folP_exp_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/folP_exp_abs_median_nolabels.png
+Done.
+Loading positions: /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/inference/05_spn_trimethoprim_MIC/05_spn_trimethoprim_MIC_variant_index.csv
+  Loaded 32406 variant positions
+Loading variant effects: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/fitted_model/depruned_variant_effects.csv
+  Loaded 129624 (variant, cutpoint) rows from variant_effects — 4 cutpoint(s)
+  10 variants with 89% CI excluding zero
+Loading SNPEff annotations: /nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt
+Loading genes_of_interest: /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_trimethoprim_genesofinterest.txt
+Loading genes_of_interest_gff: /nfs/research/jlees/jacqueline/thesis_code/locus_zoom/spn_penicillin_genesofinterest_updatedrefseq.txt
+Region: ?:1527458-1537458  |  Lead variant: 22781 (pos 1532458, cutpoint 3)
+  676 (variant, cutpoint) rows in region — 169 distinct variants
+Computing r² from genotype matrix: /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM/cppRATE_matrices/design_matrix.csv
+  r² range (per variant): 0.000 – 1.000 (median 0.025)
+Parsing GFF3: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/reference/GCA_000026665.1_ASM2666v1_genomic.gff
+  Auto-detected seqname from GFF: FM211187.1
+  13 genes in region
+Building plot...
+Saving labeled plot to:   /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/dyr_exp_abs_median.png
+Saving unlabeled plot to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2/dyr_exp_abs_median_nolabels.png
+Done.

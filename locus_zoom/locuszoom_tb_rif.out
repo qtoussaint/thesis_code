@@ -1,0 +1,43 @@
+
+============================================================
+=== Metric: rate
+============================================================
+--- Identifying lead variants per gene ---
+     gene lead_variant lead_pos lead_cutpoint lead_metric lead_metric_value
+   <char>        <int>    <int>         <int>      <char>             <num>
+1:   rpoA        64947  3877960             1        rate        0.00664151
+2:   rpoB        12501   760312             1        rate        0.04827850
+3:   rpoC        12501   760312             1        rate        0.04827850
+--- rpoA: lead variant 64947 at 3877960 bp (cutpoint 1, rate=0.00664151) ---
+--- rpoB: lead variant 12501 at 760312 bp (cutpoint 1, rate=0.0482785) ---
+--- rpoC: lead variant 12501 at 760312 bp (cutpoint 1, rate=0.0482785) ---
+
+============================================================
+=== Metric: abs_median
+============================================================
+--- Identifying lead variants per gene ---
+     gene lead_variant lead_pos lead_cutpoint lead_metric lead_metric_value
+   <char>        <int>    <int>         <int>      <char>             <num>
+1:   rpoA        64947  3877960             1  abs_median        0.08964998
+2:   rpoB        12517   761094             1  abs_median        0.70170767
+3:   rpoC        12517   761094             1  abs_median        0.70170767
+--- rpoA: lead variant 64947 at 3877960 bp (cutpoint 1, abs_median=0.0896499755) ---
+--- rpoB: lead variant 12517 at 761094 bp (cutpoint 1, abs_median=0.701707665) ---
+--- rpoC: lead variant 12517 at 761094 bp (cutpoint 1, abs_median=0.701707665) ---
+
+============================================================
+=== Metric: exp_abs_median
+============================================================
+--- Identifying lead variants per gene ---
+     gene lead_variant lead_pos lead_cutpoint    lead_metric lead_metric_value
+   <char>        <int>    <int>         <int>         <char>             <num>
+1:   rpoA        64947  3877960             1 exp_abs_median          1.093791
+2:   rpoB        12517   761094             1 exp_abs_median          2.017194
+3:   rpoC        12517   761094             1 exp_abs_median          2.017194
+--- rpoA: lead variant 64947 at 3877960 bp (cutpoint 1, exp_abs_median=1.09379136291838) ---
+--- rpoB: lead variant 12517 at 761094 bp (cutpoint 1, exp_abs_median=2.01719446033175) ---
+--- rpoC: lead variant 12517 at 761094 bp (cutpoint 1, exp_abs_median=2.01719446033175) ---
+
+=== Renaming PNGs to display names from /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt ===
+
+Done. Plots written to: /nfs/research/jlees/jacqueline/thesis_results/locus_zoom/mtuberculosis/plots/07_tb_rifampicin_binary_logistic_genes_top3
