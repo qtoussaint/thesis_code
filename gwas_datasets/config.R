@@ -9,9 +9,13 @@
 # SPN genotype (MAF > 0.05, no modifier annotations, multiallelic; last modified Jul 14 2025)
 SPN_GENOTYPE_PATH <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/genotype_maf05_NOMODIFIERS_multiallelic.tsv"
 
-# SPN unitigs (presence/absence rtab: unitigs x samples, col 1 = unitig sequence).
-# Filtered to allele frequency in [SPN_UNITIG_MIN_AF, SPN_UNITIG_MAX_AF] at load time.
-SPN_UNITIGS_PATH  <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/unitigs/spn_unitigs.rtab"
+# SPN unitigs — COORDINATE-EXPANDED presence/absence rtab (rows = unitig_N_k, one row per
+# reference coordinate the unitig maps to on FM211187; unmapped unitigs kept at position
+# -10000). Built by gwas_datasets/map_expand_unitigs/. Already MAF-filtered to
+# [SPN_UNITIG_MIN_AF, SPN_UNITIG_MAX_AF]; the load-time AF re-check is a harmless no-op
+# (duplicated columns share the same presence/absence pattern).
+SPN_UNITIGS_PATH         <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/unitigs/spn_unitigs_mapped.rtab"
+SPN_UNITIG_VARINDEX_PATH <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/unitigs/spn_unitigs_mapped_variant_index.csv"
 SPN_UNITIG_MIN_AF <- 0.05
 SPN_UNITIG_MAX_AF <- 0.95
 

@@ -13,6 +13,9 @@
 # expands to a dense integer matrix when read into R before MAF filtering.
 # CPUs: data.table uses multiple threads for fread; 8 is sufficient.
 
+source ~/.bashrc
+mamba activate gwas_pipeline
+
 mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/logs
 
 Rscript /nfs/research/jlees/jacqueline/thesis_code/gwas_datasets/write_unitig_datasets.R

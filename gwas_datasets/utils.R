@@ -51,6 +51,23 @@ load_spn_unitigs <- function(path, min_af = 0.05, max_af = 1 - min_af) {
 }
 
 
+#' Look up reference-genome positions for expanded unitig columns.
+#' Reads the coordinate variant index (variant_name, position) written by the
+#' map/expand step and returns positions aligned to `variant_names`.
+#' @param variant_names character vector (expanded unitig names, e.g. "unitig_5_2")
+#' @param varindex_path path to spn_unitigs_mapped_variant_index.csv
+#' @return numeric vector of positions in the same order as variant_names
+unitig_variant_positions <- function(variant_names, varindex_path) {
+  vi  <- read.csv(varindex_path, stringsAsFactors = FALSE)
+  pos <- vi$position[match(variant_names, vi$variant_name)]
+  n_missing <- sum(is.na(pos))
+  if (n_missing > 0) {
+    stop(n_missing, " unitig variants have no position in ", varindex_path)
+  }
+  pos
+}
+
+
 #' Load TB genotype presence/absence matrix and variant index
 #' @return list(genotype = data.table N_samples x N_variants,
 #'              variant_names = character vector)
@@ -1120,9 +1137,13 @@ write_stan_json_streaming <- function(data, file) {
 #' @param dataset_name  prefix used for file names
 #' @param test_ids      character vector of test sample IDs (prediction only, NULL otherwise)
 #' @param test_pheno    numeric vector of test phenotypes (prediction only, NULL otherwise)
+#' @param variant_positions optional numeric vector (length = variant_names) of genomic
+#'        positions to use for the variant index. When supplied (e.g. unitig coordinates),
+#'        it is used verbatim instead of parsing positions from the variant names.
 write_dataset <- function(stan_list, sample_ids, variant_names, parent_lin,
                           outdir, dataset_name,
-                          test_ids = NULL, test_pheno = NULL) {
+                          test_ids = NULL, test_pheno = NULL,
+                          variant_positions = NULL) {
   dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
   # JSON
@@ -1132,10 +1153,16 @@ write_dataset <- function(stan_list, sample_ids, variant_names, parent_lin,
 
   # Variant index
   vnames <- as.character(variant_names)
-  vnames_clean <- sub("^Chromosome_", "", vnames)
-  pos_str <- sub("_[^_]+$", "", vnames_clean)
-  pos_str <- sub("_[^_]+$", "", pos_str)
-  variant_pos <- suppressWarnings(as.numeric(pos_str))
+  if (!is.null(variant_positions)) {
+    stopifnot(length(variant_positions) == length(vnames))
+    variant_pos <- as.numeric(variant_positions)
+  } else {
+    # Parse position from "Chromosome_POS_REF_ALT" style variant names.
+    vnames_clean <- sub("^Chromosome_", "", vnames)
+    pos_str <- sub("_[^_]+$", "", vnames_clean)
+    pos_str <- sub("_[^_]+$", "", pos_str)
+    variant_pos <- suppressWarnings(as.numeric(pos_str))
+  }
   vi <- data.frame(variant_name = vnames, position = variant_pos,
                    stringsAsFactors = FALSE)
   write.csv(vi, file.path(outdir, paste0(dataset_name, "_variant_index.csv")),

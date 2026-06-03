@@ -435,6 +435,7 @@ write_dataset(
   stan_list    = stan_list,
   sample_ids   = aligned$sample_ids,
   variant_names = rownames(spn_unitigs),
+  variant_positions = unitig_variant_positions(rownames(spn_unitigs), SPN_UNITIG_VARINDEX_PATH),
   parent_lin   = enc$parent_lineage,
   outdir       = out_dir,
   dataset_name = dataset_name
@@ -503,6 +504,7 @@ write_dataset(
   stan_list    = stan_list,
   sample_ids   = aligned$sample_ids,
   variant_names = rownames(spn_unitigs),
+  variant_positions = unitig_variant_positions(rownames(spn_unitigs), SPN_UNITIG_VARINDEX_PATH),
   parent_lin   = enc$parent_lineage,
   outdir       = out_dir,
   dataset_name = dataset_name
