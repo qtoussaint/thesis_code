@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Submits the logistic alpha_prior_sd sweep: copies of gwas_finalmodels/logistic_inference.stan
-# with alpha_prior_sd set to 0.075 / 1 / 1.25 / 1.5 / 3 / 5 (baseline model uses 0.5).
-# 6 models x 1 dataset = 6 jobs.
+# with alpha_prior_sd set to 0.075 / 1 / 1.25 / 1.5 / 2 / 2.5 / 3 / 5 (baseline model uses 0.5).
+# 8 models x 1 dataset = 8 jobs.
 # DRY_RUN=1 ./submit_logistic_sweep.sh   -> print sbatch lines, don't submit.
 
 DRY_RUN="${DRY_RUN:-0}"
@@ -15,6 +15,8 @@ MODELS=(
   logistic_inference_alphasd1
   logistic_inference_alphasd1p25
   logistic_inference_alphasd1p5
+  logistic_inference_alphasd2
+  logistic_inference_alphasd2p5
   logistic_inference_alphasd3
   logistic_inference_alphasd5
 )
