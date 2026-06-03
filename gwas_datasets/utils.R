@@ -28,6 +28,29 @@ load_spn_genotype <- function(path) {
 }
 
 
+#' Load SPN unitig presence/absence matrix (rtab) and filter by allele frequency.
+#' The rtab is unitigs x samples: column 1 holds the unitig sequence, the header
+#' row holds sample IDs, and entries are 0/1. Returns the filtered matrix in the
+#' same orientation as load_spn_genotype (variants x samples).
+#' @param min_af  minimum allele frequency to keep a unitig
+#' @param max_af  maximum allele frequency to keep a unitig
+#' @return integer matrix (unitigs x samples); rownames = unitig sequence, colnames = sample IDs
+load_spn_unitigs <- function(path, min_af = 0.05, max_af = 1 - min_af) {
+  message("Loading SPN unitigs from: ", path)
+  dt <- fread(path, sep = "\t", header = TRUE)
+  seqs <- dt[[1]]
+  dt[, 1 := NULL]
+  mat <- as.matrix(dt)
+  storage.mode(mat) <- "integer"
+  rownames(mat) <- seqs
+  af   <- rowMeans(mat)
+  keep <- af >= min_af & af <= max_af
+  message("  Loaded ", nrow(mat), " unitigs x ", ncol(mat), " samples; ",
+          sum(keep), " pass AF in [", min_af, ", ", max_af, "]")
+  mat[keep, , drop = FALSE]
+}
+
+
 #' Load TB genotype presence/absence matrix and variant index
 #' @return list(genotype = data.table N_samples x N_variants,
 #'              variant_names = character vector)

@@ -15,6 +15,8 @@
 ##   10 SPN penicillin    MIC (ordinal, coarse dilutions, >= 5% per bin)
 ##   11 SPN penicillin    MIC (ordinal, >= 10% per bin)
 ##   16 SPN penicillin    MIC (ordinal, breakpoint minima binning)
+##   17 SPN penicillin    MIC (ordinal, >= 5% per bin, UNITIG genotype)
+##   18 SPN penicillin    MIC (ordinal, breakpoint minima binning, UNITIG genotype)
 ##   03 SPN penicillin    continuous (log2)
 ##
 ##   SPN TRIMETHOPRIM
@@ -51,7 +53,8 @@ pdf(NULL)
 ############################################################
 
 message("\n=== Loading SPN data ===")
-spn_geno <- load_spn_genotype(SPN_GENOTYPE_PATH)
+spn_geno    <- load_spn_genotype(SPN_GENOTYPE_PATH)
+spn_unitigs <- load_spn_unitigs(SPN_UNITIGS_PATH, SPN_UNITIG_MIN_AF, SPN_UNITIG_MAX_AF)
 spn_lin  <- load_spn_lineages(SPN_LINEAGES_PATH)
 
 spn_meta <- read.csv(SPN_METADATA_PATH, na.strings = "")
@@ -614,6 +617,226 @@ save_prediction_ordinal_histogram(
   K              = K,
   breakpoints    = mic_bkpts_full,
   dataset_label  = "SPN Penicillin (breakpoint minima binning)",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
+
+
+############################################################
+## 17: SPN PENICILLIN MIC (ordinal, auto-binned, unitig genotype)
+############################################################
+
+message("\n=== 17-pred: SPN penicillin MIC unitigs (ordinal) ===")
+dataset_name <- "17_spn_penicillin_MIC_unitigs"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+aligned <- intersect_and_align(
+  pheno_df    = pen_raw,
+  geno        = spn_unitigs,
+  lineages_df = spn_lin$lineages,
+  sublin_df   = spn_lin$sublineages,
+  id_col      = "ID",
+  geno_in_cols = TRUE
+)
+
+binning <- bin_mic_auto(
+  mic_numeric   = aligned$pheno$MIC_num,
+  min_bin_frac  = MIC_MIN_BIN_FRAC,
+  dilutions     = MIC_STANDARD_DILUTIONS,
+  hist_path     = NULL,
+  dataset_label = "SPN Penicillin (unitigs)"
+)
+
+enc <- encode_lineages_spn(
+  lineages_df = aligned$lineages,
+  sublin_df   = aligned$sublineages,
+  pheno_vec   = binning$bins
+)
+
+pred <- build_stan_prediction(
+  pheno      = binning$bins,
+  geno_mat   = aligned$geno_mat,
+  lin_mat    = enc$lineage_matrix,
+  sublin_mat = enc$sublineage_matrix,
+  parent_lin = enc$parent_lineage,
+  sample_ids = aligned$sample_ids,
+  K          = binning$K,
+  mic_bkpts  = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_unitigs),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = binning$K,
+  breakpoints  = binning$breakpoints,
+  dataset_label = "SPN Penicillin (unitigs)",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "benzylpenicillin",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
+
+# ---- LOSO ----
+message("\n=== 17-pred LOSO: SPN penicillin MIC unitigs (ordinal) ===")
+dataset_name <- "17_spn_penicillin_MIC_unitigs_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = binning$bins,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]],
+  K             = binning$K,
+  mic_bkpts     = binning$mic_breakpoints
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_unitigs),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = binning$K,
+  breakpoints    = binning$breakpoints,
+  dataset_label  = "SPN Penicillin (unitigs)",
+  hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name      = "benzylpenicillin",
+  species_name   = "S. pneumoniae",
+  split_label    = "LOSO",
+  held_out_name  = pred$held_out_sublineage
+)
+
+
+
+############################################################
+## 18: SPN PENICILLIN MIC (ordinal, breakpoint minima binning, unitig genotype)
+############################################################
+
+message("\n=== 18-pred: SPN penicillin MIC minima binning unitigs (ordinal) ===")
+dataset_name <- "18_spn_penicillin_MIC_minimabinning_unitigs"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+aligned <- intersect_and_align(
+  pheno_df    = pen_raw,
+  geno        = spn_unitigs,
+  lineages_df = spn_lin$lineages,
+  sublin_df   = spn_lin$sublineages,
+  id_col      = "ID",
+  geno_in_cols = TRUE
+)
+
+# Fixed breakpoints placed at the natural minima of the SPN penicillin
+# MIC distribution, giving K = 5 ordered categories.
+mic_bkpts_full <- c(0, 0.032, 0.065, 0.2, 2, 6)
+bins <- as.integer(cut(aligned$pheno$MIC_num,
+                       breaks = mic_bkpts_full,
+                       include.lowest = TRUE))
+K <- length(mic_bkpts_full) - 1L
+
+enc <- encode_lineages_spn(
+  lineages_df = aligned$lineages,
+  sublin_df   = aligned$sublineages,
+  pheno_vec   = bins
+)
+
+pred <- build_stan_prediction(
+  pheno      = bins,
+  geno_mat   = aligned$geno_mat,
+  lin_mat    = enc$lineage_matrix,
+  sublin_mat = enc$sublineage_matrix,
+  parent_lin = enc$parent_lineage,
+  sample_ids = aligned$sample_ids,
+  K          = K,
+  mic_bkpts  = mic_bkpts_full[-c(1, length(mic_bkpts_full))]
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_unitigs),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+save_prediction_ordinal_histogram(
+  train_pheno  = pred$stan_list$training_phenotype,
+  test_pheno   = pred$stan_list$test_phenotype,
+  K            = K,
+  breakpoints  = mic_bkpts_full,
+  dataset_label = "SPN Penicillin (breakpoint minima binning, unitigs)",
+  hist_path    = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
+  drug_name    = "benzylpenicillin",
+  species_name = "S. pneumoniae",
+  split_label  = "80/20 random"
+)
+
+
+
+# ---- LOSO ----
+message("\n=== 18-pred LOSO: SPN penicillin MIC minima binning unitigs (ordinal) ===")
+dataset_name <- "18_spn_penicillin_MIC_minimabinning_unitigs_loso"
+out_dir <- file.path(OUT_PRED, dataset_name)
+
+pred <- build_stan_prediction_loso(
+  pheno         = bins,
+  geno_mat      = aligned$geno_mat,
+  lin_mat       = enc$lineage_matrix,
+  sublin_mat    = enc$sublineage_matrix,
+  parent_lin    = enc$parent_lineage,
+  sample_ids    = aligned$sample_ids,
+  sublineage_vec = aligned$sublineages[[2]],
+  K             = K,
+  mic_bkpts     = mic_bkpts_full[-c(1, length(mic_bkpts_full))]
+)
+
+write_dataset(
+  stan_list    = pred$stan_list,
+  sample_ids   = pred$train_ids,
+  variant_names = rownames(spn_unitigs),
+  parent_lin   = enc$parent_lineage,
+  outdir       = out_dir,
+  dataset_name = dataset_name,
+  test_ids     = pred$test_ids,
+  test_pheno   = pred$stan_list$test_phenotype
+)
+
+save_prediction_ordinal_histogram(
+  train_pheno    = pred$stan_list$training_phenotype,
+  test_pheno     = pred$stan_list$test_phenotype,
+  K              = K,
+  breakpoints    = mic_bkpts_full,
+  dataset_label  = "SPN Penicillin (breakpoint minima binning, unitigs)",
   hist_path      = file.path(OUT_HIST, paste0(dataset_name, "_pred_dist.png")),
   drug_name      = "benzylpenicillin",
   species_name   = "S. pneumoniae",
@@ -1688,4 +1911,4 @@ write_dataset(
 )
 
 
-message("\n=== All 32 prediction datasets written to: ", OUT_PRED, " ===")
+message("\n=== All 36 prediction datasets written to: ", OUT_PRED, " ===")

@@ -9,6 +9,12 @@
 # SPN genotype (MAF > 0.05, no modifier annotations, multiallelic; last modified Jul 14 2025)
 SPN_GENOTYPE_PATH <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/genotype_maf05_NOMODIFIERS_multiallelic.tsv"
 
+# SPN unitigs (presence/absence rtab: unitigs x samples, col 1 = unitig sequence).
+# Filtered to allele frequency in [SPN_UNITIG_MIN_AF, SPN_UNITIG_MAX_AF] at load time.
+SPN_UNITIGS_PATH  <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/unitigs/spn_unitigs.rtab"
+SPN_UNITIG_MIN_AF <- 0.05
+SPN_UNITIG_MAX_AF <- 0.95
+
 # SPN lineages — PopPIPE/PopPunk sublineages, min_cluster_size = 3
 SPN_LINEAGES_PATH <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/lineages/sublineages_from_poppipe/min_cluster_3/all_clusters.txt"
 
