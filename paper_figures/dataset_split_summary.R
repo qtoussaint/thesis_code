@@ -191,7 +191,7 @@ df$panel <- factor(df$panel, levels = unique(panel_order))
 # Plot: one figure per split strategy
 # -----------------------------------------------------------------------------
 
-make_figure <- function(split_name, split_title) {
+make_figure <- function(split_name) {
   d <- df[df$split == split_name, ]
   d$panel <- factor(d$panel, levels = intersect(levels(df$panel), unique(d$panel)))
 
@@ -203,8 +203,7 @@ make_figure <- function(split_name, split_title) {
     facet_wrap(~ panel, scales = "free", ncol = 3, labeller = label_parsed) +
     scale_fill_manual(values = SET_COLOURS) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
-    labs(x = NULL, y = "Number of samples", fill = NULL,
-         title = paste0("Train/test phenotype distributions — ", split_title)) +
+    labs(x = NULL, y = "Number of samples", fill = NULL) +
     theme_bw(base_size = 11) +
     theme(legend.position = "top",
           panel.grid.minor = element_blank(),
@@ -219,14 +218,14 @@ make_figure <- function(split_name, split_title) {
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
 figures <- list(
-  Random = list(file = "dataset_split_summary_random.png", title = "80/20 random split"),
-  LOSO   = list(file = "dataset_split_summary_loso.png",    title = "leave-one-sublineage-out split")
+  Random = list(file = "dataset_split_summary_random.png"),
+  LOSO   = list(file = "dataset_split_summary_loso.png")
 )
 
 for (split_name in names(figures)) {
   spec     <- figures[[split_name]]
   png_path <- file.path(OUTPUT_DIR, spec$file)
-  ggsave(png_path, make_figure(split_name, spec$title),
+  ggsave(png_path, make_figure(split_name),
          width = 14, height = 15, dpi = 300, bg = "white", limitsize = FALSE)
   message("Wrote ", png_path)
 }

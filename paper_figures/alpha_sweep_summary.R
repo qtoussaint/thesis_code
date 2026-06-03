@@ -53,7 +53,7 @@ MODELS <- list(
     baseline = file.path(RESULTS_ROOT, "gwas_spn_penicillin", "inference",
                          "01_spn_penicillin_binary_logistic"),
     metrics  = c(bacc = "balanced accuracy", auc = "AUC", brier = "Brier score"),
-    sds      = c(0.075, 1, 1.25, 1.5, 3, 5),
+    sds      = c(0.075, 1, 1.25, 1.5, 2, 2.5, 3, 5),
     out      = "logistic_alpha_sweep_summary"
   ),
   list(
