@@ -23,6 +23,11 @@ suppressPackageStartupMessages({
   library(caret)   # confusionMatrix
 })
 
+# Open a null device so grid.grabExpr (Panel C) doesn't fall back to R's default
+# device and leave a stray Rplots.pdf behind when run non-interactively.
+grDevices::pdf(NULL)
+on.exit(grDevices::dev.off(), add = TRUE)
+
 RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
 OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures")
 
