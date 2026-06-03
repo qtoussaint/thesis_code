@@ -44,7 +44,7 @@ SPECIES_META <- list(
 # Each row: dataset on disk + which species/binning it belongs to.
 # binning -> models is expanded below.
 DATASETS <- data.frame(
-  number      = c("01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16"),
+  number      = c("01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18"),
   dataset     = c(
     "01_spn_penicillin_binary",
     "02_spn_penicillin_MIC",
@@ -61,7 +61,9 @@ DATASETS <- data.frame(
     "13_spn_trimethoprim_MIC_large_minbin",
     "14_tb_rifampicin_MIC_coarse_dilutions",
     "15_tb_rifampicin_MIC_large_minbin",
-    "16_spn_penicillin_MIC_minimabinning"
+    "16_spn_penicillin_MIC_minimabinning",
+    "17_spn_penicillin_MIC_unitigs",
+    "18_spn_penicillin_MIC_minimabinning_unitigs"
   ),
   species     = c(
     "spn_penicillin","spn_penicillin","spn_penicillin",
@@ -70,7 +72,8 @@ DATASETS <- data.frame(
     "spn_penicillin","spn_penicillin",
     "spn_trimethoprim","spn_trimethoprim",
     "tb_rifampicin","tb_rifampicin",
-    "spn_penicillin"
+    "spn_penicillin",
+    "spn_penicillin","spn_penicillin"
   ),
   binning     = c(
     "binary","ordinal","continuous",
@@ -79,7 +82,8 @@ DATASETS <- data.frame(
     "ordinal","ordinal",
     "ordinal","ordinal",
     "ordinal","ordinal",
-    "ordinal"
+    "ordinal",
+    "ordinal","ordinal"
   ),
   stringsAsFactors = FALSE
 )
