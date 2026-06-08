@@ -68,7 +68,7 @@ transformed data {
   p_baseline_emp = fmin(fmax(p_baseline_emp, 0.5), 0.995);
 
   real alpha_prior_mean = -logit(p_baseline_emp);
-  real alpha_prior_sd   = 0.5;
+  real alpha_prior_sd   = 1.5;
 }
 
 parameters {
