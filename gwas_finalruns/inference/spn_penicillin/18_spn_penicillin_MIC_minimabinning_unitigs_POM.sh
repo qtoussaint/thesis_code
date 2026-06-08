@@ -2,8 +2,8 @@
 #SBATCH --job-name=spnpen_18_POM_infe
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
-#SBATCH --mem=650G
-#SBATCH --time=12:00:00
+#SBATCH --mem=1500G
+#SBATCH --time=72:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/18_spn_penicillin_MIC_minimabinning_unitigs_POM/logs/18_spn_penicillin_MIC_minimabinning_unitigs_POM_%j.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/inference/18_spn_penicillin_MIC_minimabinning_unitigs_POM/logs/18_spn_penicillin_MIC_minimabinning_unitigs_POM_%j.out
 

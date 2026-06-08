@@ -127,7 +127,16 @@ build_script <- function(species, dataset, model, model_type, analysis_type, spl
   res  <- resources_for(species, model)
 
   # Unitig datasets use their own coordinate-keyed gene annotation (see SPN_UNITIG_ANNOT).
-  annotations <- if (grepl("unitigs", dataset)) SPN_UNITIG_ANNOT else meta$annotations
+  is_unitig <- grepl("unitigs", dataset)
+  annotations <- if (is_unitig) SPN_UNITIG_ANNOT else meta$annotations
+
+  # Unitig heavy (POM/PPOM) runs fit ~242k LD-pruned variants (~9x the SNP datasets),
+  # which overran 650G/12h (OOM + cppRATE timeout). Bump mem/time; the scheduler
+  # auto-routes high-mem jobs to bigmem (specifying --partition=bigmem is disallowed).
+  partition_line <- ""
+  if (is_unitig && model_kind(model) == "heavy") {
+    res <- modifyList(res, list(mem = 1500, time = 72))
+  }
 
   # Prediction LOSO uses the _loso dataset variant; random uses the base dataset.
   json_dataset <- if (analysis_type == "prediction" && split == "loso")
@@ -170,7 +179,7 @@ build_script <- function(species, dataset, model, model_type, analysis_type, spl
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task={res$cpus}
 #SBATCH --mem={res$mem}G
-#SBATCH --time={sprintf('%02d', res$time)}:00:00
+#SBATCH --time={sprintf('%02d', res$time)}:00:00{partition_line}
 #SBATCH --error={results_dir}/logs/{slug}_%j.err
 #SBATCH --output={results_dir}/logs/{slug}_%j.out
 

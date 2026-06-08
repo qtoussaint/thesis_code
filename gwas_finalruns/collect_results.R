@@ -8,7 +8,7 @@
 #   Rscript /nfs/research/jlees/jacqueline/thesis_code/gwas_finalruns/collect_results.R
 
 RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
-OUT_DIR      <- "/nfs/research/jlees/jacqueline/thesis_code/gwas_finalruns"
+OUT_DIR      <- "/nfs/research/jlees/jacqueline/thesis_results/paper_figures/prediction_accuracy_tables"
 MISSING      <- "XXX"
 
 # -----------------------------------------------------------------------------
@@ -151,7 +151,8 @@ build_flat_table <- function(specs, metric_cols, midrule_before_tb = TRUE) {
     }
     for (j in seq_along(EVALS)) {
       eval <- EVALS[j]
-      payload <- collect_one(s$species_dir, s$nn, s$base, s$run, eval, metric_cols)
+      run_dir <- paste0(s$nn, "_", s$run)
+      payload <- collect_one(s$species_dir, s$nn, s$base, run_dir, eval, metric_cols)
       # Only the first eval row of a drug carries Org + AMR. Within a species
       # the second drug also re-prints "Org" as blank — we mimic the template,
       # which leaves Org blank after the first drug of each species block.

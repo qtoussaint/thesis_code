@@ -2,8 +2,8 @@
 #SBATCH --job-name=spnpen_18_POM_pred_random
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
-#SBATCH --mem=650G
-#SBATCH --time=12:00:00
+#SBATCH --mem=1500G
+#SBATCH --time=72:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/18_spn_penicillin_MIC_minimabinning_unitigs_POM_random/logs/18_spn_penicillin_MIC_minimabinning_unitigs_POM_random_%j.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/18_spn_penicillin_MIC_minimabinning_unitigs_POM_random/logs/18_spn_penicillin_MIC_minimabinning_unitigs_POM_random_%j.out
 
