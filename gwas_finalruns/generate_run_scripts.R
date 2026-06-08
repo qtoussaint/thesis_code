@@ -122,7 +122,7 @@ resources_for <- function(species, model) {
 }
 
 # ----------------------------- script template ----------------------------- #
-build_script <- function(species, dataset, model, model_type, analysis_type, split) {
+build_script <- function(species, dataset, model, model_type, analysis_type, split, lasso = FALSE) {
   meta <- SPECIES_META[[species]]
   res  <- resources_for(species, model)
 
@@ -140,20 +140,24 @@ build_script <- function(species, dataset, model, model_type, analysis_type, spl
   }
   slug <- paste0(dataset, slug_suffix)
 
-  analysis_subdir <- analysis_type  # "inference" or "prediction"
-  results_dir     <- file.path(meta$results_dir, analysis_subdir, slug)
+  analysis_subdir <- analysis_type  # input datasets always live under "prediction"/"inference"
+  # Lasso runs share the prediction datasets but write to a parallel results tree.
+  results_subdir  <- if (lasso) paste0(analysis_type, "_lasso") else analysis_type
+  results_dir     <- file.path(meta$results_dir, results_subdir, slug)
   json_dir        <- file.path(DATASETS_DIR, analysis_subdir, json_dataset)
   json_file       <- file.path(json_dir, paste0(json_dataset, ".json"))
   variant_index   <- file.path(json_dir, paste0(json_dataset, "_variant_index.csv"))
   test_phenotypes <- file.path(json_dir, paste0(json_dataset, "_test_phenotypes.csv"))
 
-  stan_model <- file.path(MODELS_DIR, paste0(model, "_", analysis_type, ".stan"))
+  stan_suffix <- if (lasso) paste0(analysis_type, "_lasso") else analysis_type
+  stan_model  <- file.path(MODELS_DIR, paste0(model, "_", stan_suffix, ".stan"))
 
   job_name <- glue("{meta$job_tag}_{substr(dataset,1,2)}_{model}_{substr(analysis_type,1,4)}",
                    .trim = FALSE)
   if (analysis_type == "prediction") {
     job_name <- paste0(job_name, "_", split)
   }
+  if (lasso) job_name <- paste0(job_name, "_lasso")
 
   # Prediction runs skip cppRATE; inference runs leave it on.
   norate_var_line <- if (analysis_type == "prediction") "\nNORATE=\"--norate\"" else ""
@@ -219,39 +223,58 @@ CPPRATE=\"--cpprate_bin {CPPRATE_BIN}\"{norate_var_line}{true_pheno_var_line}
 }
 
 # ----------------------------- emit loop ----------------------------------- #
-written <- 0L
-for (i in seq_len(nrow(DATASETS))) {
-  row     <- DATASETS[i, ]
-  species <- row$species
-  dataset <- row$dataset
-  binning <- row$binning
-  models  <- BINNING_MODELS[[binning]]
+# Guarded so the file can be source()d for its helpers/config (e.g. by
+# generate_prediction_lasso_run_scripts.R) without emitting any scripts.
+# sys.nframe() == 0 only when run directly via Rscript.
+if (sys.nframe() == 0) {
+  written <- 0L
+  for (i in seq_len(nrow(DATASETS))) {
+    row     <- DATASETS[i, ]
+    species <- row$species
+    dataset <- row$dataset
+    binning <- row$binning
+    models  <- BINNING_MODELS[[binning]]
 
-  for (m in models) {
-    # Inference (single split)
-    inf_dir <- file.path(ROOT, "inference", species)
-    dir.create(inf_dir, recursive = TRUE, showWarnings = FALSE)
-    inf_path <- file.path(inf_dir, sprintf("%s_%s.sh", dataset, m$model))
-    writeLines(build_script(species, dataset, m$model, m$model_type,
-                            analysis_type = "inference", split = "base"),
-               inf_path)
-    Sys.chmod(inf_path, mode = "0755")
-    written <- written + 1L
-
-    # Prediction: base + LOSO
-    pred_dir <- file.path(ROOT, "prediction", species)
-    dir.create(pred_dir, recursive = TRUE, showWarnings = FALSE)
-
-    for (split in c("random", "loso")) {
-      fname <- sprintf("%s_%s_%s.sh", dataset, m$model, split)
-      path  <- file.path(pred_dir, fname)
+    for (m in models) {
+      # Inference (single split)
+      inf_dir <- file.path(ROOT, "inference", species)
+      dir.create(inf_dir, recursive = TRUE, showWarnings = FALSE)
+      inf_path <- file.path(inf_dir, sprintf("%s_%s.sh", dataset, m$model))
       writeLines(build_script(species, dataset, m$model, m$model_type,
-                              analysis_type = "prediction", split = split),
-                 path)
-      Sys.chmod(path, mode = "0755")
+                              analysis_type = "inference", split = "base"),
+                 inf_path)
+      Sys.chmod(inf_path, mode = "0755")
       written <- written + 1L
+
+      # Prediction: base + LOSO
+      pred_dir <- file.path(ROOT, "prediction", species)
+      dir.create(pred_dir, recursive = TRUE, showWarnings = FALSE)
+
+      for (split in c("random", "loso")) {
+        fname <- sprintf("%s_%s_%s.sh", dataset, m$model, split)
+        path  <- file.path(pred_dir, fname)
+        writeLines(build_script(species, dataset, m$model, m$model_type,
+                                analysis_type = "prediction", split = split),
+                   path)
+        Sys.chmod(path, mode = "0755")
+        written <- written + 1L
+      }
+
+      # Prediction (lasso): same datasets/splits, lasso stan models, prediction_lasso output
+      pred_lasso_dir <- file.path(ROOT, "prediction_lasso", species)
+      dir.create(pred_lasso_dir, recursive = TRUE, showWarnings = FALSE)
+
+      for (split in c("random", "loso")) {
+        fname <- sprintf("%s_%s_%s.sh", dataset, m$model, split)
+        path  <- file.path(pred_lasso_dir, fname)
+        writeLines(build_script(species, dataset, m$model, m$model_type,
+                                analysis_type = "prediction", split = split, lasso = TRUE),
+                   path)
+        Sys.chmod(path, mode = "0755")
+        written <- written + 1L
+      }
     }
   }
-}
 
-message(sprintf("Wrote %d SLURM scripts under %s/", written, ROOT))
+  message(sprintf("Wrote %d SLURM scripts under %s/", written, ROOT))
+}

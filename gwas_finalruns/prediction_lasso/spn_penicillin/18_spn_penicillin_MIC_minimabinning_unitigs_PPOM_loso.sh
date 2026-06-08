@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=spnpen_18_PPOM_pred_loso
+#SBATCH --job-name=spnpen_18_PPOM_pred_loso_lasso
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=650G
 #SBATCH --time=12:00:00
-#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso/logs/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso_%j.err
-#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso/logs/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso_%j.out
+#SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction_lasso/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso/logs/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso_%j.err
+#SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction_lasso/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso/logs/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso_%j.out
 
 #################################################################################
 
 source ~/.bashrc
 mamba activate gwas_pipeline
 
-mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso/logs
+mkdir -p /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction_lasso/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso/logs
 
 RSCRIPT_PATH="/nfs/research/jlees/jacqueline/gwas_workflow/code/gwas_workflow/inst/scripts/run_pipeline.R"
 
 DATA="--data /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/18_spn_penicillin_MIC_minimabinning_unitigs_loso/18_spn_penicillin_MIC_minimabinning_unitigs_loso.json"
-STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmodels/PPOM_prediction.stan"
+STAN_MODEL="--stan_model /nfs/research/jlees/jacqueline/thesis_code/gwas_finalmodels/PPOM_prediction_lasso.stan"
 ANALYSIS_TYPE="--analysis_type prediction"
 ANALYSIS_NICKNAME="--analysis_nickname 18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso"
-OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso"
+OUTPUT_DIR="--output_directory /nfs/research/jlees/jacqueline/thesis_results/gwas_spn_penicillin/prediction_lasso/18_spn_penicillin_MIC_minimabinning_unitigs_PPOM_loso"
 THREADS="--threads 48"
 
 LD_PRUNING="--ld_pruning true"
