@@ -142,8 +142,10 @@ main <- function() {
       ggplot2::scale_colour_manual(values = plasma_colors) +
       ggplot2::labs(colour = built$legend_title)
   } else {
+    # Single-series (binary GWAS): plot in purple, matching the purple end of
+    # the plasma palette used for the PPOM overlay panels.
     p <- ggplot2::ggplot(built$df, ggplot2::aes(x = pos, y = rate)) +
-      ggplot2::geom_point(alpha = 0.4, colour = plasma_colors[1])
+      ggplot2::geom_point(alpha = 0.4, colour = "#6A00A8")
   }
   p <- p +
     ggplot2::xlab("genome coordinate (bp)") +
