@@ -109,7 +109,8 @@ test_pheno  <- function(dataset, split) {
 }
 
 # Returns list(ntr, nte, metrics) for one (species, run, eval) triple.
-collect_one <- function(species_dir, dataset_nn, dataset_base, run_dir, eval, metric_cols) {
+collect_one <- function(species_dir, dataset_nn, dataset_base, run_dir, eval, metric_cols,
+                        pred_subdir = "prediction") {
   ds_full <- paste0(dataset_nn, "_", dataset_base)
   if (eval == "PPC") {
     n <- read_json_scalars(inf_json(ds_full), c("N", "N_ppc"))
@@ -118,7 +119,7 @@ collect_one <- function(species_dir, dataset_nn, dataset_base, run_dir, eval, me
   } else {
     split <- if (eval == "Random") "random" else "loso"
     n <- read_json_scalars(pred_json(ds_full, split), c("N_train", "N_test"))
-    m <- read_metrics(pred_csv(species_dir, run_dir, split), metric_cols)
+    m <- read_metrics(pred_csv(species_dir, run_dir, split, pred_subdir), metric_cols)
     list(ntr = n[["N_train"]], nte = n[["N_test"]], m = m)
   }
 }
@@ -127,7 +128,8 @@ collect_one <- function(species_dir, dataset_nn, dataset_base, run_dir, eval, me
 # bacc/ppv, or NULL if any needed file is missing. PPC reads y_rep_vs_true.csv;
 # prediction reads true labels from the dataset and point predictions from the run
 # (PPOM saves them directly, POM should rebuild them from the category draws).
-recompute_ordinal_stars <- function(species_dir, run_dir, model, eval, dataset, split, K) {
+recompute_ordinal_stars <- function(species_dir, run_dir, model, eval, dataset, split, K,
+                                    pred_subdir = "prediction") {
   if (eval == "PPC") {
     f <- ppc_yrep(species_dir, run_dir)
     if (!file.exists(f)) return(NULL)
@@ -137,11 +139,11 @@ recompute_ordinal_stars <- function(species_dir, run_dir, model, eval, dataset, 
     if (!file.exists(tf)) return(NULL)
     yt <- read.csv(tf)$true_phenotype
     if (model == "PPOM") {
-      pf <- pred_points(species_dir, run_dir, split)
+      pf <- pred_points(species_dir, run_dir, split, pred_subdir)
       if (!file.exists(pf)) return(NULL)
       yp <- read.csv(pf)$point_prediction
     } else {                                   # POM: rebuild point predictions from draws
-      df <- pred_draws(species_dir, run_dir, split)
+      df <- pred_draws(species_dir, run_dir, split, pred_subdir)
       if (!file.exists(df)) return(NULL)
       draws <- as.matrix(read.csv(df))         # rows = draws, cols = samples
       probs <- t(apply(draws, 2, function(col) tabulate(col, nbins = K) / length(col)))
@@ -155,7 +157,8 @@ recompute_ordinal_stars <- function(species_dir, run_dir, model, eval, dataset, 
 # Star the bacc/ppv cells only. A non-NA on-disk value is kept and starred when the
 # CSV's *_restricted flag is set; an NA cell is recomputed from artifacts and starred
 # (a recomputed value is restricted by construction), or left XXX if it cannot be.
-star_ordinal_cells <- function(m, csv_path, species_dir, run_dir, model, eval, dataset, split, K) {
+star_ordinal_cells <- function(m, csv_path, species_dir, run_dir, model, eval, dataset, split, K,
+                               pred_subdir = "prediction") {
   raw <- if (file.exists(csv_path))
            tryCatch(read.csv(csv_path, check.names = FALSE)[1, , drop = FALSE],
                     error = function(e) NULL) else NULL
@@ -167,7 +170,7 @@ star_ordinal_cells <- function(m, csv_path, species_dir, run_dir, model, eval, d
       starred <- !is.null(raw) && flag %in% names(raw) && isTRUE(as.logical(raw[[flag]]))
       m[[col]] <- paste0(fmt(onv), if (starred) RESTRICTED else "")
     } else {
-      if (is.null(rc)) rc <- recompute_ordinal_stars(species_dir, run_dir, model, eval, dataset, split, K)
+      if (is.null(rc)) rc <- recompute_ordinal_stars(species_dir, run_dir, model, eval, dataset, split, K, pred_subdir)
       val <- if (!is.null(rc)) rc[[col]] else NA_real_
       m[[col]] <- if (is.na(val)) MISSING else paste0(fmt(val), RESTRICTED)
     }
@@ -227,7 +230,8 @@ flat_row <- function(org, amr, eval, payload) {
           paste(payload$m, collapse = " & "))
 }
 
-build_flat_table <- function(specs, metric_cols, midrule_before_tb = TRUE) {
+build_flat_table <- function(specs, metric_cols, evals = EVALS, pred_subdir = "prediction",
+                             midrule_before_tb = TRUE) {
   out <- character()
   for (i in seq_along(specs)) {
     s <- specs[[i]]
@@ -240,10 +244,10 @@ build_flat_table <- function(specs, metric_cols, midrule_before_tb = TRUE) {
         out <- c(out, "\\midrule")
       }
     }
-    for (j in seq_along(EVALS)) {
-      eval <- EVALS[j]
+    for (j in seq_along(evals)) {
+      eval <- evals[j]
       run_dir <- paste0(s$nn, "_", s$run)
-      payload <- collect_one(s$species_dir, s$nn, s$base, run_dir, eval, metric_cols)
+      payload <- collect_one(s$species_dir, s$nn, s$base, run_dir, eval, metric_cols, pred_subdir)
       # Only the first eval row of a drug carries Org + AMR. Within a species
       # the second drug also re-prints "Org" as blank — we mimic the template,
       # which leaves Org blank after the first drug of each species block.
@@ -272,7 +276,7 @@ ordinal_row <- function(org, amr, binning, K, model, eval, payload) {
           paste(payload$m, collapse = " & "))
 }
 
-build_ordinal_table <- function(specs, metric_cols) {
+build_ordinal_table <- function(specs, metric_cols, evals = EVALS, pred_subdir = "prediction") {
   out <- character()
   for (i in seq_along(specs)) {
     s <- specs[[i]]
@@ -288,14 +292,15 @@ build_ordinal_table <- function(specs, metric_cols) {
     for (model in c("PPOM", "POM")) {
       if (model == "POM") out <- c(out, "\\cmidrule(l){5-14}")
       run_dir <- paste0(s$nn, "_", s$run_stub, "_", model)
-      for (j in seq_along(EVALS)) {
-        eval <- EVALS[j]
-        payload <- collect_one(s$species_dir, s$nn, s$base, run_dir, eval, metric_cols)
+      for (j in seq_along(evals)) {
+        eval <- evals[j]
+        payload <- collect_one(s$species_dir, s$nn, s$base, run_dir, eval, metric_cols, pred_subdir)
         split   <- if (eval == "PPC") NA_character_ else if (eval == "Random") "random" else "loso"
         csv_p   <- if (eval == "PPC") ppc_csv(s$species_dir, run_dir)
-                   else                pred_csv(s$species_dir, run_dir, split)
+                   else                pred_csv(s$species_dir, run_dir, split, pred_subdir)
         payload$m <- star_ordinal_cells(payload$m, csv_p, s$species_dir, run_dir,
-                                         model, eval, paste0(s$nn, "_", s$base), split, s$K)
+                                         model, eval, paste0(s$nn, "_", s$base), split, s$K,
+                                         pred_subdir)
         first_in_binning <- (model == "PPOM" && j == 1)
         first_in_model   <- (j == 1)
         org     <- if (first_in_binning && new_species_block) s$org     else ""
@@ -326,3 +331,16 @@ ordinal_lines    <- build_ordinal_table(ordinal_specs, ORD_COLS)
 write_table(binary_lines,     file.path(OUT_DIR, "binary_table.tex"))
 write_table(continuous_lines, file.path(OUT_DIR, "continuous_table.tex"))
 write_table(ordinal_lines,    file.path(OUT_DIR, "ordinal_table.tex"))
+
+# Lasso baselines live under prediction_lasso/ and have prediction-only runs
+# (no Bayesian inference, so no PPC eval) — emit the same tables with just the
+# Random and Lineage rows.
+LASSO_EVALS <- c("Random", "Lineage")
+
+binary_lasso     <- build_flat_table(binary_specs,     BINARY_COLS, LASSO_EVALS, "prediction_lasso")
+continuous_lasso <- build_flat_table(continuous_specs, CONT_COLS,   LASSO_EVALS, "prediction_lasso")
+ordinal_lasso    <- build_ordinal_table(ordinal_specs, ORD_COLS,    LASSO_EVALS, "prediction_lasso")
+
+write_table(binary_lasso,     file.path(OUT_DIR, "binary_table_lasso.tex"))
+write_table(continuous_lasso, file.path(OUT_DIR, "continuous_table_lasso.tex"))
+write_table(ordinal_lasso,    file.path(OUT_DIR, "ordinal_table_lasso.tex"))
