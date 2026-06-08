@@ -137,27 +137,24 @@ build_df <- function(run_dir) {
   list(df = df, n = n_cutpoints, legend_title = legend_title)
 }
 
-main <- function() {
-  args <- parse_args(commandArgs(trailingOnly = TRUE))
-  run_dir <- normalizePath(args$run_dir, mustWork = TRUE)
-  dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
-
-  message("Run dir:    ", run_dir)
-  message("Output dir: ", args$output_dir)
-
+# Build the faceted RATE plot for one run. Returns a list with the ggplot and the
+# number of cutpoints (for sizing). Reused by the single-run main() and by the
+# combined SPN penicillin figure.
+build_faceted_plot <- function(run_dir, annotations, genes_of_interest = NULL,
+                               ncol = 2L) {
   built <- build_df(run_dir)
   df <- built$df
 
   # POS -> gene from snpEff annotations; unannotated -> "MODIFIER". read.delim
   # mangles the header so the gene column becomes ANN....GENE.
-  ann <- read.delim(args$annotations, stringsAsFactors = FALSE)
+  ann <- read.delim(annotations, stringsAsFactors = FALSE)
   df$gene <- ann[["ANN....GENE"]][match(df$pos, ann$POS)]
   df$gene[is.na(df$gene)] <- "MODIFIER"
 
   # Display-name remapping from the genes-of-interest list (col1 = annotation name,
   # col2 = display label), read exactly as gwas_workflow does.
-  goi <- if (!is.null(args$genes_of_interest)) {
-    read.csv(args$genes_of_interest, header = FALSE,
+  goi <- if (!is.null(genes_of_interest)) {
+    read.csv(genes_of_interest, header = FALSE,
              col.names = c("gene", "display_name"), stringsAsFactors = FALSE)
   } else {
     NULL
@@ -174,13 +171,13 @@ main <- function() {
 
   p <- ggplot2::ggplot(df, ggplot2::aes(x = pos, y = rate)) +
     ggplot2::geom_point(alpha = 0.4, colour = single_color) +
-    ggplot2::facet_wrap(~ cutpoint_label, ncol = args$ncol,
+    ggplot2::facet_wrap(~ cutpoint_label, ncol = ncol,
                         labeller = ggplot2::labeller(cutpoint_label = function(x) x)) +
     ggrepel::geom_text_repel(
       data  = label_df,
       ggplot2::aes(x = pos, y = rate, label = gene_expr),
       parse = TRUE,
-      size  = 4.4,
+      size  = 5.1,
       arrow = grid::arrow(length = grid::unit(0.01, "npc"), type = "open"),
       colour = "black",
       inherit.aes = FALSE,
@@ -188,13 +185,31 @@ main <- function() {
     ) +
     ggplot2::xlab("genome coordinate (bp)") +
     ggplot2::ylab("relative centrality (RATE)") +
-    ggplot2::theme_minimal(base_size = 18)
+    ggplot2::theme_minimal(base_size = 20)
+
+  list(plot = p, n = built$n)
+}
+
+main <- function() {
+  args <- parse_args(commandArgs(trailingOnly = TRUE))
+  run_dir <- normalizePath(args$run_dir, mustWork = TRUE)
+  dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
+
+  message("Run dir:    ", run_dir)
+  message("Output dir: ", args$output_dir)
+
+  built <- build_faceted_plot(run_dir, args$annotations,
+                              args$genes_of_interest, args$ncol)
 
   height <- 4.5 * ceiling(built$n / args$ncol)
   outfile <- paste0(basename(run_dir), "_faceted_RATE_labeled.png")
   path <- file.path(args$output_dir, outfile)
-  ggplot2::ggsave(path, plot = p, width = 22, height = height, dpi = 300, limitsize = FALSE)
+  ggplot2::ggsave(path, plot = built$plot, width = 22, height = height,
+                  dpi = 300, limitsize = FALSE)
   message("Wrote ", path)
 }
 
-main()
+# Run main() only when executed directly (Rscript), not when sourced.
+if (identical(environment(), globalenv()) && sys.nframe() == 0L) {
+  main()
+}
