@@ -159,7 +159,7 @@ rps_density_cell <- function(rps, rpss, model) {
     geom_density(aes(y = after_stat(density) * bw * n),
                  colour = model_cols[[model]], linewidth = 0.7, bw = "nrd0", adjust = 0.5) +
     geom_vline(data = stat_lines, aes(xintercept = x, linetype = stat),
-               colour = "grey30", linewidth = 0.5) +
+               colour = "grey30", linewidth = 0.5, key_glyph = "path") +
     scale_linetype_manual(values = c(median = "dashed", mean = "dotted"), name = NULL) +
     annotate("text", x = Inf, y = Inf, hjust = 1.05, vjust = 1.3, size = 3,
              label = sprintf("RPSS_unif = %.3f\nRPSS_freq = %.3f",
@@ -229,15 +229,15 @@ agreement_cell <- function(pred_dir, true_csv, model, K, breaks) {
       xlab = "", ylab = "", xscale = FALSE, yscale = FALSE,
       xlab_rot = 90, xlab_just = "right", ylab_rot = 0, ylab_just = "right",
       prefix = "ap", pop = FALSE, newpage = FALSE,
-      margins = grid::unit(c(5.0, 2.4, 0.8, 0.8), "lines"),
+      margins = grid::unit(c(4.0, 1.8, 0.8, 0.8), "lines"),
       gp = grid::gpar(fontsize = 7))
     grid::seekViewport("ap agreementplot")
     # Titles sit just clear of the band-centred MIC tick labels: the observed (x)
     # title tucks below the rotated bottom labels, the predicted (y) title hugs the
     # left labels.
     grid::grid.text("observed interval (µg⋅mL⁻¹)",
-                    y = grid::unit(-0.48, "npc"), gp = grid::gpar(fontsize = 10))
-    grid::grid.text("predicted interval", x = grid::unit(-0.08, "npc"), rot = 90,
+                    y = grid::unit(-0.34, "npc"), gp = grid::gpar(fontsize = 10))
+    grid::grid.text("predicted interval", x = grid::unit(-0.04, "npc"), rot = 90,
                     gp = grid::gpar(fontsize = 10))
     grid::upViewport(0)
   })
