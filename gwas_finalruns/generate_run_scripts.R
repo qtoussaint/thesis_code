@@ -18,6 +18,10 @@ CPPRATE_BIN      <- "/hps/software/users/jlees/jacqueline/manual_installs/bin/cp
 
 SPN_ANNOT <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
 TB_ANNOT  <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/fields_filtered.txt"
+# Unitig datasets (17/18) have their own coordinate-keyed annotation: each unitig
+# coordinate on FM211187 labelled with the snpEff gene (from ATCC_700669.gbff) whose
+# interval contains it. Built by gwas_datasets/map_expand_unitigs/annotate_coords_gbff.py.
+SPN_UNITIG_ANNOT <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/unitigs/spn_unitigs_mapped_gene_annotations.txt"
 
 SPECIES_META <- list(
   spn_penicillin = list(
@@ -122,6 +126,9 @@ build_script <- function(species, dataset, model, model_type, analysis_type, spl
   meta <- SPECIES_META[[species]]
   res  <- resources_for(species, model)
 
+  # Unitig datasets use their own coordinate-keyed gene annotation (see SPN_UNITIG_ANNOT).
+  annotations <- if (grepl("unitigs", dataset)) SPN_UNITIG_ANNOT else meta$annotations
+
   # Prediction LOSO uses the _loso dataset variant; random uses the base dataset.
   json_dataset <- if (analysis_type == "prediction" && split == "loso")
     paste0(dataset, "_loso") else dataset
@@ -185,7 +192,7 @@ MAF_CUTOFF=\"--maf_cutoff 0\"
 LD_THRESHOLD=\"--ld_threshold 1\"
 
 PHANDANGO=\"--phandango {variant_index}\"
-ANNOTATIONS=\"--annotations {meta$annotations}\"
+ANNOTATIONS=\"--annotations {annotations}\"
 MODEL_TYPE=\"--model_type {model_type}\"
 GENES_OF_INTEREST=\"--genes_of_interest {meta$genes}\"
 RESUME=\"--resume\"

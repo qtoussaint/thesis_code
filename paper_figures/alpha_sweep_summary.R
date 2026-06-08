@@ -30,7 +30,7 @@ suppressPackageStartupMessages({
 
 RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
 SWEEP_ROOT   <- file.path(RESULTS_ROOT, "compare_ordinal_models")
-OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures")
+OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures", "parameter_sweeps")
 
 BASE_SD  <- 0.5            # production default, drawn as a reference line
 

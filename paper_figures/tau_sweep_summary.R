@@ -6,8 +6,12 @@
 # across the fixed-tau grid and two MIC binnings. This is the standard
 # diagnostic for choosing a shrinkage level.
 #
-# The grid is tau in {0.001, 0.01, 0.05, 1} crossed with three prior configs
-# that have full tau coverage: slab3/lambda1, slab5/lambda1, slab3/lambda2.
+# The grid is tau in {0.001, 0.01, 0.05, 1, 1.5, 2, 3, 5} crossed with four
+# prior configs: slab3/lambda1, slab5/lambda1, slab3/lambda2, slab5/lambda2.
+# Coverage is uneven -- the lambda1 series were only run at the low taus
+# {0.001, 0.01, 0.05, 1}, slab3/lambda2 spans the full axis, and slab5/lambda2
+# was only run at the high taus {1.5, 2, 3, 5}. Runs that don't exist render as
+# gaps (the line simply breaks), so each series shows just its own coverage.
 # (The standalone estimated-tau variants -- lambda1, lognormaltau02 -- are not
 # part of the fixed-tau sweep and are excluded.)
 #
@@ -29,29 +33,34 @@ suppressPackageStartupMessages({
 
 RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
 SWEEP_ROOT   <- file.path(RESULTS_ROOT, "compare_ordinal_models")
-OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures")
+OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures", "parameter_sweeps")
 MODEL_PREFIX <- "final_ordered_categorical_PPOM_free_cutpoints_wide_drift"
 
 # -----------------------------------------------------------------------------
 # Grid spec
 # -----------------------------------------------------------------------------
 
-TAUS <- c(0.001, 0.01, 0.05, 1)
+TAUS <- c(0.001, 0.01, 0.05, 1, 1.5, 2, 3, 5)
 
 # Encode tau -> dir token. Note 0.05 -> "0p05" (NOT "05"): a stray
-# ...fixedtau05_slab3 dir exists on disk and must not be matched.
+# ...fixedtau05_slab3 dir exists on disk and must not be matched. The high taus
+# use a bare integer token (e.g. 2 -> "2") and 1.5 -> "1p5".
 tau_token <- function(tau) {
   switch(as.character(tau),
          "0.001" = "0p001", "0.01" = "0p01",
          "0.05"  = "0p05",  "1"    = "1",
+         "1.5"   = "1p5",   "2"    = "2",
+         "3"     = "3",     "5"    = "5",
          stop("unmapped tau: ", tau))
 }
 
-# Each series -> the dir suffix that follows fixedtau<token>.
+# Each series -> the dir suffix that follows fixedtau<token>. Coverage differs
+# by series (see header); missing runs are rendered as gaps.
 SERIES <- list(
-  list(label = "slab3/λ1", suffix = "_slab3"),         # slab_scale=3, lambda~C(0,1)
-  list(label = "slab5/λ1", suffix = "_slab5"),         # slab_scale=5, lambda~C(0,1)
-  list(label = "slab3/λ2", suffix = "_slab3_lambda2")  # slab_scale=3, lambda~C(0,2)
+  list(label = "slab3/λ1", suffix = "_slab3"),          # slab_scale=3, lambda~C(0,1)
+  list(label = "slab5/λ1", suffix = "_slab5"),          # slab_scale=5, lambda~C(0,1)
+  list(label = "slab3/λ2", suffix = "_slab3_lambda2"),  # slab_scale=3, lambda~C(0,2)
+  list(label = "slab5/λ2", suffix = "_slab5_lambda2")   # slab_scale=5, lambda~C(0,2)
 )
 series_levels <- vapply(SERIES, `[[`, "", "label")
 
@@ -134,7 +143,8 @@ count_signif <- function(csv_path) {
 }
 
 # -----------------------------------------------------------------------------
-# Build tidy long data frame (24 runs: 3 series x 4 tau x 2 datasets)
+# Build tidy long data frame (4 series x 8 tau x 2 datasets, minus the
+# series/tau cells with no run on disk, which come through as NA gaps)
 # -----------------------------------------------------------------------------
 
 ACC_METRICS <- c("rpss_uniform", "rpss_frequency", "bacc")
@@ -192,7 +202,7 @@ if (length(missing_files) > 0) {
 # Aesthetics
 # -----------------------------------------------------------------------------
 
-series_cols <- viridis::viridis(3, option = "D", end = 0.9)
+series_cols <- viridis::viridis(length(series_levels), option = "D", end = 0.9)
 names(series_cols) <- series_levels
 
 # Reference baseline gets a contrasting colour outside the viridis ramp.
@@ -208,7 +218,7 @@ metric_labels <- c(rpss_uniform   = "RPSS (uniform)",
                    rpss_frequency = "RPSS (frequency)",
                    bacc           = "balanced accuracy")
 
-tau_labels <- c("0.001", "0.01", "0.05", "1")
+tau_labels <- c("0.001", "0.01", "0.05", "1", "1.5", "2", "3", "5")
 
 # -----------------------------------------------------------------------------
 # Panel A: prediction accuracy vs tau

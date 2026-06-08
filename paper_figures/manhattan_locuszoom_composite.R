@@ -13,7 +13,7 @@ suppressPackageStartupMessages({
   library(magick)
 })
 
-DEFAULT_OUTPUT_DIR <- "/nfs/research/jlees/jacqueline/thesis_results/paper_figures"
+DEFAULT_OUTPUT_DIR <- "/nfs/research/jlees/jacqueline/thesis_results/paper_figures/manhattans_with_locus"
 
 parse_args <- function(argv) {
   output_dir <- DEFAULT_OUTPUT_DIR

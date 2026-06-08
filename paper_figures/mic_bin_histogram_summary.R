@@ -13,7 +13,7 @@ suppressPackageStartupMessages({
 })
 
 INPUT_DIR  <- "/nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/MIC_bin_histograms"
-OUTPUT_DIR <- "/nfs/research/jlees/jacqueline/thesis_results/paper_figures"
+OUTPUT_DIR <- "/nfs/research/jlees/jacqueline/thesis_results/paper_figures/dataset_binning"
 
 # dataset key -> regex selecting that dataset's PNGs. Penicillin excludes the unitigs
 # variants (prefixes 17 and 18).

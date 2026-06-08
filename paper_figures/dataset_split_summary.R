@@ -26,7 +26,7 @@ suppressPackageStartupMessages({
 
 RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
 PRED_ROOT    <- file.path(RESULTS_ROOT, "gwas_datasets", "prediction")
-OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures")
+OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures", "dataset_binning")
 
 # Consistent colours: training = blue, test = orange (matches the ordinal reference
 # histograms; binary reference uses firebrick but we keep blue:orange throughout).
