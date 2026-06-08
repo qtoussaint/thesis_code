@@ -13,6 +13,11 @@
 #   Rscript paper_figures/prediction_accuracy_summary.R
 #
 # Output: <output_dir>/prediction_accuracy_summary.{png,csv}
+#         <output_dir>/prediction_accuracy_summary_lasso.{png,csv}
+# where <output_dir> = <results>/paper_figures/prediction_accuracy_summary
+#
+# The lasso version reads the parallel `prediction_lasso/` run directories
+# (LASSO-penalised models) and is otherwise identical.
 
 suppressPackageStartupMessages({
   library(ggplot2)
@@ -29,14 +34,16 @@ grDevices::pdf(NULL)
 on.exit(grDevices::dev.off(), add = TRUE)
 
 RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
-OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures")
+OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures", "prediction_accuracy_summary")
 
 # -----------------------------------------------------------------------------
 # Path builder + reader (mirrors collect_results.R, but returns numerics)
 # -----------------------------------------------------------------------------
+# `pred_subdir` selects the run family: "prediction" (default models) or
+# "prediction_lasso" (LASSO-penalised models).
 
-pred_csv <- function(species_dir, run_dir, split) file.path(
-  RESULTS_ROOT, paste0("gwas_", species_dir), "prediction",
+pred_csv <- function(species_dir, run_dir, split, pred_subdir) file.path(
+  RESULTS_ROOT, paste0("gwas_", species_dir), pred_subdir,
   paste0(run_dir, "_", split), "prediction_results", "prediction_accuracy_metrics.csv")
 
 missing_files <- character(0)
@@ -85,51 +92,47 @@ SPLITS <- list(random = "Random", loso = "Lineage")
 ORD_METRICS <- c("bacc", "rpss_uniform", "rpss_frequency")
 
 # -----------------------------------------------------------------------------
-# Build long data frame
+# Build long data frame (for one run family / pred_subdir)
 # -----------------------------------------------------------------------------
 
-rows <- list()
+build_df <- function(pred_subdir) {
+  rows <- list()
 
-for (s in ordinal_specs) {
-  for (model in c("POM", "PPOM")) {
-    run_dir <- paste0(s$nn, "_", s$run_stub, "_", model)
-    for (sp in names(SPLITS)) {
-      m <- read_metrics(pred_csv(s$species_dir, run_dir, sp), ORD_METRICS)
-      for (metric in ORD_METRICS) {
-        rows[[length(rows) + 1]] <- data.frame(
-          drug = s$drug, organism = s$organism, binning = s$binning, K = s$K,
-          model = model, split = SPLITS[[sp]], metric = metric,
-          value = unname(m[[metric]]), stringsAsFactors = FALSE)
+  for (s in ordinal_specs) {
+    for (model in c("POM", "PPOM")) {
+      run_dir <- paste0(s$nn, "_", s$run_stub, "_", model)
+      for (sp in names(SPLITS)) {
+        m <- read_metrics(pred_csv(s$species_dir, run_dir, sp, pred_subdir), ORD_METRICS)
+        for (metric in ORD_METRICS) {
+          rows[[length(rows) + 1]] <- data.frame(
+            drug = s$drug, organism = s$organism, binning = s$binning, K = s$K,
+            model = model, split = SPLITS[[sp]], metric = metric,
+            value = unname(m[[metric]]), stringsAsFactors = FALSE)
+        }
       }
     }
   }
-}
 
-for (s in binary_specs) {
-  for (sp in names(SPLITS)) {
-    m <- read_metrics(pred_csv(s$species_dir, s$run_stub, sp), "bacc")
-    rows[[length(rows) + 1]] <- data.frame(
-      drug = s$drug, organism = NA_character_, binning = NA_character_, K = 2L,
-      model = "Logistic", split = SPLITS[[sp]], metric = "bacc",
-      value = unname(m[["bacc"]]), stringsAsFactors = FALSE)
+  for (s in binary_specs) {
+    for (sp in names(SPLITS)) {
+      m <- read_metrics(pred_csv(s$species_dir, s$run_stub, sp, pred_subdir), "bacc")
+      rows[[length(rows) + 1]] <- data.frame(
+        drug = s$drug, organism = NA_character_, binning = NA_character_, K = 2L,
+        model = "Logistic", split = SPLITS[[sp]], metric = "bacc",
+        value = unname(m[["bacc"]]), stringsAsFactors = FALSE)
+    }
   }
-}
 
-df <- do.call(rbind, rows)
+  df <- do.call(rbind, rows)
 
-# Factor orders
-drug_levels    <- c("SPN PEN", "SPN TMP", "TB RIF")
-binning_levels <- c("standard", "coarse", "large minbin", "minima")
-df$drug    <- factor(df$drug, levels = drug_levels)
-df$binning <- factor(df$binning, levels = binning_levels)
-df$model   <- factor(df$model, levels = c("POM", "PPOM", "Logistic"))
-df$split   <- factor(df$split, levels = c("Random", "Lineage"))
-
-if (length(missing_files) > 0) {
-  message(sprintf("NOTE: %d metrics CSV(s) missing (rendered as gaps):", length(missing_files)))
-  for (f in missing_files) message("  ", f)
-} else {
-  message("All metrics CSVs found.")
+  # Factor orders
+  drug_levels    <- c("SPN PEN", "SPN TMP", "TB RIF")
+  binning_levels <- c("standard", "coarse", "large minbin", "minima")
+  df$drug    <- factor(df$drug, levels = drug_levels)
+  df$binning <- factor(df$binning, levels = binning_levels)
+  df$model   <- factor(df$model, levels = c("POM", "PPOM", "Logistic"))
+  df$split   <- factor(df$split, levels = c("Random", "Lineage"))
+  df
 }
 
 # -----------------------------------------------------------------------------
@@ -153,60 +156,7 @@ base_theme <- theme_bw(base_size = 12) +
         legend.position = "bottom")
 
 # -----------------------------------------------------------------------------
-# Panel A: balanced accuracy (POM/PPOM bars + logistic reference line)
-# -----------------------------------------------------------------------------
-
-bacc_bars <- df[df$metric == "bacc" & df$model %in% c("POM", "PPOM"), ]
-bacc_bars$model <- droplevels(bacc_bars$model)
-
-# Logistic is constant across binnings within a drug -> one hline per drug x split.
-bacc_logit <- df[df$metric == "bacc" & df$model == "Logistic", ]
-
-# One combined "model" legend: POM/PPOM as filled bars, logistic as a line.
-# A shared 3-level scale (same name + breaks) merges the fill and linetype
-# guides; logistic's fill key is transparent and the POM/PPOM lines are blank,
-# so each key shows only the relevant glyph.
-model_levels <- c("POM", "PPOM", "logistic")
-bacc_logit$model_key <- factor("logistic", levels = model_levels)
-fill_vals <- c(POM = model_cols[["POM"]], PPOM = model_cols[["PPOM"]], logistic = NA)
-lty_vals  <- c(POM = "blank", PPOM = "blank", logistic = "dashed")
-
-panel_a <- ggplot(bacc_bars, aes(x = binning, y = value, fill = model)) +
-  geom_col(position = position_dodge(width = 0.75), width = 0.7) +
-  geom_hline(data = bacc_logit,
-             aes(yintercept = value, linetype = model_key),
-             colour = model_cols[["Logistic"]], linewidth = 0.7) +
-  facet_grid(split ~ drug, scales = "free_x", space = "free_x", labeller = drug_labeller) +
-  scale_fill_manual(values = fill_vals, name = "model", limits = model_levels) +
-  scale_linetype_manual(values = lty_vals, name = "model", limits = model_levels) +
-  coord_cartesian(ylim = c(0, 1)) +
-  labs(x = NULL, y = "balanced accuracy (bACC)") +
-  base_theme +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1))
-
-# -----------------------------------------------------------------------------
-# Panel B: RPSS skill scores (POM vs PPOM; uniform + frequency baselines)
-# -----------------------------------------------------------------------------
-
-rpss <- df[df$metric %in% c("rpss_uniform", "rpss_frequency"), ]
-rpss$baseline <- factor(ifelse(rpss$metric == "rpss_uniform", "uniform", "frequency"),
-                        levels = c("uniform", "frequency"))
-rpss$model <- droplevels(rpss$model)
-
-panel_b <- ggplot(rpss,
-                  aes(x = binning, y = value, colour = model, shape = baseline,
-                      group = interaction(model, baseline))) +
-  geom_hline(yintercept = 0, colour = "grey50", linewidth = 0.4) +
-  geom_point(position = position_dodge(width = 0.6), size = 2.8) +
-  facet_grid(split ~ drug, scales = "free_x", space = "free_x", labeller = drug_labeller) +
-  scale_colour_manual(values = model_cols, name = "model") +
-  scale_shape_manual(values = c(uniform = 16, frequency = 17), name = "RPSS baseline") +
-  labs(x = NULL, y = "Ranked Probability Skill Score (RPSS)") +
-  base_theme +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1))
-
-# -----------------------------------------------------------------------------
-# Panel C: agreement mosaics (standard binning, random split only)
+# Panel C helpers: agreement mosaics (standard binning, random split only)
 # -----------------------------------------------------------------------------
 # Recreated from the prediction pipeline's agreement plot (gwas_workflow
 # R/prediction_accuracy.R: vcd::agreementplot on the MIC-labelled confusion
@@ -254,8 +204,8 @@ point_predictions_for <- function(pred_dir, model, K) {
 }
 
 # Build one agreement-plot grob (or a blank ggdraw if inputs are missing).
-agreement_cell <- function(spec, model) {
-  pred_dir <- file.path(RESULTS_ROOT, paste0("gwas_", spec$species_dir), "prediction",
+agreement_cell <- function(spec, model, pred_subdir) {
+  pred_dir <- file.path(RESULTS_ROOT, paste0("gwas_", spec$species_dir), pred_subdir,
                         paste0(spec$stub, "_", model, "_random"), "prediction_results")
   true_csv <- file.path(RESULTS_ROOT, "gwas_datasets", "prediction", spec$stub,
                         paste0(spec$stub, "_test_phenotypes.csv"))
@@ -304,7 +254,7 @@ agreement_cell <- function(spec, model) {
   ggdraw() + draw_grob(g)
 }
 
-row_cells <- function(model) lapply(c_specs, function(s) agreement_cell(s, model))
+row_cells <- function(model, pred_subdir) lapply(c_specs, function(s) agreement_cell(s, model, pred_subdir))
 
 # Column headers (drug names) and bold row labels (model).
 col_titles <- lapply(drug_labels, function(e)
@@ -313,30 +263,104 @@ row_label  <- function(txt) ggdraw() + draw_label(txt, fontface = "bold", angle 
 
 cw <- c(0.07, 1, 1, 1)  # left label strip + three drug columns
 header_row <- plot_grid(NULL, plotlist = col_titles, nrow = 1, rel_widths = cw)
-pom_row    <- plot_grid(plotlist = c(list(row_label("POM")),  row_cells("POM")),  nrow = 1, rel_widths = cw)
-ppom_row   <- plot_grid(plotlist = c(list(row_label("PPOM")), row_cells("PPOM")), nrow = 1, rel_widths = cw)
-panel_c <- plot_grid(header_row, pom_row, ppom_row, ncol = 1, rel_heights = c(0.12, 1, 1))
 
 # -----------------------------------------------------------------------------
-# Assemble + save
+# Figure builder: assemble all three panels for one run family and save.
+# pred_subdir selects the run dirs ("prediction" / "prediction_lasso"),
+# file_stub names the output {png,csv}.
 # -----------------------------------------------------------------------------
 
-figure <- plot_grid(
-  panel_a, panel_b, panel_c,
-  ncol = 1,
-  labels = c("A", "B", "C"),
-  label_size = 24,
-  label_fontface = "bold",
-  rel_heights = c(1, 1, 1.9)
-) + theme(plot.margin = margin(5, 5, 5, 10))
+make_figure <- function(pred_subdir, file_stub) {
+  missing_files <<- character(0)
+  df <- build_df(pred_subdir)
+
+  if (length(missing_files) > 0) {
+    message(sprintf("[%s] NOTE: %d metrics CSV(s) missing (rendered as gaps):",
+                    pred_subdir, length(missing_files)))
+    for (f in missing_files) message("  ", f)
+  } else {
+    message(sprintf("[%s] All metrics CSVs found.", pred_subdir))
+  }
+
+  # --- Panel A: balanced accuracy (POM/PPOM bars + logistic reference line) ---
+  bacc_bars <- df[df$metric == "bacc" & df$model %in% c("POM", "PPOM"), ]
+  bacc_bars$model <- droplevels(bacc_bars$model)
+
+  # Logistic is constant across binnings within a drug -> one hline per drug x split.
+  bacc_logit <- df[df$metric == "bacc" & df$model == "Logistic", ]
+
+  # One combined "model" legend: POM/PPOM as filled bars, logistic as a line.
+  # A shared 3-level scale (same name + breaks) merges the fill and linetype
+  # guides; logistic's fill key is transparent and the POM/PPOM lines are blank,
+  # so each key shows only the relevant glyph.
+  model_levels <- c("POM", "PPOM", "logistic")
+  bacc_logit$model_key <- factor("logistic", levels = model_levels)
+  fill_vals <- c(POM = model_cols[["POM"]], PPOM = model_cols[["PPOM"]], logistic = NA)
+  lty_vals  <- c(POM = "blank", PPOM = "blank", logistic = "dashed")
+
+  panel_a <- ggplot(bacc_bars, aes(x = binning, y = value, fill = model)) +
+    geom_col(position = position_dodge(width = 0.75), width = 0.7) +
+    geom_hline(data = bacc_logit,
+               aes(yintercept = value, linetype = model_key),
+               colour = model_cols[["Logistic"]], linewidth = 0.7) +
+    facet_grid(split ~ drug, scales = "free_x", space = "free_x", labeller = drug_labeller) +
+    scale_fill_manual(values = fill_vals, name = "model", limits = model_levels) +
+    scale_linetype_manual(values = lty_vals, name = "model", limits = model_levels) +
+    coord_cartesian(ylim = c(0, 1)) +
+    labs(x = NULL, y = "balanced accuracy (bACC)") +
+    base_theme +
+    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+  # --- Panel B: RPSS skill scores (POM vs PPOM; uniform + frequency baselines) ---
+  rpss <- df[df$metric %in% c("rpss_uniform", "rpss_frequency"), ]
+  rpss$baseline <- factor(ifelse(rpss$metric == "rpss_uniform", "uniform", "frequency"),
+                          levels = c("uniform", "frequency"))
+  rpss$model <- droplevels(rpss$model)
+
+  panel_b <- ggplot(rpss,
+                    aes(x = binning, y = value, colour = model, shape = baseline,
+                        group = interaction(model, baseline))) +
+    geom_hline(yintercept = 0, colour = "grey50", linewidth = 0.4) +
+    geom_point(position = position_dodge(width = 0.6), size = 2.8) +
+    facet_grid(split ~ drug, scales = "free_x", space = "free_x", labeller = drug_labeller) +
+    scale_colour_manual(values = model_cols, name = "model") +
+    scale_shape_manual(values = c(uniform = 16, frequency = 17), name = "RPSS baseline") +
+    labs(x = NULL, y = "Ranked Probability Skill Score (RPSS)") +
+    base_theme +
+    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+  # --- Panel C: agreement mosaics ---
+  pom_row  <- plot_grid(plotlist = c(list(row_label("POM")),  row_cells("POM", pred_subdir)),
+                        nrow = 1, rel_widths = cw)
+  ppom_row <- plot_grid(plotlist = c(list(row_label("PPOM")), row_cells("PPOM", pred_subdir)),
+                        nrow = 1, rel_widths = cw)
+  panel_c <- plot_grid(header_row, pom_row, ppom_row, ncol = 1, rel_heights = c(0.12, 1, 1))
+
+  # --- Assemble + save ---
+  figure <- plot_grid(
+    panel_a, panel_b, panel_c,
+    ncol = 1,
+    labels = c("A", "B", "C"),
+    label_size = 24,
+    label_fontface = "bold",
+    rel_heights = c(1, 1, 1.9)
+  ) + theme(plot.margin = margin(5, 5, 5, 10))
+
+  png_path <- file.path(OUTPUT_DIR, paste0(file_stub, ".png"))
+  csv_path <- file.path(OUTPUT_DIR, paste0(file_stub, ".csv"))
+
+  ggsave(png_path, figure, width = 14, height = 20, dpi = 300, bg = "white")
+  write.csv(df[order(df$metric, df$drug, df$binning, df$model, df$split), ],
+            csv_path, row.names = FALSE)
+
+  message("wrote ", png_path)
+  message("wrote ", csv_path)
+}
+
+# -----------------------------------------------------------------------------
+# Build both run families: default models + LASSO-penalised models.
+# -----------------------------------------------------------------------------
 
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
-png_path <- file.path(OUTPUT_DIR, "prediction_accuracy_summary.png")
-csv_path <- file.path(OUTPUT_DIR, "prediction_accuracy_summary.csv")
-
-ggsave(png_path, figure, width = 14, height = 20, dpi = 300, bg = "white")
-write.csv(df[order(df$metric, df$drug, df$binning, df$model, df$split), ],
-          csv_path, row.names = FALSE)
-
-message("wrote ", png_path)
-message("wrote ", csv_path)
+make_figure("prediction",       "prediction_accuracy_summary")
+make_figure("prediction_lasso", "prediction_accuracy_summary_lasso")

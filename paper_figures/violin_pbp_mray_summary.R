@@ -33,7 +33,14 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(ggrepel)
   library(viridis)
+  library(MetBrewer)
 })
+
+# Discrete Hiroshige colours, matching the heritability plots in gwas_workflow.
+.hiroshige_discrete <- function(n) {
+  n_safe <- max(as.integer(n), 2L)
+  MetBrewer::met.brewer("Hiroshige", n = n_safe, type = "continuous")[seq_len(n)]
+}
 
 RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
 OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures", "violin_plots")
@@ -167,11 +174,11 @@ process_run <- function(run) {
       ggrepel::geom_text_repel(
         data = tops,
         ggplot2::aes(label = variant_label),
-        size = 4.5, max.overlaps = 10) +
+        size = 2.5, max.overlaps = 10) +
       ggplot2::facet_wrap(~ display_name, labeller = .italic_gene_labeller) +
       ggplot2::labs(x = x_axis_title, y = ylabel) +
       ggplot2::theme_minimal(base_size = 16)
-    ggplot2::ggsave(out_path, plot = p, width = 14, height = 10, dpi = 300)
+    ggplot2::ggsave(out_path, plot = p, width = 16, height = 10, dpi = 300)
   }
 
   # |β̃|: all cutpoints.
@@ -231,18 +238,24 @@ facet_levels <- c(
 combined$facet <- factor(facet_expr, levels = facet_levels)
 
 p_overlay <- ggplot2::ggplot(combined,
-    ggplot2::aes(x = factor(x_val), y = value)) +
-  ggplot2::geom_violin(fill = "#cfe4f5", colour = "#0b3d91",
-                       alpha = 0.7, linewidth = 0.6) +
-  ggplot2::geom_jitter(ggplot2::aes(colour = gene),
-                       width = 0.15, alpha = 0.6, size = 1) +
-  ggplot2::scale_colour_viridis_d(name = "gene") +
+    ggplot2::aes(x = factor(x_val), y = value, fill = gene)) +
+  ggplot2::geom_violin(colour = "#0b3d91", alpha = 0.7, linewidth = 0.4,
+                       scale = "width",
+                       position = ggplot2::position_dodge(width = 0.9)) +
+  ggplot2::geom_point(ggplot2::aes(colour = gene),
+                      position = ggplot2::position_jitterdodge(
+                        jitter.width = 0.15, dodge.width = 0.9),
+                      alpha = 0.6, size = 1, show.legend = FALSE) +
+  ggplot2::scale_fill_manual(name = "gene",
+                             values = .hiroshige_discrete(nlevels(combined$gene))) +
+  ggplot2::scale_colour_manual(name = "gene",
+                               values = .hiroshige_discrete(nlevels(combined$gene))) +
   ggplot2::facet_wrap(~ facet, scales = "free", ncol = 2,
                       labeller = ggplot2::label_parsed) +
   ggplot2::labs(x = expression("MIC breakpoint" ~ (mu * "g·mL"^{-1})), y = NULL) +
   ggplot2::theme_minimal(base_size = 16)
 ggplot2::ggsave(
   file.path(OUTPUT_DIR, "overlay_gene_violin_grid.png"),
-  plot = p_overlay, width = 14, height = 10, dpi = 300)
+  plot = p_overlay, width = 16, height = 10, dpi = 300)
 
 message("Done. Output written to ", OUTPUT_DIR)
