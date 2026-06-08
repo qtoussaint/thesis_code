@@ -9,7 +9,8 @@
 
 RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
 OUT_DIR      <- "/nfs/research/jlees/jacqueline/thesis_results/paper_figures/prediction_accuracy_tables"
-MISSING      <- "XXX"
+MISSING      <- "--"            # null / no value
+RESTRICTED   <- "$^{\\dagger}$"  # metric computed on a reduced category set
 
 # -----------------------------------------------------------------------------
 # Readers
@@ -50,6 +51,25 @@ read_json_scalars <- function(json_path, keys) {
 }
 
 # -----------------------------------------------------------------------------
+# Restricted-category bacc/ppv (mirrors gwas_workflow .restricted_ordinal_metrics)
+# -----------------------------------------------------------------------------
+
+# Recompute bacc/ppv over the categories actually present in the test set, off the
+# K x K confusion table so every sample stays in play. bacc averages per-class
+# balanced accuracy over classes with a true sample (needs two or more, else NA);
+# ppv weight-averages precision over classes that were predicted at least once.
+restricted_ordinal_metrics <- function(yt, yp, K) {
+  M  <- table(factor(yt, levels = seq_len(K)), factor(yp, levels = seq_len(K)))
+  N  <- sum(M); rs <- rowSums(M); cs <- colSums(M); tp <- diag(M)
+  present <- which(rs > 0); predicted <- which(cs > 0)
+  sens <- tp / rs; spec <- (N - rs - (cs - tp)) / (N - rs)
+  bacc <- if (length(present) >= 2) mean((sens[present] + spec[present]) / 2) else NA_real_
+  prec <- tp / cs
+  ppv  <- if (sum(rs[predicted]) > 0) sum(prec[predicted] * rs[predicted]) / sum(rs[predicted]) else NA_real_
+  list(bacc = bacc, ppv = ppv)
+}
+
+# -----------------------------------------------------------------------------
 # Path builders
 # -----------------------------------------------------------------------------
 
@@ -57,8 +77,8 @@ ppc_csv  <- function(species_dir, run_dir) file.path(
   RESULTS_ROOT, paste0("gwas_", species_dir), "inference",
   run_dir, "inference_ppc", "prediction_accuracy_metrics.csv")
 
-pred_csv <- function(species_dir, run_dir, split) file.path(
-  RESULTS_ROOT, paste0("gwas_", species_dir), "prediction",
+pred_csv <- function(species_dir, run_dir, split, pred_subdir = "prediction") file.path(
+  RESULTS_ROOT, paste0("gwas_", species_dir), pred_subdir,
   paste0(run_dir, "_", split), "prediction_results", "prediction_accuracy_metrics.csv")
 
 inf_json  <- function(dataset) file.path(
@@ -67,6 +87,25 @@ inf_json  <- function(dataset) file.path(
 pred_json <- function(dataset, split) {
   d <- if (split == "loso") paste0(dataset, "_loso") else dataset
   file.path(RESULTS_ROOT, "gwas_datasets", "prediction", d, paste0(d, ".json"))
+}
+
+# Per-sample artifacts used to recompute ordinal bacc/ppv over present categories.
+ppc_yrep    <- function(species_dir, run_dir) file.path(
+  RESULTS_ROOT, paste0("gwas_", species_dir), "inference",
+  run_dir, "inference_ppc", "y_rep_vs_true.csv")
+
+pred_points <- function(species_dir, run_dir, split, pred_subdir = "prediction") file.path(
+  RESULTS_ROOT, paste0("gwas_", species_dir), pred_subdir,
+  paste0(run_dir, "_", split), "prediction_results", "point_predictions.csv")
+
+pred_draws  <- function(species_dir, run_dir, split, pred_subdir = "prediction") file.path(
+  RESULTS_ROOT, paste0("gwas_", species_dir), pred_subdir,
+  paste0(run_dir, "_", split), "prediction_results", "predicted_draws.csv")
+
+test_pheno  <- function(dataset, split) {
+  d <- if (split == "loso") paste0(dataset, "_loso") else dataset
+  file.path(RESULTS_ROOT, "gwas_datasets", "prediction", d,
+            paste0(d, "_test_phenotypes.csv"))
 }
 
 # Returns list(ntr, nte, metrics) for one (species, run, eval) triple.
@@ -82,6 +121,58 @@ collect_one <- function(species_dir, dataset_nn, dataset_base, run_dir, eval, me
     m <- read_metrics(pred_csv(species_dir, run_dir, split), metric_cols)
     list(ntr = n[["N_train"]], nte = n[["N_test"]], m = m)
   }
+}
+
+# Load the per-sample artifacts for one ordinal (run, model, eval) and recompute
+# bacc/ppv, or NULL if any needed file is missing. PPC reads y_rep_vs_true.csv;
+# prediction reads true labels from the dataset and point predictions from the run
+# (PPOM saves them directly, POM should rebuild them from the category draws).
+recompute_ordinal_stars <- function(species_dir, run_dir, model, eval, dataset, split, K) {
+  if (eval == "PPC") {
+    f <- ppc_yrep(species_dir, run_dir)
+    if (!file.exists(f)) return(NULL)
+    d <- read.csv(f); yt <- d$y_true; yp <- d$y_rep_mode
+  } else {
+    tf <- test_pheno(dataset, split)
+    if (!file.exists(tf)) return(NULL)
+    yt <- read.csv(tf)$true_phenotype
+    if (model == "PPOM") {
+      pf <- pred_points(species_dir, run_dir, split)
+      if (!file.exists(pf)) return(NULL)
+      yp <- read.csv(pf)$point_prediction
+    } else {                                   # POM: rebuild point predictions from draws
+      df <- pred_draws(species_dir, run_dir, split)
+      if (!file.exists(df)) return(NULL)
+      draws <- as.matrix(read.csv(df))         # rows = draws, cols = samples
+      probs <- t(apply(draws, 2, function(col) tabulate(col, nbins = K) / length(col)))
+      yp    <- apply(probs, 1, which.max)
+    }
+  }
+  if (is.null(yt) || is.null(yp) || length(yt) != length(yp)) return(NULL)
+  restricted_ordinal_metrics(yt, yp, K)
+}
+
+# Star the bacc/ppv cells only. A non-NA on-disk value is kept and starred when the
+# CSV's *_restricted flag is set; an NA cell is recomputed from artifacts and starred
+# (a recomputed value is restricted by construction), or left XXX if it cannot be.
+star_ordinal_cells <- function(m, csv_path, species_dir, run_dir, model, eval, dataset, split, K) {
+  raw <- if (file.exists(csv_path))
+           tryCatch(read.csv(csv_path, check.names = FALSE)[1, , drop = FALSE],
+                    error = function(e) NULL) else NULL
+  rc <- NULL  # recompute lazily, only if a cell is NA
+  for (col in c("bacc", "ppv")) {
+    onv  <- if (!is.null(raw) && col %in% names(raw)) suppressWarnings(as.numeric(raw[[col]])) else NA_real_
+    flag <- paste0(col, "_restricted")
+    if (!is.na(onv)) {
+      starred <- !is.null(raw) && flag %in% names(raw) && isTRUE(as.logical(raw[[flag]]))
+      m[[col]] <- paste0(fmt(onv), if (starred) RESTRICTED else "")
+    } else {
+      if (is.null(rc)) rc <- recompute_ordinal_stars(species_dir, run_dir, model, eval, dataset, split, K)
+      val <- if (!is.null(rc)) rc[[col]] else NA_real_
+      m[[col]] <- if (is.na(val)) MISSING else paste0(fmt(val), RESTRICTED)
+    }
+  }
+  m
 }
 
 # -----------------------------------------------------------------------------
@@ -200,6 +291,11 @@ build_ordinal_table <- function(specs, metric_cols) {
       for (j in seq_along(EVALS)) {
         eval <- EVALS[j]
         payload <- collect_one(s$species_dir, s$nn, s$base, run_dir, eval, metric_cols)
+        split   <- if (eval == "PPC") NA_character_ else if (eval == "Random") "random" else "loso"
+        csv_p   <- if (eval == "PPC") ppc_csv(s$species_dir, run_dir)
+                   else                pred_csv(s$species_dir, run_dir, split)
+        payload$m <- star_ordinal_cells(payload$m, csv_p, s$species_dir, run_dir,
+                                         model, eval, paste0(s$nn, "_", s$base), split, s$K)
         first_in_binning <- (model == "PPOM" && j == 1)
         first_in_model   <- (j == 1)
         org     <- if (first_in_binning && new_species_block) s$org     else ""

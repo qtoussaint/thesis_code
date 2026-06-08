@@ -129,7 +129,7 @@ process_run <- function(run) {
   df <- eff
   df$position        <- pos[df$variant_id]
   df$gene            <- ann$gene[df$variant_id]
-  df$impact          <- variant_impacts[as.character(df$variant_id)]
+  df$impact          <- gsub("_", " ", variant_impacts[as.character(df$variant_id)])
   df$variant_label   <- variant_labels[as.character(df$variant_id)]
   df <- df[df$gene %in% GENES_OF_INTEREST[[1]], , drop = FALSE]
   df$display_name <- factor(display_map[df$gene],
@@ -163,14 +163,14 @@ process_run <- function(run) {
       ggplot2::geom_jitter(ggplot2::aes(colour = impact),
                            width = 0.15, alpha = 0.6, size = 1.5) +
       ggplot2::scale_colour_viridis_d(na.value = "grey60",
-                                      name = "functional impact") +
+                                      name = "Functional impact") +
       ggrepel::geom_text_repel(
         data = tops,
         ggplot2::aes(label = variant_label),
-        size = 2.5, max.overlaps = 10) +
+        size = 4.5, max.overlaps = 10) +
       ggplot2::facet_wrap(~ display_name, labeller = .italic_gene_labeller) +
       ggplot2::labs(x = x_axis_title, y = ylabel) +
-      ggplot2::theme_minimal(base_size = 14)
+      ggplot2::theme_minimal(base_size = 16)
     ggplot2::ggsave(out_path, plot = p, width = 14, height = 10, dpi = 300)
   }
 
@@ -240,7 +240,7 @@ p_overlay <- ggplot2::ggplot(combined,
   ggplot2::facet_wrap(~ facet, scales = "free", ncol = 2,
                       labeller = ggplot2::label_parsed) +
   ggplot2::labs(x = expression("MIC breakpoint" ~ (mu * "g·mL"^{-1})), y = NULL) +
-  ggplot2::theme_minimal(base_size = 14)
+  ggplot2::theme_minimal(base_size = 16)
 ggplot2::ggsave(
   file.path(OUTPUT_DIR, "overlay_gene_violin_grid.png"),
   plot = p_overlay, width = 14, height = 10, dpi = 300)
