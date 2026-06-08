@@ -64,6 +64,82 @@ read_metrics <- function(csv_path, cols) {
 }
 
 # -----------------------------------------------------------------------------
+# Restricted-category bacc (mirrors collect_results.R / gwas_workflow)
+# -----------------------------------------------------------------------------
+# bacc is the only shared metric that can hit a div-by-zero when a test split is
+# missing whole categories. collect_results.R recomputes it over the categories
+# actually present (off the K x K confusion table) and flags the cell with a
+# superscript dagger in the LaTeX tables; here we mirror that and mark the bar
+# with a star. RPSS and the binary logistic bacc are never restricted.
+
+# Per-sample artifact paths. Test phenotypes are shared across run families;
+# point predictions / draws live under the run family's pred_subdir.
+test_pheno  <- function(stub, split) {
+  d <- if (split == "loso") paste0(stub, "_loso") else stub
+  file.path(RESULTS_ROOT, "gwas_datasets", "prediction", d, paste0(d, "_test_phenotypes.csv"))
+}
+pred_points <- function(species_dir, run_dir, split, pred_subdir) file.path(
+  RESULTS_ROOT, paste0("gwas_", species_dir), pred_subdir,
+  paste0(run_dir, "_", split), "prediction_results", "point_predictions.csv")
+pred_draws  <- function(species_dir, run_dir, split, pred_subdir) file.path(
+  RESULTS_ROOT, paste0("gwas_", species_dir), pred_subdir,
+  paste0(run_dir, "_", split), "prediction_results", "predicted_draws.csv")
+
+# bacc averaged over the categories with a true test sample (needs two or more,
+# else NA), off the full K x K confusion table so every sample stays in play.
+restricted_bacc <- function(yt, yp, K) {
+  M  <- table(factor(yt, levels = seq_len(K)), factor(yp, levels = seq_len(K)))
+  N  <- sum(M); rs <- rowSums(M); cs <- colSums(M); tp <- diag(M)
+  present <- which(rs > 0)
+  sens <- tp / rs; spec <- (N - rs - (cs - tp)) / (N - rs)
+  if (length(present) >= 2) mean((sens[present] + spec[present]) / 2) else NA_real_
+}
+
+# Recompute bacc over present categories from the saved per-sample artifacts, or
+# NA if any needed file is missing. PPOM saves point predictions directly; POM
+# rebuilds them as the modal category over the integer draws.
+recompute_bacc <- function(species_dir, run_dir, model, split, stub, K, pred_subdir) {
+  tf <- test_pheno(stub, split)
+  if (!file.exists(tf)) return(NA_real_)
+  yt <- read.csv(tf)$true_phenotype
+  if (model == "PPOM") {
+    pf <- pred_points(species_dir, run_dir, split, pred_subdir)
+    if (!file.exists(pf)) return(NA_real_)
+    yp <- read.csv(pf)$point_prediction
+  } else {
+    dr <- pred_draws(species_dir, run_dir, split, pred_subdir)
+    if (!file.exists(dr)) return(NA_real_)
+    draws <- as.matrix(read.csv(dr))            # rows = draws, cols = samples
+    probs <- t(apply(draws, 2, function(col) tabulate(col, nbins = K) / length(col)))
+    yp    <- apply(probs, 1, which.max)
+  }
+  if (is.null(yt) || is.null(yp) || length(yt) != length(yp)) return(NA_real_)
+  restricted_bacc(yt, yp, K)
+}
+
+# Resolve bacc for one (spec, model, split): keep the on-disk value (starred when
+# its bacc_restricted flag is set), or recompute over present categories when the
+# cell is NA (a recomputed value is restricted by construction).
+resolve_bacc <- function(s, model, sp, pred_subdir) {
+  run_dir  <- paste0(s$nn, "_", s$run_stub, "_", model)
+  csv_path <- pred_csv(s$species_dir, run_dir, sp, pred_subdir)
+  raw <- if (file.exists(csv_path))
+           tryCatch(read.csv(csv_path, check.names = FALSE)[1, , drop = FALSE],
+                    error = function(e) NULL) else NULL
+  onv <- if (!is.null(raw) && "bacc" %in% names(raw))
+           suppressWarnings(as.numeric(raw[["bacc"]])) else NA_real_
+  if (!is.na(onv)) {
+    starred <- !is.null(raw) && "bacc_restricted" %in% names(raw) &&
+               isTRUE(as.logical(raw[["bacc_restricted"]]))
+    list(value = onv, restricted = starred)
+  } else {
+    val <- recompute_bacc(s$species_dir, run_dir, model, sp,
+                          paste0(s$nn, "_", s$run_stub), s$K, pred_subdir)
+    list(value = val, restricted = !is.na(val))
+  }
+}
+
+# -----------------------------------------------------------------------------
 # Specs (drug / binning / model layout, from collect_results.R)
 # -----------------------------------------------------------------------------
 
@@ -103,11 +179,17 @@ build_df <- function(pred_subdir) {
       run_dir <- paste0(s$nn, "_", s$run_stub, "_", model)
       for (sp in names(SPLITS)) {
         m <- read_metrics(pred_csv(s$species_dir, run_dir, sp, pred_subdir), ORD_METRICS)
+        # bacc may be NA on disk (div-by-zero on a missing category); resolve it
+        # over present-only categories and flag whether the value is restricted.
+        bacc_res <- resolve_bacc(s, model, sp, pred_subdir)
         for (metric in ORD_METRICS) {
+          is_bacc <- metric == "bacc"
           rows[[length(rows) + 1]] <- data.frame(
             drug = s$drug, organism = s$organism, binning = s$binning, K = s$K,
             model = model, split = SPLITS[[sp]], metric = metric,
-            value = unname(m[[metric]]), stringsAsFactors = FALSE)
+            value = if (is_bacc) bacc_res$value else unname(m[[metric]]),
+            restricted = if (is_bacc) bacc_res$restricted else FALSE,
+            stringsAsFactors = FALSE)
         }
       }
     }
@@ -119,7 +201,7 @@ build_df <- function(pred_subdir) {
       rows[[length(rows) + 1]] <- data.frame(
         drug = s$drug, organism = NA_character_, binning = NA_character_, K = 2L,
         model = "Logistic", split = SPLITS[[sp]], metric = "bacc",
-        value = unname(m[["bacc"]]), stringsAsFactors = FALSE)
+        value = unname(m[["bacc"]]), restricted = FALSE, stringsAsFactors = FALSE)
     }
   }
 
@@ -300,6 +382,11 @@ make_figure <- function(pred_subdir, file_stub) {
 
   panel_a <- ggplot(bacc_bars, aes(x = binning, y = value, fill = model)) +
     geom_col(position = position_dodge(width = 0.75), width = 0.7) +
+    # Star bars whose bacc was computed on a reduced category set (cf. the
+    # superscript dagger collect_results.R puts on the matching LaTeX cells).
+    geom_text(aes(label = ifelse(restricted, "*", ""), group = model),
+              position = position_dodge(width = 0.75),
+              vjust = -0.2, size = 6, show.legend = FALSE) +
     geom_hline(data = bacc_logit,
                aes(yintercept = value, linetype = model_key),
                colour = model_cols[["Logistic"]], linewidth = 0.7) +
@@ -307,9 +394,11 @@ make_figure <- function(pred_subdir, file_stub) {
     scale_fill_manual(values = fill_vals, name = "model", limits = model_levels) +
     scale_linetype_manual(values = lty_vals, name = "model", limits = model_levels) +
     coord_cartesian(ylim = c(0, 1)) +
-    labs(x = NULL, y = "balanced accuracy (bACC)") +
+    labs(x = NULL, y = "balanced accuracy (bACC)",
+         caption = "* bACC computed on a reduced category set (categories absent from the test split excluded)") +
     base_theme +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+    theme(axis.text.x = element_text(angle = 30, hjust = 1),
+          plot.caption = element_text(hjust = 0, size = 9))
 
   # --- Panel B: RPSS skill scores (POM vs PPOM; uniform + frequency baselines) ---
   rpss <- df[df$metric %in% c("rpss_uniform", "rpss_frequency"), ]

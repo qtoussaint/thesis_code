@@ -162,6 +162,11 @@ process_run <- function(run) {
   }
 
   # Shared impact-coloured violin (matches gwas_workflow's style exactly).
+  # Functional impact is a qualitative variable, so colour it with the discrete
+  # Hiroshige palette (categorical), matching the gene colouring in the overlay.
+  impact_levels  <- sort(unique(df$impact[!is.na(df$impact)]))
+  impact_colours <- setNames(.hiroshige_discrete(length(impact_levels)),
+                             impact_levels)
   impact_violin <- function(d, y_col, ylabel, tops, out_path) {
     p <- ggplot2::ggplot(d,
         ggplot2::aes(x = factor(x_val), y = .data[[y_col]])) +
@@ -169,8 +174,9 @@ process_run <- function(run) {
                            alpha = 0.7, linewidth = 0.6) +
       ggplot2::geom_jitter(ggplot2::aes(colour = impact),
                            width = 0.15, alpha = 0.6, size = 1.5) +
-      ggplot2::scale_colour_viridis_d(na.value = "grey60",
-                                      name = "Functional impact") +
+      ggplot2::scale_colour_manual(values = impact_colours,
+                                   na.value = "grey60",
+                                   name = "Functional impact") +
       ggrepel::geom_text_repel(
         data = tops,
         ggplot2::aes(label = variant_label),
