@@ -48,6 +48,9 @@ OUT_DIR    <- file.path(RES, "paper_figures", "faceted_rate_beta")
 NCOL       <- 2L
 
 SINGLE_COLOR <- viridis::viridis(6, option = "plasma")[2]
+# beta vs rate point colour: dark ends of the PuOr palette (colourblind-safe) -- muddy/
+# dark orange for |beta|, dark purple for RATE.
+METRIC_COLORS <- c(beta = "#b35806", rate = "#542788")
 # plotmath strings (parsed in the facet strips): beta -> |beta-tilde|, rate -> plain text.
 METRIC_LABELS <- c(beta = "group('|', tilde(beta), '|')",
                    rate = "'relative centrality (RATE)'")
@@ -188,14 +191,17 @@ build_pom_combined <- function(cfg, binnings) {
   if (isTRUE(cfg$pom_wrap)) return(build_pom_wrapped(long, label_df))
 
   ggplot2::ggplot(long, ggplot2::aes(x = pos, y = value)) +
-    ggplot2::geom_point(alpha = 0.4, colour = SINGLE_COLOR) +
+    ggplot2::geom_point(ggplot2::aes(colour = metric), alpha = 0.4) +
+    ggplot2::scale_colour_manual(values = METRIC_COLORS, guide = "none") +
     ggplot2::facet_grid(metric ~ binning, scales = "free_y", switch = "y",
                         labeller = ggplot2::labeller(metric = metric_labeller)) +
     repel_layer(label_df) +
     ggplot2::xlab("genome coordinate (bp)") + ggplot2::ylab(NULL) +
     ggplot2::theme_minimal(base_size = 20) +
     ggplot2::theme(strip.placement = "outside",
-                   strip.text.x = ggplot2::element_text(face = "bold", size = 20))
+                   strip.text.x = ggplot2::element_text(face = "bold", size = 20),
+                   # metric label sits where the y-axis title would; match the x title (20pt)
+                   strip.text.y = ggplot2::element_text(size = 20))
 }
 
 # Wrapped POM layout: a beta block (binnings wrapped two-per-row) stacked over a
@@ -205,7 +211,7 @@ build_pom_wrapped <- function(long, label_df) {
     sub <- long[long$metric == m, ]
     lab <- label_df[label_df$metric == m, ]
     ggplot2::ggplot(sub, ggplot2::aes(x = pos, y = value)) +
-      ggplot2::geom_point(alpha = 0.4, colour = SINGLE_COLOR) +
+      ggplot2::geom_point(alpha = 0.4, colour = METRIC_COLORS[[m]]) +
       ggplot2::facet_wrap(~ binning, ncol = NCOL, scales = "free_y") +
       repel_layer(lab) +
       ggplot2::xlab("genome coordinate (bp)") + ggplot2::ylab(ylab_expr) +
@@ -251,14 +257,19 @@ build_ppom_stacked <- function(cfg, metric, binnings) {
 logi_panel <- function(long, n = 10L) {
   label_df <- facet_labels(long, c("species", "metric"), n = n)
   ggplot2::ggplot(long, ggplot2::aes(x = pos, y = value)) +
-    ggplot2::geom_point(alpha = 0.4, colour = SINGLE_COLOR) +
+    ggplot2::geom_point(ggplot2::aes(colour = metric), alpha = 0.4) +
+    ggplot2::scale_colour_manual(values = METRIC_COLORS, guide = "none") +
     ggplot2::facet_grid(metric ~ species, scales = "free", switch = "y",
                         labeller = ggplot2::labeller(metric = metric_labeller,
                                                      species = ggplot2::label_parsed)) +
     repel_layer(label_df) +
     ggplot2::xlab("genome coordinate (bp)") + ggplot2::ylab(NULL) +
     ggplot2::theme_minimal(base_size = 20) +
-    ggplot2::theme(strip.placement = "outside")
+    ggplot2::theme(strip.placement = "outside",
+                   # species/drug title: 2pt larger than the axis titles (20pt)
+                   strip.text.x = ggplot2::element_text(size = 22),
+                   # metric label sits where the y-axis title would; match the x title (20pt)
+                   strip.text.y = ggplot2::element_text(size = 20))
 }
 
 # -----------------------------------------------------------------------------
@@ -274,7 +285,7 @@ build_logistic_all <- function(cfgs) {
       message("    skip logistic '", cfg$key, "' (no RATE output yet)")
       next
     }
-    df <- annotate_genes(read_single_run(rdir), cfg$annot, cfg$goi)
+    df <- annotate_genes(read_single_run(rdir, canonical_positions(cfg)), cfg$annot, cfg$goi)
     df$species <- cfg$display
     df$species_key <- cfg$key
     frames[[length(frames) + 1]] <- df
@@ -329,9 +340,10 @@ for (cfg in species_cfgs) {
   message("[", cfg$key, "] POM combined")
   pom <- build_pom_combined(cfg, cfg$binnings)
   if (isTRUE(cfg$pom_wrap)) {
-    # Two columns wide, four rows tall (two beta over two RATE).
+    # Two columns wide, four rows tall (two beta over two RATE); 15% wider than the
+    # base two-column width for a bit more horizontal breathing room.
     save_or_skip(pom, file.path(OUT_DIR, paste0(cfg$key, "_POM_faceted_RATE_beta.png")),
-                 16, 22)
+                 18.4, 22)
   } else {
     save_or_skip(pom, file.path(OUT_DIR, paste0(cfg$key, "_POM_faceted_RATE_beta.png")),
                  max(20, 6 * length(cfg$binnings)), 11)

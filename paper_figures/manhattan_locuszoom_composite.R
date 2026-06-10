@@ -44,60 +44,62 @@ DEFAULT_OUTPUT_DIR <- file.path(RESULTS, "paper_figures/manhattans_with_locus")
 
 parse_args <- function(argv) {
   out <- list(output_dir = DEFAULT_OUTPUT_DIR,
-              analysis_name = "02_spn_penicillin_MIC_PPOM_labeled")
+              analysis_name = "02_spn_penicillin_MIC_PPOM_labeled",
+              layout = "full")   # "full" (A-E) or "smaller" (exp|median| + RATE only)
   i <- 1
   while (i <= length(argv)) {
     a <- argv[i]
     if (a == "--output-dir") { out$output_dir <- argv[i + 1]; i <- i + 2 }
     else if (a == "--analysis-name") { out$analysis_name <- argv[i + 1]; i <- i + 2 }
+    else if (a == "--layout") { out$layout <- argv[i + 1]; i <- i + 2 }
     else stop("Unknown argument: ", a)
   }
+  if (!out$layout %in% c("full", "smaller")) stop("--layout must be full or smaller")
   out
 }
 
 main <- function() {
   args <- parse_args(commandArgs(trailingOnly = TRUE))
   dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
-  full_path    <- file.path(args$output_dir, paste0("figure_", args$analysis_name, ".png"))
-  smaller_path <- file.path(args$output_dir, paste0("figure_", args$analysis_name, "_smaller.png"))
+  suffix <- if (args$layout == "smaller") "_smaller" else ""
+  output_path <- file.path(args$output_dir,
+                           paste0("figure_", args$analysis_name, suffix, ".png"))
 
-  message("Building beta manhattans (median + exp|median|)...")
+  message("Building exp(|median|) beta + RATE manhattans...")
+  # penicillin: label the regional peak within +/-10kb of each gene's top SNP and
+  # shift each label right until its text box clears every plotted point
   betas <- make_beta_manhattans(PEN_RUN, PEN_POS, annotations = SPN_ANNOT, goi = GOI,
-                                label_genes = BETA_GENES, gene_aliases = GENE_ALIASES)
-  pA <- betas$median
+                                label_genes = BETA_GENES, gene_aliases = GENE_ALIASES,
+                                label_window_bp = 10000, label_no_overlap = TRUE)
   pB <- betas$exp_abs
-  message("Building RATE manhattan...")
   pD <- make_rate_manhattan(PEN_RUN, annotations = SPN_ANNOT, goi = GOI,
-                            label_mode = "gene_list", label_genes = RATE_GENES)
+                            label_mode = "gene_list", label_genes = RATE_GENES,
+                            label_window_bp = 10000, label_no_overlap = TRUE)
 
   message("Building locus-zoom rows...")
   rowC <- mb_lz_row(PEN_LZ, LZ_GENES, "exp_abs_median")
   rowE <- mb_lz_row(PEN_LZ, LZ_GENES, "rate")
 
-  # Full figure: median beta, exp(|median|) beta + locus zoom, RATE + locus zoom
-  full <- mb_assemble(list(
-    list(manhattan = pA, lz = NULL),
-    list(manhattan = pB, lz = rowC),
-    list(manhattan = pD, lz = rowE)
-  ))
-  message("Output: ", full_path)
-  ggsave(full_path, full$canvas, width = full$width, height = full$height,
-         dpi = 300, limitsize = FALSE, bg = "white")
-  message("Wrote ", full_path)
+  if (args$layout == "full") {
+    # median beta, exp(|median|) beta + locus zoom, RATE + locus zoom
+    units <- list(
+      list(manhattan = betas$median, lz = NULL),
+      list(manhattan = pB, lz = rowC),
+      list(manhattan = pD, lz = rowE)
+    )
+  } else {
+    # "smaller": drop the median beta panel
+    units <- list(
+      list(manhattan = pB, lz = rowC),
+      list(manhattan = pD, lz = rowE)
+    )
+  }
 
-  # "Smaller" figure: drop the median beta panel — exp(|median|) beta + locus zoom,
-  # RATE + locus zoom only. Rebuild the locus-zoom rows so each carries a fresh
-  # (single-use) magick image handle.
-  rowC2 <- mb_lz_row(PEN_LZ, LZ_GENES, "exp_abs_median")
-  rowE2 <- mb_lz_row(PEN_LZ, LZ_GENES, "rate")
-  smaller <- mb_assemble(list(
-    list(manhattan = pB, lz = rowC2),
-    list(manhattan = pD, lz = rowE2)
-  ))
-  message("Output: ", smaller_path)
-  ggsave(smaller_path, smaller$canvas, width = smaller$width, height = smaller$height,
+  res <- mb_assemble(units)
+  message("Output: ", output_path)
+  ggsave(output_path, res$canvas, width = res$width, height = res$height,
          dpi = 300, limitsize = FALSE, bg = "white")
-  message("Wrote ", smaller_path)
+  message("Wrote ", output_path)
 }
 
 main()

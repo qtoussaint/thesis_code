@@ -12,17 +12,19 @@
 # Per-cutpoint MIC breakpoint labels come from depruned_variant_effects.csv in
 # the same run dir (guaranteed present whenever the RDS exists).
 #
-# Resume: a run whose cutpoint_draws.csv already exists is skipped. Runs with no
-# RDS yet (still inferring) are skipped with a warning.
+# One run per RDS, so this is run as a SLURM array (one task per run, memory
+# sized to that run): extract_cutpoint_draws_array.sh maps SLURM_ARRAY_TASK_ID
+# to --index here. Resume: a run whose cutpoint_draws.csv already exists is
+# skipped; a run with no RDS yet (still inferring) is skipped with a warning.
+#
+# Modes:
+#   Rscript extract_cutpoint_draws.R              # process every run, serially
+#   Rscript extract_cutpoint_draws.R --index N    # process only run N (1-based)
+#   Rscript extract_cutpoint_draws.R --list       # print "index<TAB>run_dir<TAB>rds_bytes"
 #
 # Usage (big-mem node):
 #   mamba activate gwas_pipeline
-#   Rscript paper_figures/extract_cutpoint_draws.R
-
-suppressPackageStartupMessages({
-  library(cmdstanr)
-  library(posterior)
-})
+#   Rscript paper_figures/extract_cutpoint_draws.R --index 3
 
 RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
 
@@ -50,6 +52,28 @@ run_dir_path <- function(species_dir, nn, run_stub, model) file.path(
   RESULTS_ROOT, paste0("gwas_", species_dir), "inference",
   paste0(nn, "_", run_stub, "_", model))
 
+# Flatten datasets x models into a stable, index-addressable run manifest. The
+# ordering is fixed so SLURM_ARRAY_TASK_ID maps to the same run every time.
+build_runs <- function() {
+  runs <- list()
+  for (ds in datasets) {
+    for (s in ds$binning_specs) {
+      for (model in MODELS) {
+        runs[[length(runs) + 1]] <- list(
+          tag = paste(s$nn, s$run_stub, model, sep = "_"),
+          run_dir = run_dir_path(ds$species_dir, s$nn, s$run_stub, model))
+      }
+    }
+  }
+  runs
+}
+
+rds_path <- function(run_dir) {
+  f <- list.files(file.path(run_dir, "fitted_model"),
+                  pattern = "\\.RDS$", full.names = TRUE)
+  if (length(f)) f[1] else NA_character_
+}
+
 # Per-cutpoint MIC breakpoint, ordered by cutpoint index, from the run's
 # depruned_variant_effects.csv (unique cutpoint -> cutpoint_MIC).
 cutpoint_mic_map <- function(run_dir) {
@@ -58,8 +82,7 @@ cutpoint_mic_map <- function(run_dir) {
   eff <- read.csv(effects_csv)
   if (!all(c("cutpoint", "cutpoint_MIC") %in% names(eff))) return(NULL)
   map <- unique(eff[, c("cutpoint", "cutpoint_MIC")])
-  map <- map[order(map$cutpoint), ]
-  map
+  map[order(map$cutpoint), ]
 }
 
 extract_one <- function(run_dir) {
@@ -68,15 +91,19 @@ extract_one <- function(run_dir) {
     message("  cache exists, skipping: ", out_csv)
     return(invisible(NULL))
   }
-  rds <- list.files(file.path(run_dir, "fitted_model"),
-                    pattern = "\\.RDS$", full.names = TRUE)
-  if (length(rds) == 0L) {
+  rds <- rds_path(run_dir)
+  if (is.na(rds)) {
     warning("no RDS (run not finished?), skipping: ", run_dir)
     return(invisible(NULL))
   }
 
-  message("  reading ", rds[1])
-  fit <- readRDS(rds[1])
+  suppressPackageStartupMessages({
+    library(cmdstanr)
+    library(posterior)
+  })
+
+  message("  reading ", rds)
+  fit <- readRDS(rds)
   draws_mat <- tryCatch(
     posterior::as_draws_matrix(fit$draws(variables = "cutpoints")),
     error = function(e) {
@@ -108,16 +135,35 @@ extract_one <- function(run_dir) {
   invisible(NULL)
 }
 
-for (ds in datasets) {
-  for (s in ds$binning_specs) {
-    for (model in MODELS) {
-      run_dir <- run_dir_path(ds$species_dir, s$nn, s$run_stub, model)
-      message(sprintf("[%s_%s_%s]", s$nn, s$run_stub, model))
-      tryCatch(extract_one(run_dir),
-               error = function(e) warning("failed: ", run_dir, " -- ",
-                                           conditionMessage(e)))
-    }
+# ---- CLI -------------------------------------------------------------------
+argv  <- commandArgs(trailingOnly = TRUE)
+runs  <- build_runs()
+
+if ("--list" %in% argv) {
+  for (i in seq_along(runs)) {
+    rds <- rds_path(runs[[i]]$run_dir)
+    bytes <- if (is.na(rds)) 0 else file.info(rds)$size
+    cat(i, runs[[i]]$run_dir, format(bytes, scientific = FALSE), sep = "\t")
+    cat("\n")
   }
+  quit(save = "no")
 }
 
+idx_pos <- match("--index", argv)
+if (!is.na(idx_pos)) {
+  i <- as.integer(argv[idx_pos + 1])
+  if (is.na(i) || i < 1 || i > length(runs)) stop("--index out of range: ", argv[idx_pos + 1])
+  message(sprintf("[%d/%d %s]", i, length(runs), runs[[i]]$tag))
+  extract_one(runs[[i]]$run_dir)
+  message("Done.")
+  quit(save = "no")
+}
+
+# No --index: process all runs serially (fallback / non-array use).
+for (i in seq_along(runs)) {
+  message(sprintf("[%d/%d %s]", i, length(runs), runs[[i]]$tag))
+  tryCatch(extract_one(runs[[i]]$run_dir),
+           error = function(e) warning("failed: ", runs[[i]]$run_dir, " -- ",
+                                       conditionMessage(e)))
+}
 message("Done.")
