@@ -57,6 +57,26 @@ GENES_OF_INTEREST <- list(
   c("pbp2x", "pbp1a", "pbp1b", "pbp2a", "pbp2b", "mraY")
 )
 
+# Display order for the 6-gene facets (the plotted order, unchanged).
+DISPLAY_LEVELS <- c("pbp1a", "pbp1b", "pbp2a", "pbp2b", "pbp2x", "mraY")
+
+# Full genes-of-interest list (spn_penicillin_genesofinterest.txt). The six core
+# genes above keep their order and display labels; the remaining genes follow in
+# the order they appear in the CSV. stkP (SPN23F17350) has no variants, so its
+# facet is dropped automatically. Same layout: col1 = annotation name, col2 = label.
+ALL_GENES_OF_INTEREST <- list(
+  c("pbp1A", "pbp1B", "pbp2A", "penA", "pbpX", "mraY",
+    "mraW", "murM", "murN", "ftsL", "SPN23F03440", "clpL", "clpX",
+    "ciaH", "ciaR", "recU", "SPN23F09960", "SPN23F01040",
+    "SPN23F17350", "SPN23F17360", "SPN23F22380"),
+  c("pbp1a", "pbp1b", "pbp2a", "pbp2b", "pbp2x", "mraY",
+    "mraW", "murM", "murN", "ftsL", "gpsB", "clpL", "clpX",
+    "ciaH", "ciaR", "recU", "cpoA", "spr1178",
+    "stkP", "phpP", "pde1")
+)
+# Facet order for the all-genes plot = the column-2 labels above, in that order.
+ALL_DISPLAY_LEVELS <- ALL_GENES_OF_INTEREST[[2]]
+
 # Each run: where the fitted effects live and the variant index giving genomic positions
 # (column 2, row-aligned to variant_id) — the same --phandango files the pipeline used.
 RUNS <- list(
@@ -131,24 +151,29 @@ process_run <- function(run) {
   variant_impacts <- setNames(ann$impact, ids)
 
   # Build the filtered, per-cutpoint data frame the same way the pipeline does:
-  # map gene/impact/label by variant_id, keep the 6 genes, then derive |β̃| and |Δβ̃|.
-  display_map <- setNames(GENES_OF_INTEREST[[2]], GENES_OF_INTEREST[[1]])
-  df <- eff
-  df$position        <- pos[df$variant_id]
-  df$gene            <- ann$gene[df$variant_id]
-  df$impact          <- gsub("_", " ", variant_impacts[as.character(df$variant_id)])
-  df$variant_label   <- variant_labels[as.character(df$variant_id)]
-  df <- df[df$gene %in% GENES_OF_INTEREST[[1]], , drop = FALSE]
-  df$display_name <- factor(display_map[df$gene],
-                            levels = c("pbp1a", "pbp1b", "pbp2a",
-                                       "pbp2b", "pbp2x", "mraY"))
-  df <- df[order(df$variant_id, df$cutpoint), ]
-  df$abs_median   <- abs(df$median)
-  df$delta_signed <- ave(df$median, df$variant_id,
-                         FUN = function(x) c(NA_real_, diff(x)))
-  df$delta_abs    <- ave(df$median, df$variant_id,
-                         FUN = function(x) c(NA_real_, abs(diff(x))))
-  df$x_val <- as.numeric(as.character(df$cutpoint_MIC))   # MIC breakpoint per cutpoint
+  # map gene/impact/label by variant_id, keep the requested genes, then derive
+  # |β̃| and |Δβ̃|. Parameterised so the same shared annotation can feed both the
+  # 6-gene plots and the all-genes plot without re-reading the effects CSV.
+  make_df <- function(gene_names, display_levels) {
+    display_map <- setNames(display_levels, gene_names)
+    d <- eff
+    d$position      <- pos[d$variant_id]
+    d$gene          <- ann$gene[d$variant_id]
+    d$impact        <- gsub("_", " ", variant_impacts[as.character(d$variant_id)])
+    d$variant_label <- variant_labels[as.character(d$variant_id)]
+    d <- d[d$gene %in% gene_names, , drop = FALSE]
+    d$display_name  <- factor(display_map[d$gene], levels = display_levels)
+    d <- d[order(d$variant_id, d$cutpoint), ]
+    d$abs_median   <- abs(d$median)
+    d$delta_signed <- ave(d$median, d$variant_id,
+                          FUN = function(x) c(NA_real_, diff(x)))
+    d$delta_abs    <- ave(d$median, d$variant_id,
+                          FUN = function(x) c(NA_real_, abs(diff(x))))
+    d$x_val <- as.numeric(as.character(d$cutpoint_MIC))   # MIC breakpoint per cutpoint
+    d
+  }
+
+  df <- make_df(GENES_OF_INTEREST[[1]], DISPLAY_LEVELS)
 
   x_axis_title <- expression("MIC breakpoint" ~ (mu * "g·mL"^{-1}))
 
@@ -164,10 +189,13 @@ process_run <- function(run) {
   # Shared impact-coloured violin (matches gwas_workflow's style exactly).
   # Functional impact is a qualitative variable, so colour it with the discrete
   # Hiroshige palette (categorical), matching the gene colouring in the overlay.
-  impact_levels  <- sort(unique(df$impact[!is.na(df$impact)]))
-  impact_colours <- setNames(.hiroshige_discrete(length(impact_levels)),
-                             impact_levels)
-  impact_violin <- function(d, y_col, ylabel, tops, out_path) {
+  # The palette is derived from the data passed in so the all-genes plot covers
+  # its own impact levels. ncol/width/height default to the 6-gene layout.
+  impact_violin <- function(d, y_col, ylabel, tops, out_path,
+                            ncol = NULL, width = 16, height = 10) {
+    impact_levels  <- sort(unique(d$impact[!is.na(d$impact)]))
+    impact_colours <- setNames(.hiroshige_discrete(length(impact_levels)),
+                               impact_levels)
     p <- ggplot2::ggplot(d,
         ggplot2::aes(x = factor(x_val), y = .data[[y_col]])) +
       ggplot2::geom_violin(fill = "#cfe4f5", colour = "#0b3d91",
@@ -181,10 +209,11 @@ process_run <- function(run) {
         data = tops,
         ggplot2::aes(label = variant_label),
         size = 2.5, max.overlaps = 10) +
-      ggplot2::facet_wrap(~ display_name, labeller = .italic_gene_labeller) +
+      ggplot2::facet_wrap(~ display_name, ncol = ncol,
+                          labeller = .italic_gene_labeller) +
       ggplot2::labs(x = x_axis_title, y = ylabel) +
       ggplot2::theme_minimal(base_size = 16)
-    ggplot2::ggsave(out_path, plot = p, width = 16, height = 10, dpi = 300)
+    ggplot2::ggsave(out_path, plot = p, width = width, height = height, dpi = 300)
   }
 
   # |β̃|: all cutpoints.
@@ -201,6 +230,17 @@ process_run <- function(run) {
     top_per_group(df_delta, "delta_abs"),
     file.path(OUTPUT_DIR,
               paste0(run$name, "_gene_violin_abs_delta_beta_impact.png")))
+
+  # |β̃| across ALL genes of interest: same plot, but faceted over every gene in
+  # spn_penicillin_genesofinterest.txt (core six first, rest after). Wider canvas
+  # and 5 columns to fit the ~20 facets.
+  df_all <- make_df(ALL_GENES_OF_INTEREST[[1]], ALL_DISPLAY_LEVELS)
+  impact_violin(
+    df_all, "abs_median", expression("|" ~ tilde(beta) ~ "|"),
+    top_per_group(df_all, "abs_median"),
+    file.path(OUTPUT_DIR,
+              paste0(run$name, "_gene_violin_abs_beta_impact_allgenes.png")),
+    ncol = 5, width = 22, height = 16)
 
   # Companion CSV of the filtered underlying data, mirroring the plot inputs.
   out_cols <- c("variant_id", "position", "gene", "display_name",

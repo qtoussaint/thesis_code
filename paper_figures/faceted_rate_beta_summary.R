@@ -143,9 +143,9 @@ repel_layer <- function(label_df) {
 # -----------------------------------------------------------------------------
 # (A) POM combined: beta row on top, RATE row on bottom, column per binning.
 # -----------------------------------------------------------------------------
-build_pom_combined <- function(cfg) {
+build_pom_combined <- function(cfg, binnings) {
   frames <- list()
-  for (b in cfg$binnings) {
+  for (b in binnings) {
     rdir <- run_dir(cfg$key, paste0(b$nn, "_", b$stub, "_POM"))
     if (!single_has_rate(rdir)) {
       message("    skip POM binning '", b$label, "' (no RATE output yet): ", basename(rdir))
@@ -177,9 +177,9 @@ build_pom_combined <- function(cfg) {
 # -----------------------------------------------------------------------------
 # (B/C) PPOM stacked blocks: one titled block per binning, faceted by cutpoint.
 # -----------------------------------------------------------------------------
-build_ppom_stacked <- function(cfg, metric) {
+build_ppom_stacked <- function(cfg, metric, binnings) {
   blocks <- list(); rel_h <- numeric(0)
-  for (b in cfg$binnings) {
+  for (b in binnings) {
     rdir <- run_dir(cfg$key, paste0(b$nn, "_", b$stub, "_PPOM"))
     if (length(Sys.glob(file.path(rdir, "cppRATE_results",
                                   "RATE_values_cutpoint*_depruned.txt"))) == 0L) {
@@ -281,22 +281,35 @@ save_or_skip <- function(fig, path, width, height) {
 }
 
 for (cfg in species_cfgs) {
-  n_bin <- length(cfg$binnings)
+  # Each species produces one figure-set per binning group; species without an
+  # explicit `groups` get a single set covering all their binnings (no suffix).
+  groups <- cfg$groups
+  if (is.null(groups)) {
+    groups <- list(list(suffix = NULL,
+                        labels = vapply(cfg$binnings, function(b) b$label, character(1))))
+  }
 
-  message("[", cfg$key, "] POM combined")
-  pom <- build_pom_combined(cfg)
-  save_or_skip(pom, file.path(OUT_DIR, paste0(cfg$key, "_POM_faceted_RATE_beta.png")),
-               max(20, 6 * n_bin), 11)
+  for (g in groups) {
+    binnings <- Filter(function(b) b$label %in% g$labels, cfg$binnings)
+    sfx <- if (is.null(g$suffix)) "" else paste0("_", g$suffix)
+    tag <- paste0(cfg$key, sfx)
+    n_bin <- length(binnings)
 
-  message("[", cfg$key, "] PPOM RATE")
-  rate <- build_ppom_stacked(cfg, "rate")
-  save_or_skip(rate$figure, file.path(OUT_DIR, paste0(cfg$key, "_PPOM_faceted_RATE.png")),
-               22, if (is.null(rate)) 0 else rate$height)
+    message("[", tag, "] POM combined")
+    pom <- build_pom_combined(cfg, binnings)
+    save_or_skip(pom, file.path(OUT_DIR, paste0(tag, "_POM_faceted_RATE_beta.png")),
+                 max(20, 6 * n_bin), 11)
 
-  message("[", cfg$key, "] PPOM beta")
-  beta <- build_ppom_stacked(cfg, "abs_beta")
-  save_or_skip(beta$figure, file.path(OUT_DIR, paste0(cfg$key, "_PPOM_faceted_beta.png")),
-               22, if (is.null(beta)) 0 else beta$height)
+    message("[", tag, "] PPOM RATE")
+    rate <- build_ppom_stacked(cfg, "rate", binnings)
+    save_or_skip(rate$figure, file.path(OUT_DIR, paste0(tag, "_PPOM_faceted_RATE.png")),
+                 22, if (is.null(rate)) 0 else rate$height)
+
+    message("[", tag, "] PPOM beta")
+    beta <- build_ppom_stacked(cfg, "abs_beta", binnings)
+    save_or_skip(beta$figure, file.path(OUT_DIR, paste0(tag, "_PPOM_faceted_beta.png")),
+                 22, if (is.null(beta)) 0 else beta$height)
+  }
 }
 
 message("[all species] logistic RATE + beta")
