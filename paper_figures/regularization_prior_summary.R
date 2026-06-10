@@ -66,8 +66,8 @@ penalty_levels  <- c("lasso", "ridge")
 center_levels   <- c("centred", "no-center")
 
 DATASETS <- list(
-  list(id = "02_spn_penicillin_MIC",               label = "standard (K=8)", K = 8L),
-  list(id = "16_spn_penicillin_MIC_minimabinning", label = "minima (K=5)",   K = 5L)
+  list(id = "02_spn_penicillin_MIC",               label = "doubling (≥5%), K=8", K = 8L),
+  list(id = "16_spn_penicillin_MIC_minimabinning", label = "minima, K=5",         K = 5L)
 )
 dataset_levels <- vapply(DATASETS, `[[`, "", "label")
 
@@ -75,10 +75,10 @@ dataset_levels <- vapply(DATASETS, `[[`, "", "label")
 # as a reference line in every facet.
 REF_LABEL <- "horseshoe PPOM (estimated τ)"
 REF_RUNS <- list(
-  list(dataset = "standard (K=8)",
+  list(dataset = "doubling (≥5%), K=8",
        dir = file.path(RESULTS_ROOT, "gwas_spn_penicillin", "inference",
                        "02_spn_penicillin_MIC_PPOM")),
-  list(dataset = "minima (K=5)",
+  list(dataset = "minima, K=5",
        dir = file.path(RESULTS_ROOT, "gwas_spn_penicillin", "inference",
                        "16_spn_penicillin_MIC_minimabinning_PPOM"))
 )

@@ -1,22 +1,21 @@
 #!/usr/bin/env Rscript
-# Compose a cross-drug RATE paper figure from two manhattan_short directories
-# and two locus-zoom directories:
-#   A  Spn trimethoprim (standard PPOM) RATE manhattan (short)
-#   B  locus zoom of the same (folP, folA RATE)
-#   C  TB rifampicin RATE manhattan (short)
-#   D  locus zoom of the same (rpoA, rpoB, rpoC RATE)
+# Compose the cross-drug RATE paper figure:
+#   A  Spn trimethoprim (PPOM) RATE manhattan  — top variant in folA / folP labeled
+#   B  locus zoom of the same (folP, folA), shared legend at right
+#   C  TB rifampicin (binary) RATE manhattan   — top 10 genes labeled
+#   D  locus zoom of the same (rpoA, rpoB, rpoC), shared legend at right
 #
-# The Spn PPOM run overlays all cutpoints, so its manhattan filename is
-# manhattan_all_cutpoints_overlayed_RATE.png. The TB binary GWAS run produces a
-# single manhattan per metric, so its filename is manhattan_RATE.png.
+# The manhattan panels are built natively (manhattan_builders.R) so the magnifier
+# connector lines from each locus zoom's genomic window up to its manhattan region
+# land at exact base-pair coordinates. The locus-zoom panels come from
+# make_locuszoom_plot.R --composite_style (no per-plot legend, no axis titles, plus
+# a shared <gene>_<metric>_legend.png and a <gene>_<metric>_region.txt sidecar).
 #
 # Usage:
 #   Rscript manhattan_locuszoom_composite_rate_tmp_rif.R \
-#     <tmp_manhattan_dir> <tmp_locuszoom_dir> <rif_manhattan_dir> <rif_locuszoom_dir> \
 #     [--output-dir <dir>] [--analysis-name <name>]
 #
 # Output: <output_dir>/figure_<analysis_name>_rate_tmp_rif.png
-# where <analysis_name> defaults to the parent directory name of <tmp_manhattan_dir>.
 
 suppressPackageStartupMessages({
   library(cowplot)
@@ -24,121 +23,67 @@ suppressPackageStartupMessages({
   library(magick)
 })
 
-DEFAULT_OUTPUT_DIR <- "/nfs/research/jlees/jacqueline/thesis_results/paper_figures/manhattans_with_locus"
+CODE_DIR <- "/nfs/research/jlees/jacqueline/thesis_code/paper_figures"
+source(file.path(CODE_DIR, "manhattan_builders.R"))
+source(file.path(CODE_DIR, "composite_connectors.R"))
+
+# --- inputs -----------------------------------------------------------------
+RESULTS   <- "/nfs/research/jlees/jacqueline/thesis_results"
+GOI_DIR   <- "/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest"
+SPN_ANNOT <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
+TB_ANNOT  <- "/nfs/research/jlees/jacqueline/gwas_data/tuberculosis/cryptic_regeno_snpeff/fields_filtered.txt"
+
+TMP_RUN <- file.path(RESULTS, "gwas_spn_trimethoprim/inference/05_spn_trimethoprim_MIC_PPOM")
+TB_RUN  <- file.path(RESULTS, "gwas_tb_rifampicin/inference/07_tb_rifampicin_binary_logistic")
+TMP_LZ  <- file.path(RESULTS, "locus_zoom/spneumoniae/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2_composite")
+TB_LZ   <- file.path(RESULTS, "locus_zoom/mtuberculosis/plots/07_tb_rifampicin_binary_logistic_genes_top3_composite")
+
+TMP_GOI <- file.path(GOI_DIR, "spn_trimethoprim_genesofinterest.txt")
+TB_GOI  <- file.path(GOI_DIR, "tb_rifampicin_genesofinterest.txt")
+
+TMP_LZ_GENES <- c("folP", "folA")  # panel B, left-to-right
+TB_LZ_GENES  <- c("rpoB")          # panel D (rpoB only)
+
+DEFAULT_OUTPUT_DIR <- file.path(RESULTS, "paper_figures/manhattans_with_locus")
 
 parse_args <- function(argv) {
-  output_dir <- DEFAULT_OUTPUT_DIR
-  analysis_name <- NULL
-  positional <- character(0)
+  out <- list(output_dir = DEFAULT_OUTPUT_DIR, analysis_name = "spn_tmp_tb_rif_labeled")
   i <- 1
   while (i <= length(argv)) {
     a <- argv[i]
-    if (a == "--output-dir") {
-      if (i == length(argv)) stop("--output-dir requires a value")
-      output_dir <- argv[i + 1]
-      i <- i + 2
-    } else if (a == "--analysis-name") {
-      if (i == length(argv)) stop("--analysis-name requires a value")
-      analysis_name <- argv[i + 1]
-      i <- i + 2
-    } else {
-      positional <- c(positional, a)
-      i <- i + 1
-    }
+    if (a == "--output-dir") { out$output_dir <- argv[i + 1]; i <- i + 2 }
+    else if (a == "--analysis-name") { out$analysis_name <- argv[i + 1]; i <- i + 2 }
+    else stop("Unknown argument: ", a)
   }
-  if (length(positional) != 4) {
-    stop("Usage: Rscript manhattan_locuszoom_composite_rate_tmp_rif.R <tmp_manhattan_dir> <tmp_locuszoom_dir> <rif_manhattan_dir> <rif_locuszoom_dir> [--output-dir <dir>] [--analysis-name <name>]")
-  }
-  list(
-    tmp_manhattan_dir = positional[1],
-    tmp_locuszoom_dir = positional[2],
-    rif_manhattan_dir = positional[3],
-    rif_locuszoom_dir = positional[4],
-    output_dir = output_dir,
-    analysis_name = analysis_name
-  )
-}
-
-require_file <- function(path) {
-  if (!file.exists(path)) stop("Missing input file: ", path)
-  path
-}
-
-panel_from_png <- function(path) {
-  trimmed <- magick::image_trim(magick::image_read(path))
-  info <- magick::image_info(trimmed)
-  list(
-    plot = ggdraw() + draw_image(trimmed),
-    aspect = info$height / info$width
-  )
-}
-
-locuszoom_row <- function(locuszoom_dir, genes) {
-  files <- file.path(locuszoom_dir, paste0(genes, "_rate_nolabels.png"))
-  missing <- files[!file.exists(files)]
-  if (length(missing) > 0) stop("Missing locus-zoom PNG(s): ", paste(missing, collapse = ", "))
-  panels <- lapply(files, panel_from_png)
-  list(
-    row = plot_grid(plotlist = lapply(panels, `[[`, "plot"), nrow = 1),
-    aspect = max(vapply(panels, `[[`, numeric(1), "aspect")) / length(panels)
-  )
+  out
 }
 
 main <- function() {
   args <- parse_args(commandArgs(trailingOnly = TRUE))
-
-  tmp_manhattan_dir <- normalizePath(args$tmp_manhattan_dir, mustWork = TRUE)
-  tmp_locuszoom_dir <- normalizePath(args$tmp_locuszoom_dir, mustWork = TRUE)
-  rif_manhattan_dir <- normalizePath(args$rif_manhattan_dir, mustWork = TRUE)
-  rif_locuszoom_dir <- normalizePath(args$rif_locuszoom_dir, mustWork = TRUE)
-
-  # Panel A: Spn trimethoprim PPOM RATE manhattan (cutpoints overlayed)
-  panel_a_path <- require_file(file.path(tmp_manhattan_dir, "manhattan_all_cutpoints_overlayed_RATE.png"))
-  # Panel C: TB rifampicin binary-GWAS RATE manhattan
-  panel_c_path <- require_file(file.path(rif_manhattan_dir, "manhattan_RATE.png"))
-
-  analysis_name <- if (!is.null(args$analysis_name)) args$analysis_name else basename(dirname(tmp_manhattan_dir))
   dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
-  output_path <- file.path(args$output_dir, paste0("figure_", analysis_name, "_rate_tmp_rif.png"))
+  output_path <- file.path(args$output_dir,
+                           paste0("figure_", args$analysis_name, "_rate_tmp_rif.png"))
 
-  message("Panel A: ", panel_a_path)
-  message("Panel B: trimethoprim RATE locus-zoom plots from ", tmp_locuszoom_dir)
-  message("Panel C: ", panel_c_path)
-  message("Panel D: rifampicin RATE locus-zoom plots from ", rif_locuszoom_dir)
-  message("Output:  ", output_path)
+  message("Building panel A (trimethoprim RATE manhattan)...")
+  pA <- make_rate_manhattan(TMP_RUN, annotations = SPN_ANNOT, goi = TMP_GOI,
+                            label_mode = "gene_list",
+                            label_genes = c("folA (dhfR)", "folP"))
+  message("Building panel C (TB RATE manhattan)...")
+  pC <- make_rate_manhattan(TB_RUN, annotations = TB_ANNOT, goi = TB_GOI,
+                            label_mode = "top_n", n_labels = 10L)
 
-  panel_a <- panel_from_png(panel_a_path)
-  panel_b <- locuszoom_row(tmp_locuszoom_dir, c("folP", "folA"))
-  panel_c <- panel_from_png(panel_c_path)
-  panel_d <- locuszoom_row(rif_locuszoom_dir, c("rpoA", "rpoB", "rpoC"))
+  message("Building locus-zoom rows...")
+  rowB <- mb_lz_row(TMP_LZ, TMP_LZ_GENES, "rate")
+  rowD <- mb_lz_row(TB_LZ,  TB_LZ_GENES,  "rate")
 
-  fig_width <- 16
-  h_a <- fig_width * panel_a$aspect
-  h_b <- fig_width * panel_b$aspect
-  h_c <- fig_width * panel_c$aspect
-  h_d <- fig_width * panel_d$aspect
+  res <- mb_assemble(list(
+    list(manhattan = pA, lz = rowB),
+    list(manhattan = pC, lz = rowD)
+  ))
 
-  figure <- plot_grid(
-    panel_a$plot, panel_b$row, panel_c$plot, panel_d$row,
-    ncol = 1,
-    labels = c("A", "B", "C", "D"),
-    label_size = 28,
-    label_fontface = "bold",
-    label_x = -0.01,
-    hjust = 0,
-    rel_heights = c(h_a, h_b, h_c, h_d)
-  ) + theme(plot.margin = margin(5, 5, 5, 25))
-
-  ggsave(
-    output_path,
-    figure,
-    width = fig_width,
-    height = h_a + h_b + h_c + h_d,
-    dpi = 300,
-    limitsize = FALSE,
-    bg = "white"
-  )
-
+  message("Output: ", output_path)
+  ggsave(output_path, res$canvas, width = res$width, height = res$height,
+         dpi = 300, limitsize = FALSE, bg = "white")
   message("Wrote ", output_path)
 }
 

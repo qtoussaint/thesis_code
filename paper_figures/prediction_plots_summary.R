@@ -45,22 +45,22 @@ drugs <- list(
   list(key = "spn_penicillin", species_dir = "spn_penicillin",
        title = "Penicillin~resistance~(italic('S. pneumoniae'))",
        binnings = list(
-         list(binning = "standard",     nn = "02", run_stub = "spn_penicillin_MIC"),
-         list(binning = "coarse",       nn = "10", run_stub = "spn_penicillin_MIC_coarse_dilutions"),
-         list(binning = "large minbin", nn = "11", run_stub = "spn_penicillin_MIC_large_minbin"),
-         list(binning = "minima",       nn = "16", run_stub = "spn_penicillin_MIC_minimabinning"))),
+         list(binning = "doubling (≥5%)",        nn = "02", run_stub = "spn_penicillin_MIC"),
+         list(binning = "4-fold (≥5%)", nn = "10", run_stub = "spn_penicillin_MIC_coarse_dilutions"),
+         list(binning = "doubling (≥10%)",       nn = "11", run_stub = "spn_penicillin_MIC_large_minbin"),
+         list(binning = "minima",                 nn = "16", run_stub = "spn_penicillin_MIC_minimabinning"))),
   list(key = "spn_trimethoprim", species_dir = "spn_trimethoprim",
        title = "Trimethoprim~resistance~(italic('S. pneumoniae'))",
        binnings = list(
-         list(binning = "standard",     nn = "05", run_stub = "spn_trimethoprim_MIC"),
-         list(binning = "coarse",       nn = "12", run_stub = "spn_trimethoprim_MIC_coarse_dilutions"),
-         list(binning = "large minbin", nn = "13", run_stub = "spn_trimethoprim_MIC_large_minbin"))),
+         list(binning = "doubling (≥5%)",        nn = "05", run_stub = "spn_trimethoprim_MIC"),
+         list(binning = "4-fold (≥5%)", nn = "12", run_stub = "spn_trimethoprim_MIC_coarse_dilutions"),
+         list(binning = "doubling (≥10%)",       nn = "13", run_stub = "spn_trimethoprim_MIC_large_minbin"))),
   list(key = "tb_rifampicin", species_dir = "tb_rifampicin",
        title = "Rifampicin~resistance~(italic('M. tuberculosis'))",
        binnings = list(
-         list(binning = "standard",     nn = "08", run_stub = "tb_rifampicin_MIC"),
-         list(binning = "coarse",       nn = "14", run_stub = "tb_rifampicin_MIC_coarse_dilutions"),
-         list(binning = "large minbin", nn = "15", run_stub = "tb_rifampicin_MIC_large_minbin")))
+         list(binning = "doubling (≥5%)",        nn = "08", run_stub = "tb_rifampicin_MIC"),
+         list(binning = "4-fold (≥5%)", nn = "14", run_stub = "tb_rifampicin_MIC_coarse_dilutions"),
+         list(binning = "doubling (≥10%)",       nn = "15", run_stub = "tb_rifampicin_MIC_large_minbin")))
 )
 
 SPLITS <- list(random = "Random", loso = "Lineage")

@@ -208,11 +208,11 @@ process_run <- function(run) {
       ggrepel::geom_text_repel(
         data = tops,
         ggplot2::aes(label = variant_label),
-        size = 2.5, max.overlaps = 10) +
+        size = 4.5, max.overlaps = 10) +
       ggplot2::facet_wrap(~ display_name, ncol = ncol,
                           labeller = .italic_gene_labeller) +
       ggplot2::labs(x = x_axis_title, y = ylabel) +
-      ggplot2::theme_minimal(base_size = 16)
+      ggplot2::theme_minimal(base_size = 20)
     ggplot2::ggsave(out_path, plot = p, width = width, height = height, dpi = 300)
   }
 
@@ -232,15 +232,15 @@ process_run <- function(run) {
               paste0(run$name, "_gene_violin_abs_delta_beta_impact.png")))
 
   # |β̃| across ALL genes of interest: same plot, but faceted over every gene in
-  # spn_penicillin_genesofinterest.txt (core six first, rest after). Wider canvas
-  # and 5 columns to fit the ~20 facets.
+  # spn_penicillin_genesofinterest.txt (core six first, rest after). 3 columns,
+  # taller canvas to fit the ~20 facets.
   df_all <- make_df(ALL_GENES_OF_INTEREST[[1]], ALL_DISPLAY_LEVELS)
   impact_violin(
     df_all, "abs_median", expression("|" ~ tilde(beta) ~ "|"),
     top_per_group(df_all, "abs_median"),
     file.path(OUTPUT_DIR,
               paste0(run$name, "_gene_violin_abs_beta_impact_allgenes.png")),
-    ncol = 5, width = 22, height = 16)
+    ncol = 3, width = 16, height = 24)
 
   # Companion CSV of the filtered underlying data, mirroring the plot inputs.
   out_cols <- c("variant_id", "position", "gene", "display_name",
@@ -270,7 +270,7 @@ combined <- do.call(rbind, lapply(RUNS, process_run))
 # no variant labels. Four facets = the four existing plots (run × metric).
 run_label <- c(
   "02_spn_penicillin_MIC_PPOM"               = "MIC PPOM",
-  "16_spn_penicillin_MIC_minimabinning_PPOM" = "minima-binning PPOM"
+  "16_spn_penicillin_MIC_minimabinning_PPOM" = "minima PPOM"
 )
 facet_expr <- ifelse(
   combined$metric == "beta",
@@ -279,8 +279,8 @@ facet_expr <- ifelse(
 facet_levels <- c(
   "plain('MIC PPOM')~~'|'*tilde(beta)*'|'",
   "plain('MIC PPOM')~~'|'*Delta*tilde(beta)*'|'",
-  "plain('minima-binning PPOM')~~'|'*tilde(beta)*'|'",
-  "plain('minima-binning PPOM')~~'|'*Delta*tilde(beta)*'|'")
+  "plain('minima PPOM')~~'|'*tilde(beta)*'|'",
+  "plain('minima PPOM')~~'|'*Delta*tilde(beta)*'|'")
 combined$facet <- factor(facet_expr, levels = facet_levels)
 
 p_overlay <- ggplot2::ggplot(combined,
@@ -299,7 +299,7 @@ p_overlay <- ggplot2::ggplot(combined,
   ggplot2::facet_wrap(~ facet, scales = "free", ncol = 2,
                       labeller = ggplot2::label_parsed) +
   ggplot2::labs(x = expression("MIC breakpoint" ~ (mu * "g·mL"^{-1})), y = NULL) +
-  ggplot2::theme_minimal(base_size = 16)
+  ggplot2::theme_minimal(base_size = 20)
 ggplot2::ggsave(
   file.path(OUTPUT_DIR, "overlay_gene_violin_grid.png"),
   plot = p_overlay, width = 16, height = 10, dpi = 300)

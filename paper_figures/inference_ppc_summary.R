@@ -41,16 +41,16 @@ OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures", "inference_ppc_summary"
 # mic_breakpoints (length K-1) read from the dataset JSONs.
 # -----------------------------------------------------------------------------
 specs <- list(
-  list(species_dir="spn_penicillin",   drug="SPN PEN", binning="standard",     K=8, nn="02", run_stub="spn_penicillin_MIC",                   breaks=c(0.016,0.03,0.06,0.12,0.25,1,2)),
-  list(species_dir="spn_penicillin",   drug="SPN PEN", binning="coarse",       K=5, nn="10", run_stub="spn_penicillin_MIC_coarse_dilutions",  breaks=c(0.016,0.06,0.25,1)),
-  list(species_dir="spn_penicillin",   drug="SPN PEN", binning="large minbin", K=4, nn="11", run_stub="spn_penicillin_MIC_large_minbin",      breaks=c(0.03,0.12,1)),
-  list(species_dir="spn_penicillin",   drug="SPN PEN", binning="minima",       K=5, nn="16", run_stub="spn_penicillin_MIC_minimabinning",     breaks=c(0.032,0.065,0.2,2)),
-  list(species_dir="spn_trimethoprim", drug="SPN TMP", binning="standard",     K=5, nn="05", run_stub="spn_trimethoprim_MIC",                  breaks=c(0.12,0.25,1,2)),
-  list(species_dir="spn_trimethoprim", drug="SPN TMP", binning="coarse",       K=3, nn="12", run_stub="spn_trimethoprim_MIC_coarse_dilutions", breaks=c(0.25,1)),
-  list(species_dir="spn_trimethoprim", drug="SPN TMP", binning="large minbin", K=3, nn="13", run_stub="spn_trimethoprim_MIC_large_minbin",     breaks=c(0.25,2)),
-  list(species_dir="tb_rifampicin",    drug="TB RIF",  binning="standard",     K=5, nn="08", run_stub="tb_rifampicin_MIC",                     breaks=c(0.06,0.12,2,4)),
-  list(species_dir="tb_rifampicin",    drug="TB RIF",  binning="coarse",       K=4, nn="14", run_stub="tb_rifampicin_MIC_coarse_dilutions",    breaks=c(0.06,0.25,4)),
-  list(species_dir="tb_rifampicin",    drug="TB RIF",  binning="large minbin", K=4, nn="15", run_stub="tb_rifampicin_MIC_large_minbin",        breaks=c(0.06,2,4))
+  list(species_dir="spn_penicillin",   drug="SPN PEN", binning="doubling (≥5%)",        K=8, nn="02", run_stub="spn_penicillin_MIC",                   breaks=c(0.016,0.03,0.06,0.12,0.25,1,2)),
+  list(species_dir="spn_penicillin",   drug="SPN PEN", binning="4-fold (≥5%)", K=5, nn="10", run_stub="spn_penicillin_MIC_coarse_dilutions",  breaks=c(0.016,0.06,0.25,1)),
+  list(species_dir="spn_penicillin",   drug="SPN PEN", binning="doubling (≥10%)",       K=4, nn="11", run_stub="spn_penicillin_MIC_large_minbin",      breaks=c(0.03,0.12,1)),
+  list(species_dir="spn_penicillin",   drug="SPN PEN", binning="minima",                 K=5, nn="16", run_stub="spn_penicillin_MIC_minimabinning",     breaks=c(0.032,0.065,0.2,2)),
+  list(species_dir="spn_trimethoprim", drug="SPN TMP", binning="doubling (≥5%)",        K=5, nn="05", run_stub="spn_trimethoprim_MIC",                  breaks=c(0.12,0.25,1,2)),
+  list(species_dir="spn_trimethoprim", drug="SPN TMP", binning="4-fold (≥5%)", K=3, nn="12", run_stub="spn_trimethoprim_MIC_coarse_dilutions", breaks=c(0.25,1)),
+  list(species_dir="spn_trimethoprim", drug="SPN TMP", binning="doubling (≥10%)",       K=3, nn="13", run_stub="spn_trimethoprim_MIC_large_minbin",     breaks=c(0.25,2)),
+  list(species_dir="tb_rifampicin",    drug="TB RIF",  binning="doubling (≥5%)",        K=5, nn="08", run_stub="tb_rifampicin_MIC",                     breaks=c(0.06,0.12,2,4)),
+  list(species_dir="tb_rifampicin",    drug="TB RIF",  binning="4-fold (≥5%)", K=4, nn="14", run_stub="tb_rifampicin_MIC_coarse_dilutions",    breaks=c(0.06,0.25,4)),
+  list(species_dir="tb_rifampicin",    drug="TB RIF",  binning="doubling (≥10%)",       K=4, nn="15", run_stub="tb_rifampicin_MIC_large_minbin",        breaks=c(0.06,2,4))
 )
 
 # inference_ppc dir for one (spec, model).

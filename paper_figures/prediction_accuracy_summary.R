@@ -145,16 +145,16 @@ resolve_bacc <- function(s, model, sp, pred_subdir) {
 
 # Ordinal MIC runs: one entry per (drug, binning). Each fits both PPOM and POM.
 ordinal_specs <- list(
-  list(species_dir="spn_penicillin",   drug="SPN PEN", organism="S. pneumoniae",   binning="standard",     K=8, nn="02", run_stub="spn_penicillin_MIC"),
-  list(species_dir="spn_penicillin",   drug="SPN PEN", organism="S. pneumoniae",   binning="coarse",       K=5, nn="10", run_stub="spn_penicillin_MIC_coarse_dilutions"),
-  list(species_dir="spn_penicillin",   drug="SPN PEN", organism="S. pneumoniae",   binning="large minbin", K=4, nn="11", run_stub="spn_penicillin_MIC_large_minbin"),
-  list(species_dir="spn_penicillin",   drug="SPN PEN", organism="S. pneumoniae",   binning="minima",       K=5, nn="16", run_stub="spn_penicillin_MIC_minimabinning"),
-  list(species_dir="spn_trimethoprim", drug="SPN TMP", organism="S. pneumoniae",   binning="standard",     K=5, nn="05", run_stub="spn_trimethoprim_MIC"),
-  list(species_dir="spn_trimethoprim", drug="SPN TMP", organism="S. pneumoniae",   binning="coarse",       K=3, nn="12", run_stub="spn_trimethoprim_MIC_coarse_dilutions"),
-  list(species_dir="spn_trimethoprim", drug="SPN TMP", organism="S. pneumoniae",   binning="large minbin", K=3, nn="13", run_stub="spn_trimethoprim_MIC_large_minbin"),
-  list(species_dir="tb_rifampicin",    drug="TB RIF",  organism="M. tuberculosis", binning="standard",     K=5, nn="08", run_stub="tb_rifampicin_MIC"),
-  list(species_dir="tb_rifampicin",    drug="TB RIF",  organism="M. tuberculosis", binning="coarse",       K=4, nn="14", run_stub="tb_rifampicin_MIC_coarse_dilutions"),
-  list(species_dir="tb_rifampicin",    drug="TB RIF",  organism="M. tuberculosis", binning="large minbin", K=4, nn="15", run_stub="tb_rifampicin_MIC_large_minbin")
+  list(species_dir="spn_penicillin",   drug="SPN PEN", organism="S. pneumoniae",   binning="doubling (≥5%)",        K=8, nn="02", run_stub="spn_penicillin_MIC"),
+  list(species_dir="spn_penicillin",   drug="SPN PEN", organism="S. pneumoniae",   binning="4-fold (≥5%)", K=5, nn="10", run_stub="spn_penicillin_MIC_coarse_dilutions"),
+  list(species_dir="spn_penicillin",   drug="SPN PEN", organism="S. pneumoniae",   binning="doubling (≥10%)",       K=4, nn="11", run_stub="spn_penicillin_MIC_large_minbin"),
+  list(species_dir="spn_penicillin",   drug="SPN PEN", organism="S. pneumoniae",   binning="minima",                 K=5, nn="16", run_stub="spn_penicillin_MIC_minimabinning"),
+  list(species_dir="spn_trimethoprim", drug="SPN TMP", organism="S. pneumoniae",   binning="doubling (≥5%)",        K=5, nn="05", run_stub="spn_trimethoprim_MIC"),
+  list(species_dir="spn_trimethoprim", drug="SPN TMP", organism="S. pneumoniae",   binning="4-fold (≥5%)", K=3, nn="12", run_stub="spn_trimethoprim_MIC_coarse_dilutions"),
+  list(species_dir="spn_trimethoprim", drug="SPN TMP", organism="S. pneumoniae",   binning="doubling (≥10%)",       K=3, nn="13", run_stub="spn_trimethoprim_MIC_large_minbin"),
+  list(species_dir="tb_rifampicin",    drug="TB RIF",  organism="M. tuberculosis", binning="doubling (≥5%)",        K=5, nn="08", run_stub="tb_rifampicin_MIC"),
+  list(species_dir="tb_rifampicin",    drug="TB RIF",  organism="M. tuberculosis", binning="4-fold (≥5%)", K=4, nn="14", run_stub="tb_rifampicin_MIC_coarse_dilutions"),
+  list(species_dir="tb_rifampicin",    drug="TB RIF",  organism="M. tuberculosis", binning="doubling (≥10%)",       K=4, nn="15", run_stub="tb_rifampicin_MIC_large_minbin")
 )
 
 # Binary logistic baseline: one per drug. run_stub is the on-disk dir prefix.
@@ -209,7 +209,7 @@ build_df <- function(pred_subdir) {
 
   # Factor orders
   drug_levels    <- c("SPN PEN", "SPN TMP", "TB RIF")
-  binning_levels <- c("standard", "coarse", "large minbin", "minima")
+  binning_levels <- c("doubling (≥5%)", "4-fold (≥5%)", "doubling (≥10%)", "minima")
   df$drug    <- factor(df$drug, levels = drug_levels)
   df$binning <- factor(df$binning, levels = binning_levels)
   df$model   <- factor(df$model, levels = c("POM", "PPOM", "Logistic"))

@@ -1,11 +1,21 @@
 #!/usr/bin/env Rscript
-# Compose one PPOM paper figure from a manhattan_short directory and a locus-zoom directory.
+# Compose the SPN penicillin PPOM paper figure (manhattans + locus zooms):
+#   A  median-effect beta manhattan        — pbp1a / pbp2X / pbp2b / folA labeled
+#   B  exp(|median|) beta manhattan         — pbp1a / pbp2X / pbp2b / folA labeled
+#   C  locus zoom of B (pbp2X, pbp1a, pbp2b), shared legend at right
+#   D  RATE manhattan                       — pbp1a / pbp2X / pbp2b labeled
+#   E  locus zoom of D (pbp2X, pbp1a, pbp2b), shared legend at right
+#
+# Manhattans are built natively (manhattan_builders.R) so the magnifier connector
+# lines from each locus zoom up to its manhattan land at exact base-pair
+# coordinates. Locus-zoom panels come from make_locuszoom_plot.R --composite_style.
+# The dihydrofolate-reductase gene is annotated "dyr" in the genome; on this
+# penicillin figure it is relabeled "folA".
 #
 # Usage:
-#   Rscript manhattan_locuszoom_composite.R <manhattan_dir> <locuszoom_dir> [--output-dir <dir>] [--analysis-name <name>]
+#   Rscript manhattan_locuszoom_composite.R [--output-dir <dir>] [--analysis-name <name>]
 #
 # Output: <output_dir>/figure_<analysis_name>.png
-# where <analysis_name> defaults to the parent directory name of <manhattan_dir>.
 
 suppressPackageStartupMessages({
   library(cowplot)
@@ -13,119 +23,81 @@ suppressPackageStartupMessages({
   library(magick)
 })
 
-DEFAULT_OUTPUT_DIR <- "/nfs/research/jlees/jacqueline/thesis_results/paper_figures/manhattans_with_locus"
+CODE_DIR <- "/nfs/research/jlees/jacqueline/thesis_code/paper_figures"
+source(file.path(CODE_DIR, "manhattan_builders.R"))
+source(file.path(CODE_DIR, "composite_connectors.R"))
+
+RESULTS   <- "/nfs/research/jlees/jacqueline/thesis_results"
+GOI       <- "/nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/spn_penicillin_genesofinterest.txt"
+SPN_ANNOT <- "/nfs/research/jlees/jacqueline/gwas_data/spn_pneumo/genotype/fields_filtered_maf05_multiallelic.txt"
+
+PEN_RUN  <- file.path(RESULTS, "gwas_spn_penicillin/inference/02_spn_penicillin_MIC_PPOM")
+PEN_POS  <- file.path(RESULTS, "gwas_datasets/inference/02_spn_penicillin_MIC/02_spn_penicillin_MIC_variant_index.csv")
+PEN_LZ   <- file.path(RESULTS, "locus_zoom/spneumoniae/plots/02_spn_penicillin_MIC_PPOM_pbp_top5_composite")
+
+LZ_GENES     <- c("pbp2X", "pbp1a", "pbp2b")
+BETA_GENES   <- c("pbp1a", "pbp2X", "pbp2b", "folA")  # folA = relabeled dyr
+RATE_GENES   <- c("pbp1a", "pbp2X", "pbp2b")
+GENE_ALIASES <- c(dyr = "folA")
+
+DEFAULT_OUTPUT_DIR <- file.path(RESULTS, "paper_figures/manhattans_with_locus")
 
 parse_args <- function(argv) {
-  output_dir <- DEFAULT_OUTPUT_DIR
-  analysis_name <- NULL
-  positional <- character(0)
+  out <- list(output_dir = DEFAULT_OUTPUT_DIR,
+              analysis_name = "02_spn_penicillin_MIC_PPOM_labeled")
   i <- 1
   while (i <= length(argv)) {
     a <- argv[i]
-    if (a == "--output-dir") {
-      if (i == length(argv)) stop("--output-dir requires a value")
-      output_dir <- argv[i + 1]
-      i <- i + 2
-    } else if (a == "--analysis-name") {
-      if (i == length(argv)) stop("--analysis-name requires a value")
-      analysis_name <- argv[i + 1]
-      i <- i + 2
-    } else {
-      positional <- c(positional, a)
-      i <- i + 1
-    }
+    if (a == "--output-dir") { out$output_dir <- argv[i + 1]; i <- i + 2 }
+    else if (a == "--analysis-name") { out$analysis_name <- argv[i + 1]; i <- i + 2 }
+    else stop("Unknown argument: ", a)
   }
-  if (length(positional) != 2) {
-    stop("Usage: Rscript manhattan_locuszoom_composite.R <manhattan_dir> <locuszoom_dir> [--output-dir <dir>] [--analysis-name <name>]")
-  }
-  list(
-    manhattan_dir = positional[1],
-    locuszoom_dir = positional[2],
-    output_dir = output_dir,
-    analysis_name = analysis_name
-  )
-}
-
-require_file <- function(path) {
-  if (!file.exists(path)) stop("Missing input file: ", path)
-  path
-}
-
-panel_from_png <- function(path) {
-  trimmed <- magick::image_trim(magick::image_read(path))
-  info <- magick::image_info(trimmed)
-  list(
-    plot = ggdraw() + draw_image(trimmed),
-    aspect = info$height / info$width
-  )
+  out
 }
 
 main <- function() {
   args <- parse_args(commandArgs(trailingOnly = TRUE))
-
-  manhattan_dir <- normalizePath(args$manhattan_dir, mustWork = TRUE)
-  locuszoom_dir <- normalizePath(args$locuszoom_dir, mustWork = TRUE)
-
-  panel_a_path <- require_file(file.path(manhattan_dir, "manhattan_all_cutpoints_overlayed_median_effects.png"))
-  panel_b_path <- require_file(file.path(manhattan_dir, "manhattan_all_cutpoints_overlayed_exp_abs_median.png"))
-  panel_d_path <- require_file(file.path(manhattan_dir, "manhattan_all_cutpoints_overlayed_RATE.png"))
-
-  lz_genes <- c("pbp2X", "pbp1a", "pbp2b")
-  lz_files <- file.path(locuszoom_dir, paste0(lz_genes, "_exp_abs_median_nolabels.png"))
-  lz_rate_files <- file.path(locuszoom_dir, paste0(lz_genes, "_rate_nolabels.png"))
-  missing <- c(lz_files, lz_rate_files)[!file.exists(c(lz_files, lz_rate_files))]
-  if (length(missing) > 0) stop("Missing locus-zoom PNG(s): ", paste(missing, collapse = ", "))
-
-  analysis_name <- if (!is.null(args$analysis_name)) args$analysis_name else basename(dirname(manhattan_dir))
   dir.create(args$output_dir, showWarnings = FALSE, recursive = TRUE)
-  output_path <- file.path(args$output_dir, paste0("figure_", analysis_name, ".png"))
+  full_path    <- file.path(args$output_dir, paste0("figure_", args$analysis_name, ".png"))
+  smaller_path <- file.path(args$output_dir, paste0("figure_", args$analysis_name, "_smaller.png"))
 
-  message("Panel A: ", panel_a_path)
-  message("Panel B: ", panel_b_path)
-  message("Panel C: ", length(lz_files), " locus-zoom plots from ", locuszoom_dir)
-  message("Panel D: ", panel_d_path)
-  message("Panel E: ", length(lz_rate_files), " RATE locus-zoom plots from ", locuszoom_dir)
-  message("Output:  ", output_path)
+  message("Building beta manhattans (median + exp|median|)...")
+  betas <- make_beta_manhattans(PEN_RUN, PEN_POS, annotations = SPN_ANNOT, goi = GOI,
+                                label_genes = BETA_GENES, gene_aliases = GENE_ALIASES)
+  pA <- betas$median
+  pB <- betas$exp_abs
+  message("Building RATE manhattan...")
+  pD <- make_rate_manhattan(PEN_RUN, annotations = SPN_ANNOT, goi = GOI,
+                            label_mode = "gene_list", label_genes = RATE_GENES)
 
-  panel_a <- panel_from_png(panel_a_path)
-  panel_b <- panel_from_png(panel_b_path)
-  panel_d <- panel_from_png(panel_d_path)
-  lz_panels <- lapply(lz_files, panel_from_png)
-  lz_rate_panels <- lapply(lz_rate_files, panel_from_png)
-  row_c <- plot_grid(plotlist = lapply(lz_panels, `[[`, "plot"), nrow = 1)
-  row_e <- plot_grid(plotlist = lapply(lz_rate_panels, `[[`, "plot"), nrow = 1)
+  message("Building locus-zoom rows...")
+  rowC <- mb_lz_row(PEN_LZ, LZ_GENES, "exp_abs_median")
+  rowE <- mb_lz_row(PEN_LZ, LZ_GENES, "rate")
 
-  fig_width <- 16
-  h_a <- fig_width * panel_a$aspect
-  h_b <- fig_width * panel_b$aspect
-  h_d <- fig_width * panel_d$aspect
-  h_c <- (fig_width / length(lz_panels)) *
-    max(vapply(lz_panels, `[[`, numeric(1), "aspect"))
-  h_e <- (fig_width / length(lz_rate_panels)) *
-    max(vapply(lz_rate_panels, `[[`, numeric(1), "aspect"))
+  # Full figure: median beta, exp(|median|) beta + locus zoom, RATE + locus zoom
+  full <- mb_assemble(list(
+    list(manhattan = pA, lz = NULL),
+    list(manhattan = pB, lz = rowC),
+    list(manhattan = pD, lz = rowE)
+  ))
+  message("Output: ", full_path)
+  ggsave(full_path, full$canvas, width = full$width, height = full$height,
+         dpi = 300, limitsize = FALSE, bg = "white")
+  message("Wrote ", full_path)
 
-  figure <- plot_grid(
-    panel_a$plot, panel_b$plot, row_c, panel_d$plot, row_e,
-    ncol = 1,
-    labels = c("A", "B", "C", "D", "E"),
-    label_size = 28,
-    label_fontface = "bold",
-    label_x = -0.01,
-    hjust = 0,
-    rel_heights = c(h_a, h_b, h_c, h_d, h_e)
-  ) + theme(plot.margin = margin(5, 5, 5, 25))
-
-  ggsave(
-    output_path,
-    figure,
-    width = fig_width,
-    height = h_a + h_b + h_c + h_d + h_e,
-    dpi = 300,
-    limitsize = FALSE,
-    bg = "white"
-  )
-
-  message("Wrote ", output_path)
+  # "Smaller" figure: drop the median beta panel — exp(|median|) beta + locus zoom,
+  # RATE + locus zoom only. Rebuild the locus-zoom rows so each carries a fresh
+  # (single-use) magick image handle.
+  rowC2 <- mb_lz_row(PEN_LZ, LZ_GENES, "exp_abs_median")
+  rowE2 <- mb_lz_row(PEN_LZ, LZ_GENES, "rate")
+  smaller <- mb_assemble(list(
+    list(manhattan = pB, lz = rowC2),
+    list(manhattan = pD, lz = rowE2)
+  ))
+  message("Output: ", smaller_path)
+  ggsave(smaller_path, smaller$canvas, width = smaller$width, height = smaller$height,
+         dpi = 300, limitsize = FALSE, bg = "white")
+  message("Wrote ", smaller_path)
 }
 
 main()

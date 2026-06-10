@@ -42,10 +42,10 @@ datasets <- list(
     key = "spn_penicillin", species_dir = "spn_penicillin",
     title = "Penicillin~resistance~(italic('S. pneumoniae'))",
     binning_specs = list(
-      list(binning = "standard",     nn = "02", run_stub = "spn_penicillin_MIC"),
-      list(binning = "coarse",       nn = "10", run_stub = "spn_penicillin_MIC_coarse_dilutions"),
-      list(binning = "large minbin", nn = "11", run_stub = "spn_penicillin_MIC_large_minbin"),
-      list(binning = "minima",       nn = "16", run_stub = "spn_penicillin_MIC_minimabinning")),
+      list(binning = "doubling (≥5%)",        nn = "02", run_stub = "spn_penicillin_MIC"),
+      list(binning = "4-fold (≥5%)", nn = "10", run_stub = "spn_penicillin_MIC_coarse_dilutions"),
+      list(binning = "doubling (≥10%)",       nn = "11", run_stub = "spn_penicillin_MIC_large_minbin"),
+      list(binning = "minima",                 nn = "16", run_stub = "spn_penicillin_MIC_minimabinning")),
     baseline_specs = list(
       list(model = "logistic",   run_dir = "01_spn_penicillin_binary_logistic"),
       list(model = "continuous", run_dir = "03_spn_penicillin_continuous_continuous"))
@@ -54,9 +54,9 @@ datasets <- list(
     key = "spn_trimethoprim", species_dir = "spn_trimethoprim",
     title = "Trimethoprim~resistance~(italic('S. pneumoniae'))",
     binning_specs = list(
-      list(binning = "standard",     nn = "05", run_stub = "spn_trimethoprim_MIC"),
-      list(binning = "coarse",       nn = "12", run_stub = "spn_trimethoprim_MIC_coarse_dilutions"),
-      list(binning = "large minbin", nn = "13", run_stub = "spn_trimethoprim_MIC_large_minbin")),
+      list(binning = "doubling (≥5%)",        nn = "05", run_stub = "spn_trimethoprim_MIC"),
+      list(binning = "4-fold (≥5%)", nn = "12", run_stub = "spn_trimethoprim_MIC_coarse_dilutions"),
+      list(binning = "doubling (≥10%)",       nn = "13", run_stub = "spn_trimethoprim_MIC_large_minbin")),
     baseline_specs = list(
       list(model = "logistic",   run_dir = "04_spn_trimethoprim_binary_logistic"),
       list(model = "continuous", run_dir = "06_spn_trimethoprim_continuous_continuous"))
@@ -65,9 +65,9 @@ datasets <- list(
     key = "tb_rifampicin", species_dir = "tb_rifampicin",
     title = "Rifampicin~resistance~(italic('M. tuberculosis'))",
     binning_specs = list(
-      list(binning = "standard",     nn = "08", run_stub = "tb_rifampicin_MIC"),
-      list(binning = "coarse",       nn = "14", run_stub = "tb_rifampicin_MIC_coarse_dilutions"),
-      list(binning = "large minbin", nn = "15", run_stub = "tb_rifampicin_MIC_large_minbin")),
+      list(binning = "doubling (≥5%)",        nn = "08", run_stub = "tb_rifampicin_MIC"),
+      list(binning = "4-fold (≥5%)", nn = "14", run_stub = "tb_rifampicin_MIC_coarse_dilutions"),
+      list(binning = "doubling (≥10%)",       nn = "15", run_stub = "tb_rifampicin_MIC_large_minbin")),
     baseline_specs = list(
       list(model = "logistic",   run_dir = "07_tb_rifampicin_binary_logistic"),
       list(model = "continuous", run_dir = "09_tb_rifampicin_continuous_continuous"))
@@ -76,7 +76,7 @@ datasets <- list(
 
 # Binning order/levels covering every dataset (datasets without `minima` just
 # drop that level after factoring).
-binning_levels <- c("standard", "coarse", "large minbin", "minima")
+binning_levels <- c("doubling (≥5%)", "4-fold (≥5%)", "doubling (≥10%)", "minima")
 
 # -----------------------------------------------------------------------------
 # Shared aesthetics

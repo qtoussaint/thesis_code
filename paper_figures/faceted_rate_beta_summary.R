@@ -59,28 +59,32 @@ species_cfgs <- list(
        annot = TB_ANNOT, goi = file.path(GOI_DIR, "tb_rifampicin_genesofinterest.txt"),
        logistic = "07_tb_rifampicin_binary_logistic", n_label = 20L,
        binnings = list(
-         list(label = "standard MIC", nn = "08", stub = "tb_rifampicin_MIC"),
-         list(label = "coarse",       nn = "14", stub = "tb_rifampicin_MIC_coarse_dilutions"),
-         list(label = "large minbin", nn = "15", stub = "tb_rifampicin_MIC_large_minbin"))),
+         list(label = "doubling (≥5%)",        nn = "08", stub = "tb_rifampicin_MIC"),
+         list(label = "4-fold (≥5%)", nn = "14", stub = "tb_rifampicin_MIC_coarse_dilutions"),
+         list(label = "doubling (≥10%)",       nn = "15", stub = "tb_rifampicin_MIC_large_minbin"))),
   list(key = "spn_penicillin", display = "bolditalic('S. pneumoniae')~bold('(penicillin)')",
        annot = SPN_ANNOT, goi = file.path(GOI_DIR, "spn_penicillin_genesofinterest.txt"),
        logistic = "01_spn_penicillin_binary_logistic", n_label = 10L,
+       # Four binnings make the side-by-side POM grid very wide; lay it out as two rows
+       # of beta over two rows of RATE (binning wrapped 2-per-row) instead.
+       pom_wrap = TRUE,
        binnings = list(
-         list(label = "standard MIC", nn = "02", stub = "spn_penicillin_MIC"),
-         list(label = "coarse",       nn = "10", stub = "spn_penicillin_MIC_coarse_dilutions"),
-         list(label = "large minbin", nn = "11", stub = "spn_penicillin_MIC_large_minbin"),
-         list(label = "minima",       nn = "16", stub = "spn_penicillin_MIC_minimabinning")),
-       # spn_penicillin's four binnings are split across two figures.
+         list(label = "doubling (≥5%)",        nn = "02", stub = "spn_penicillin_MIC"),
+         list(label = "4-fold (≥5%)", nn = "10", stub = "spn_penicillin_MIC_coarse_dilutions"),
+         list(label = "doubling (≥10%)",       nn = "11", stub = "spn_penicillin_MIC_large_minbin"),
+         list(label = "minima",                 nn = "16", stub = "spn_penicillin_MIC_minimabinning")),
+       # spn_penicillin's PPOM figures are split across two binning groups; its POM
+       # figure stays a single plot covering all four binnings, like the other species.
        groups = list(
-         list(suffix = "standard_minima",     labels = c("standard MIC", "minima")),
-         list(suffix = "coarse_largeminbin",  labels = c("coarse", "large minbin")))),
+         list(suffix = "standard_minima",     labels = c("doubling (≥5%)", "minima")),
+         list(suffix = "coarse_largeminbin",  labels = c("4-fold (≥5%)", "doubling (≥10%)")))),
   list(key = "spn_trimethoprim", display = "bolditalic('S. pneumoniae')~bold('(trimethoprim)')",
        annot = SPN_ANNOT, goi = file.path(GOI_DIR, "spn_trimethoprim_genesofinterest.txt"),
        logistic = "04_spn_trimethoprim_binary_logistic", n_label = 10L,
        binnings = list(
-         list(label = "standard MIC", nn = "05", stub = "spn_trimethoprim_MIC"),
-         list(label = "coarse",       nn = "12", stub = "spn_trimethoprim_MIC_coarse_dilutions"),
-         list(label = "large minbin", nn = "13", stub = "spn_trimethoprim_MIC_large_minbin")))
+         list(label = "doubling (≥5%)",        nn = "05", stub = "spn_trimethoprim_MIC"),
+         list(label = "4-fold (≥5%)", nn = "12", stub = "spn_trimethoprim_MIC_coarse_dilutions"),
+         list(label = "doubling (≥10%)",       nn = "13", stub = "spn_trimethoprim_MIC_large_minbin")))
 )
 
 run_dir <- function(key, dir_name) file.path(RES, paste0("gwas_", key), "inference", dir_name)
@@ -164,6 +168,8 @@ build_pom_combined <- function(cfg, binnings) {
   long$binning <- factor(long$binning, levels = bin_labels)
   label_df <- facet_labels(long, c("binning", "metric"), n = cfg$n_label)
 
+  if (isTRUE(cfg$pom_wrap)) return(build_pom_wrapped(long, label_df))
+
   ggplot2::ggplot(long, ggplot2::aes(x = pos, y = value)) +
     ggplot2::geom_point(alpha = 0.4, colour = SINGLE_COLOR) +
     ggplot2::facet_grid(metric ~ binning, scales = "free_y", switch = "y",
@@ -171,7 +177,27 @@ build_pom_combined <- function(cfg, binnings) {
     repel_layer(label_df) +
     ggplot2::xlab("genome coordinate (bp)") + ggplot2::ylab(NULL) +
     ggplot2::theme_minimal(base_size = 20) +
-    ggplot2::theme(strip.placement = "outside")
+    ggplot2::theme(strip.placement = "outside",
+                   strip.text.x = ggplot2::element_text(face = "bold", size = 20))
+}
+
+# Wrapped POM layout: a beta block (binnings wrapped two-per-row) stacked over a
+# matching RATE block. With four binnings this is two rows of beta over two of RATE.
+build_pom_wrapped <- function(long, label_df) {
+  panel <- function(m, ylab_expr) {
+    sub <- long[long$metric == m, ]
+    lab <- label_df[label_df$metric == m, ]
+    ggplot2::ggplot(sub, ggplot2::aes(x = pos, y = value)) +
+      ggplot2::geom_point(alpha = 0.4, colour = SINGLE_COLOR) +
+      ggplot2::facet_wrap(~ binning, ncol = NCOL, scales = "free_y") +
+      repel_layer(lab) +
+      ggplot2::xlab("genome coordinate (bp)") + ggplot2::ylab(ylab_expr) +
+      ggplot2::theme_minimal(base_size = 20) +
+      ggplot2::theme(strip.text = ggplot2::element_text(face = "bold", size = 20))
+  }
+  beta_p <- panel("beta", parse(text = METRIC_LABELS[["beta"]]))
+  rate_p <- panel("rate", "relative centrality (RATE)")
+  cowplot::plot_grid(beta_p, rate_p, ncol = 1)
 }
 
 # -----------------------------------------------------------------------------
@@ -192,7 +218,8 @@ build_ppom_stacked <- function(cfg, metric, binnings) {
     rows <- ceiling(built$n / NCOL)
     title_h <- 0.5; plot_h <- 4.5 * rows
     title <- cowplot::ggdraw() +
-      cowplot::draw_label(b$label, fontface = "bold", size = 26, x = 0.01, hjust = 0)
+      cowplot::draw_label(b$label, fontface = "bold", size = 30,
+                          x = 0.5, hjust = 0.5)
     blocks[[length(blocks) + 1]] <- cowplot::plot_grid(
       title, built$plot, ncol = 1, rel_heights = c(title_h, plot_h))
     rel_h <- c(rel_h, title_h + plot_h)
@@ -281,8 +308,20 @@ save_or_skip <- function(fig, path, width, height) {
 }
 
 for (cfg in species_cfgs) {
-  # Each species produces one figure-set per binning group; species without an
-  # explicit `groups` get a single set covering all their binnings (no suffix).
+  # POM is always a single figure per species, covering every binning side by side.
+  message("[", cfg$key, "] POM combined")
+  pom <- build_pom_combined(cfg, cfg$binnings)
+  if (isTRUE(cfg$pom_wrap)) {
+    # Two columns wide, four rows tall (two beta over two RATE).
+    save_or_skip(pom, file.path(OUT_DIR, paste0(cfg$key, "_POM_faceted_RATE_beta.png")),
+                 16, 22)
+  } else {
+    save_or_skip(pom, file.path(OUT_DIR, paste0(cfg$key, "_POM_faceted_RATE_beta.png")),
+                 max(20, 6 * length(cfg$binnings)), 11)
+  }
+
+  # PPOM is split into binning groups where `groups` is defined (spn_penicillin);
+  # other species get a single set covering all their binnings (no suffix).
   groups <- cfg$groups
   if (is.null(groups)) {
     groups <- list(list(suffix = NULL,
@@ -293,12 +332,6 @@ for (cfg in species_cfgs) {
     binnings <- Filter(function(b) b$label %in% g$labels, cfg$binnings)
     sfx <- if (is.null(g$suffix)) "" else paste0("_", g$suffix)
     tag <- paste0(cfg$key, sfx)
-    n_bin <- length(binnings)
-
-    message("[", tag, "] POM combined")
-    pom <- build_pom_combined(cfg, binnings)
-    save_or_skip(pom, file.path(OUT_DIR, paste0(tag, "_POM_faceted_RATE_beta.png")),
-                 max(20, 6 * n_bin), 11)
 
     message("[", tag, "] PPOM RATE")
     rate <- build_ppom_stacked(cfg, "rate", binnings)

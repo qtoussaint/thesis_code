@@ -41,24 +41,24 @@ SET_COLOURS <- c(Train = "steelblue", Test = "darkorange")
 
 specs <- list(
   list(dir_stub = "01_spn_penicillin_binary",                species = "S. pneumoniae",   drug = "benzylpenicillin", pheno = "binary",          type = "binary"),
-  list(dir_stub = "02_spn_penicillin_MIC",                   species = "S. pneumoniae",   drug = "benzylpenicillin", pheno = "MIC std",          type = "ordinal"),
-  list(dir_stub = "10_spn_penicillin_MIC_coarse_dilutions",  species = "S. pneumoniae",   drug = "benzylpenicillin", pheno = "MIC coarse",       type = "ordinal"),
-  list(dir_stub = "11_spn_penicillin_MIC_large_minbin",      species = "S. pneumoniae",   drug = "benzylpenicillin", pheno = "MIC large-minbin", type = "ordinal"),
-  list(dir_stub = "16_spn_penicillin_MIC_minimabinning",     species = "S. pneumoniae",   drug = "benzylpenicillin", pheno = "MIC minima",       type = "ordinal"),
+  list(dir_stub = "02_spn_penicillin_MIC",                   species = "S. pneumoniae",   drug = "benzylpenicillin", pheno = "MIC doubling (≥5%)",        type = "ordinal"),
+  list(dir_stub = "10_spn_penicillin_MIC_coarse_dilutions",  species = "S. pneumoniae",   drug = "benzylpenicillin", pheno = "MIC 4-fold (≥5%)", type = "ordinal"),
+  list(dir_stub = "11_spn_penicillin_MIC_large_minbin",      species = "S. pneumoniae",   drug = "benzylpenicillin", pheno = "MIC doubling (≥10%)",       type = "ordinal"),
+  list(dir_stub = "16_spn_penicillin_MIC_minimabinning",     species = "S. pneumoniae",   drug = "benzylpenicillin", pheno = "MIC minima",                type = "ordinal"),
 
   list(dir_stub = "04_spn_trimethoprim_binary",              species = "S. pneumoniae",   drug = "trimethoprim",     pheno = "binary",          type = "binary"),
-  list(dir_stub = "05_spn_trimethoprim_MIC",                 species = "S. pneumoniae",   drug = "trimethoprim",     pheno = "MIC std",          type = "ordinal"),
-  list(dir_stub = "12_spn_trimethoprim_MIC_coarse_dilutions",species = "S. pneumoniae",   drug = "trimethoprim",     pheno = "MIC coarse",       type = "ordinal"),
-  list(dir_stub = "13_spn_trimethoprim_MIC_large_minbin",    species = "S. pneumoniae",   drug = "trimethoprim",     pheno = "MIC large-minbin", type = "ordinal"),
+  list(dir_stub = "05_spn_trimethoprim_MIC",                 species = "S. pneumoniae",   drug = "trimethoprim",     pheno = "MIC doubling (≥5%)",        type = "ordinal"),
+  list(dir_stub = "12_spn_trimethoprim_MIC_coarse_dilutions",species = "S. pneumoniae",   drug = "trimethoprim",     pheno = "MIC 4-fold (≥5%)", type = "ordinal"),
+  list(dir_stub = "13_spn_trimethoprim_MIC_large_minbin",    species = "S. pneumoniae",   drug = "trimethoprim",     pheno = "MIC doubling (≥10%)",       type = "ordinal"),
 
   list(dir_stub = "07_tb_rifampicin_binary",                 species = "M. tuberculosis", drug = "rifampicin",       pheno = "binary",          type = "binary"),
-  list(dir_stub = "08_tb_rifampicin_MIC",                    species = "M. tuberculosis", drug = "rifampicin",       pheno = "MIC std",          type = "ordinal"),
-  list(dir_stub = "14_tb_rifampicin_MIC_coarse_dilutions",   species = "M. tuberculosis", drug = "rifampicin",       pheno = "MIC coarse",       type = "ordinal"),
-  list(dir_stub = "15_tb_rifampicin_MIC_large_minbin",       species = "M. tuberculosis", drug = "rifampicin",       pheno = "MIC large-minbin", type = "ordinal")
+  list(dir_stub = "08_tb_rifampicin_MIC",                    species = "M. tuberculosis", drug = "rifampicin",       pheno = "MIC doubling (≥5%)",        type = "ordinal"),
+  list(dir_stub = "14_tb_rifampicin_MIC_coarse_dilutions",   species = "M. tuberculosis", drug = "rifampicin",       pheno = "MIC 4-fold (≥5%)", type = "ordinal"),
+  list(dir_stub = "15_tb_rifampicin_MIC_large_minbin",       species = "M. tuberculosis", drug = "rifampicin",       pheno = "MIC doubling (≥10%)",       type = "ordinal")
 )
 
 # Strip label as a plotmath expression string (parsed by label_parsed): species
-# in italics, then drug and binning, e.g. italic("S. pneumoniae")*", trimethoprim, MIC std".
+# in italics, then drug and binning, e.g. italic("S. pneumoniae")*", trimethoprim, MIC doubling (≥5%)".
 panel_expr <- function(species, drug, pheno) {
   paste0('italic("', species, '")*", ', drug, ', ', pheno, '"')
 }
