@@ -61,6 +61,7 @@ build_runs <- function() {
       for (model in MODELS) {
         runs[[length(runs) + 1]] <- list(
           tag = paste(s$nn, s$run_stub, model, sep = "_"),
+          nn = s$nn, run_stub = s$run_stub,
           run_dir = run_dir_path(ds$species_dir, s$nn, s$run_stub, model))
       }
     }
@@ -74,18 +75,36 @@ rds_path <- function(run_dir) {
   if (length(f)) f[1] else NA_character_
 }
 
-# Per-cutpoint MIC breakpoint, ordered by cutpoint index, from the run's
-# depruned_variant_effects.csv (unique cutpoint -> cutpoint_MIC).
-cutpoint_mic_map <- function(run_dir) {
+# Per-cutpoint MIC breakpoints. Prefer the dataset JSON's mic_breakpoints (the
+# canonical source, read from the file tail so the multi-GB genotype is never
+# loaded); fall back to the run's depruned_variant_effects.csv (PPOM has
+# cutpoint_MIC; regenerated POM effects do not). Returns a numeric vector in
+# cutpoint order, or NULL.
+cutpoint_mic_vec <- function(run_dir, nn, run_stub) {
+  json <- file.path(RESULTS_ROOT, "gwas_datasets", "inference",
+                    paste0(nn, "_", run_stub), paste0(nn, "_", run_stub, ".json"))
+  if (file.exists(json)) {
+    sz  <- file.info(json)$size
+    n   <- min(sz, 16384)
+    con <- file(json, "rb")
+    if (sz > n) seek(con, where = sz - n)
+    raw <- readChar(con, n, useBytes = TRUE)
+    close(con)
+    m <- regmatches(raw, regexpr("\"mic_breakpoints\"\\s*:\\s*\\[[^]]*\\]", raw, perl = TRUE))
+    if (length(m)) {
+      inside <- sub("\\].*$", "", sub("^[^[]*\\[", "", m))
+      return(as.numeric(strsplit(inside, "\\s*,\\s*")[[1]]))
+    }
+  }
   effects_csv <- file.path(run_dir, "fitted_model", "depruned_variant_effects.csv")
   if (!file.exists(effects_csv)) return(NULL)
   eff <- read.csv(effects_csv)
   if (!all(c("cutpoint", "cutpoint_MIC") %in% names(eff))) return(NULL)
   map <- unique(eff[, c("cutpoint", "cutpoint_MIC")])
-  map[order(map$cutpoint), ]
+  map[order(map$cutpoint), ]$cutpoint_MIC
 }
 
-extract_one <- function(run_dir) {
+extract_one <- function(run_dir, nn, run_stub) {
   out_csv <- file.path(run_dir, "plots", "cutpoints", "cutpoint_draws.csv")
   if (file.exists(out_csv)) {
     message("  cache exists, skipping: ", out_csv)
@@ -117,8 +136,8 @@ extract_one <- function(run_dir) {
   n_cp    <- ncol(draws_mat)
   n_draws <- nrow(draws_mat)
 
-  map <- cutpoint_mic_map(run_dir)
-  mic <- if (!is.null(map) && nrow(map) == n_cp) map$cutpoint_MIC else rep(NA_real_, n_cp)
+  mic <- cutpoint_mic_vec(run_dir, nn, run_stub)
+  if (is.null(mic) || length(mic) != n_cp) mic <- rep(NA_real_, n_cp)
 
   # Long format: each cutpoint's draws stacked in cutpoint order (column-major
   # flatten of the draws matrix matches rep(seq_len(n_cp), each = n_draws)).
@@ -154,7 +173,7 @@ if (!is.na(idx_pos)) {
   i <- as.integer(argv[idx_pos + 1])
   if (is.na(i) || i < 1 || i > length(runs)) stop("--index out of range: ", argv[idx_pos + 1])
   message(sprintf("[%d/%d %s]", i, length(runs), runs[[i]]$tag))
-  extract_one(runs[[i]]$run_dir)
+  extract_one(runs[[i]]$run_dir, runs[[i]]$nn, runs[[i]]$run_stub)
   message("Done.")
   quit(save = "no")
 }
@@ -162,7 +181,7 @@ if (!is.na(idx_pos)) {
 # No --index: process all runs serially (fallback / non-array use).
 for (i in seq_along(runs)) {
   message(sprintf("[%d/%d %s]", i, length(runs), runs[[i]]$tag))
-  tryCatch(extract_one(runs[[i]]$run_dir),
+  tryCatch(extract_one(runs[[i]]$run_dir, runs[[i]]$nn, runs[[i]]$run_stub),
            error = function(e) warning("failed: ", runs[[i]]$run_dir, " -- ",
                                        conditionMessage(e)))
 }

@@ -178,12 +178,14 @@ process_run <- function(run) {
   x_axis_title <- expression("MIC breakpoint" ~ (mu * "g·mL"^{-1}))
 
   # Label only the single top SNP (largest value) within each gene facet at each
-  # cutpoint, rather than every statistical outlier.
-  top_per_group <- function(d, value_col) {
-    do.call(rbind, lapply(
+  # cutpoint, rather than every statistical outlier. Skip labels for small betas
+  # (value < 1) to keep the labelled set to the genuinely large effects.
+  top_per_group <- function(d, value_col, min_value = 1) {
+    picked <- do.call(rbind, lapply(
       split(d, interaction(d$display_name, d$x_val, drop = TRUE)),
       function(sub) sub[which.max(sub[[value_col]]), , drop = FALSE]
     ))
+    picked[picked[[value_col]] >= min_value, , drop = FALSE]
   }
 
   # Shared impact-coloured violin (matches gwas_workflow's style exactly).
@@ -192,7 +194,8 @@ process_run <- function(run) {
   # The palette is derived from the data passed in so the all-genes plot covers
   # its own impact levels. ncol/width/height default to the 6-gene layout.
   impact_violin <- function(d, y_col, ylabel, tops, out_path,
-                            ncol = NULL, width = 16, height = 10) {
+                            ncol = NULL, width = 16, height = 10,
+                            label_size = 4.5) {
     impact_levels  <- sort(unique(d$impact[!is.na(d$impact)]))
     impact_colours <- setNames(.hiroshige_discrete(length(impact_levels)),
                                impact_levels)
@@ -208,7 +211,7 @@ process_run <- function(run) {
       ggrepel::geom_text_repel(
         data = tops,
         ggplot2::aes(label = variant_label),
-        size = 4.5, max.overlaps = 10) +
+        size = label_size, max.overlaps = 10) +
       ggplot2::facet_wrap(~ display_name, ncol = ncol,
                           labeller = .italic_gene_labeller) +
       ggplot2::labs(x = x_axis_title, y = ylabel) +
@@ -221,7 +224,8 @@ process_run <- function(run) {
     df, "abs_median", expression("|" ~ tilde(beta) ~ "|"),
     top_per_group(df, "abs_median"),
     file.path(OUTPUT_DIR,
-              paste0(run$name, "_gene_violin_abs_beta_impact.png")))
+              paste0(run$name, "_gene_violin_abs_beta_impact.png")),
+    width = 18.4, label_size = 2.5)
 
   # |Δβ̃|: transitions only (first cutpoint per variant has no delta).
   df_delta <- df[!is.na(df$delta_signed), ]
@@ -229,18 +233,20 @@ process_run <- function(run) {
     df_delta, "delta_abs", expression("|" ~ Delta ~ tilde(beta) ~ "|"),
     top_per_group(df_delta, "delta_abs"),
     file.path(OUTPUT_DIR,
-              paste0(run$name, "_gene_violin_abs_delta_beta_impact.png")))
+              paste0(run$name, "_gene_violin_abs_delta_beta_impact.png")),
+    width = 18.4, label_size = 2.5)
 
   # |β̃| across ALL genes of interest: same plot, but faceted over every gene in
-  # spn_penicillin_genesofinterest.txt (core six first, rest after). 3 columns,
-  # taller canvas to fit the ~20 facets.
+  # spn_penicillin_genesofinterest.txt (core six first, rest after). 4 columns,
+  # taller canvas to fit the ~20 facets, wide enough to keep x-axis labels from
+  # overlapping.
   df_all <- make_df(ALL_GENES_OF_INTEREST[[1]], ALL_DISPLAY_LEVELS)
   impact_violin(
     df_all, "abs_median", expression("|" ~ tilde(beta) ~ "|"),
     top_per_group(df_all, "abs_median"),
     file.path(OUTPUT_DIR,
               paste0(run$name, "_gene_violin_abs_beta_impact_allgenes.png")),
-    ncol = 3, width = 16, height = 24)
+    ncol = 4, width = 17.6, height = 24)
 
   # Companion CSV of the filtered underlying data, mirroring the plot inputs.
   out_cols <- c("variant_id", "position", "gene", "display_name",

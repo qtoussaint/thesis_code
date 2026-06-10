@@ -1,0 +1,84 @@
+===== START alpha_sweep =====
+----- OK    alpha_sweep
+===== START tau_sweep =====
+----- OK    tau_sweep
+===== START regularization_prior =====
+----- OK    regularization_prior
+===== START dataset_split =====
+----- OK    dataset_split
+===== START mic_bin_histogram =====
+----- OK    mic_bin_histogram
+===== START heritability =====
+----- OK    heritability
+===== START heritability_combined =====
+----- OK    heritability_combined
+===== START inference_ppc =====
+----- OK    inference_ppc
+===== START prediction_accuracy =====
+----- OK    prediction_accuracy
+===== START prediction_plots =====
+----- OK    prediction_plots
+===== START faceted_rate_beta =====
+----- OK    faceted_rate_beta
+===== START violin_pbp_mray =====
+----- OK    violin_pbp_mray
+===== START combine_16_median =====
+----- OK    combine_16_median
+===== START combine_faceted =====
+----- OK    combine_faceted
+===== START composite_pen_full =====
+----- OK    composite_pen_full
+===== START composite_pen_smaller =====
+----- OK    composite_pen_smaller
+===== START composite_tmp_rif =====
+----- OK    composite_tmp_rif
+===== START short_02_overlay =====
+----- OK    short_02_overlay
+===== START short_02_overlay_lab =====
+----- OK    short_02_overlay_lab
+===== START short_02_rate_lab =====
+----- OK    short_02_rate_lab
+===== START short_05_rate =====
+----- OK    short_05_rate
+===== START short_05_rate_lab =====
+----- OK    short_05_rate_lab
+===== START short_07_rate =====
+----- OK    short_07_rate
+===== START short_07_rate_lab =====
+----- OK    short_07_rate_lab
+===== START faceted_02 =====
+----- OK    faceted_02
+===== START faceted_05 =====
+----- OK    faceted_05
+===== START faceted_16 =====
+----- OK    faceted_16
+
+================= SUMMARY =================
+OK     alpha_sweep
+OK     tau_sweep
+OK     regularization_prior
+OK     dataset_split
+OK     mic_bin_histogram
+OK     heritability
+OK     heritability_combined
+OK     inference_ppc
+OK     prediction_accuracy
+OK     prediction_plots
+OK     faceted_rate_beta
+OK     violin_pbp_mray
+OK     combine_16_median
+OK     combine_faceted
+OK     composite_pen_full
+OK     composite_pen_smaller
+OK     composite_tmp_rif
+OK     short_02_overlay
+OK     short_02_overlay_lab
+OK     short_02_rate_lab
+OK     short_05_rate
+OK     short_05_rate_lab
+OK     short_07_rate
+OK     short_07_rate_lab
+OK     faceted_02
+OK     faceted_05
+OK     faceted_16
+Logs: /nfs/research/jlees/jacqueline/thesis_results/paper_figures/run_all_logs

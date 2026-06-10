@@ -31,8 +31,9 @@ suppressPackageStartupMessages({
 grDevices::pdf(NULL)
 on.exit(grDevices::dev.off(), add = TRUE)
 
-RESULTS_ROOT <- "/nfs/research/jlees/jacqueline/thesis_results"
-OUTPUT_DIR   <- file.path(RESULTS_ROOT, "paper_figures", "cutpoint_histograms")
+RESULTS_ROOT  <- "/nfs/research/jlees/jacqueline/thesis_results"
+OUTPUT_DIR    <- file.path(RESULTS_ROOT, "paper_figures", "cutpoint_histograms")
+DATASETS_ROOT <- file.path(RESULTS_ROOT, "gwas_datasets", "inference")
 
 MODELS <- c("POM", "PPOM")
 
@@ -71,13 +72,36 @@ cache_path <- function(species_dir, nn, run_stub, model) file.path(
   RESULTS_ROOT, paste0("gwas_", species_dir), "inference",
   paste0(nn, "_", run_stub, "_", model), "plots", "cutpoints", "cutpoint_draws.csv")
 
-fmt_mic <- function(x) ifelse(is.na(x), "", format(x, drop0trailing = TRUE, scientific = FALSE))
+# mic_breakpoints lives at the tail of the (multi-GB) dataset JSON, after the
+# genotype: read only the last few KB so the genotype is never loaded. This is
+# the canonical MIC source -- POM caches store regenerated effects without MIC,
+# so their cutpoint_mic column is NA.
+read_mic_breakpoints <- function(nn, run_stub) {
+  json <- file.path(DATASETS_ROOT, paste0(nn, "_", run_stub),
+                    paste0(nn, "_", run_stub, ".json"))
+  if (!file.exists(json)) return(NULL)
+  sz  <- file.info(json)$size
+  n   <- min(sz, 16384)
+  con <- file(json, "rb"); on.exit(close(con))
+  if (sz > n) seek(con, where = sz - n)
+  raw <- readChar(con, n, useBytes = TRUE)
+  m   <- regmatches(raw, regexpr("\"mic_breakpoints\"\\s*:\\s*\\[[^]]*\\]", raw, perl = TRUE))
+  if (!length(m)) return(NULL)
+  inside <- sub("\\].*$", "", sub("^[^[]*\\[", "", m))
+  as.numeric(strsplit(inside, "\\s*,\\s*")[[1]])
+}
+
+fmt_mic <- function(x) vapply(x, function(v)
+  if (is.na(v)) "" else format(v, drop0trailing = TRUE, scientific = FALSE, trim = TRUE),
+  character(1))
 
 # Build one run's histogram panel from its cutpoint_draws.csv. Mirrors
-# gwas_workflow's .write_cutpoints_histogram_plot, but with blank legend titles.
-# A trailing star on a legend entry flags a cutpoint whose 89% CI overlaps any
-# other cutpoint's, exactly as the pipeline figures do.
-build_panel <- function(binning, model, csv_path) {
+# gwas_workflow's .write_cutpoints_histogram_plot, but the fill/colour are keyed
+# on the (always-unique) cutpoint index with the MIC breakpoint shown only as the
+# legend label, and the legend titles are blanked. A trailing star on a legend
+# entry flags a cutpoint whose 89% CI overlaps any other cutpoint's, exactly as
+# the pipeline figures do.
+build_panel <- function(binning, model, csv_path, mic) {
   caption <- sprintf("%s — %s", binning, model)
 
   if (!file.exists(csv_path)) {
@@ -92,39 +116,45 @@ build_panel <- function(binning, model, csv_path) {
   n_cp    <- length(ord)
   n_draws <- nrow(d) / n_cp
 
-  # Per-cutpoint median, 89% CI and MIC, then star for overlapping 89% CIs.
+  # MIC per cutpoint (JSON order == cutpoint order); fall back to the cache's own
+  # cutpoint_mic column, then to NA -> a "cutpoint k" label.
+  if (is.null(mic) || length(mic) != n_cp) {
+    mic <- vapply(ord, function(k) d$cutpoint_mic[d$cutpoint == k][1], numeric(1))
+  }
+
+  # Per-cutpoint median + 89% CI (ordered by cutpoint), then star for overlap.
   summ <- do.call(rbind, lapply(ord, function(k) {
     x  <- d$value[d$cutpoint == k]
     qs <- stats::quantile(x, probs = c(0.055, 0.945), names = FALSE)
-    data.frame(cutpoint = k, mic = d$cutpoint_mic[d$cutpoint == k][1],
-               median = stats::median(x), q_lower = qs[1], q_upper = qs[2])
+    data.frame(cutpoint = k, median = stats::median(x), q_lower = qs[1], q_upper = qs[2])
   }))
   star <- vapply(seq_len(nrow(summ)), function(i) {
     others <- setdiff(seq_len(nrow(summ)), i)
     any(summ$q_lower[i] <= summ$q_upper[others] &
           summ$q_lower[others] <= summ$q_upper[i])
   }, logical(1))
-  base_lab <- fmt_mic(summ$mic)
-  lab      <- ifelse(star, paste0(base_lab, " ★"), base_lab)
-  levels_o <- lab[order(summ$cutpoint)]
 
-  d$cutpoint_label    <- factor(lab[match(d$cutpoint, summ$cutpoint)], levels = levels_o)
-  summ$cutpoint_label <- factor(lab, levels = levels_o)
+  disp <- fmt_mic(mic)
+  disp[disp == ""] <- paste0("cutpoint ", ord)[disp == ""]
+  disp <- ifelse(star, paste0(disp, " ★"), disp)
+
+  d$cp    <- factor(d$cutpoint,    levels = ord)
+  summ$cp <- factor(summ$cutpoint, levels = ord)
 
   rng          <- range(d$value)
   binwidth_val <- diff(rng) / 52
   pal          <- hiroshige_discrete(n_cp)
 
   ggplot(d, aes(x = value)) +
-    geom_histogram(aes(fill = cutpoint_label), alpha = 0.3,
+    geom_histogram(aes(fill = cp), alpha = 0.3,
                    position = "identity", binwidth = binwidth_val, colour = NA) +
-    geom_density(aes(colour = cutpoint_label,
+    geom_density(aes(colour = cp,
                      y = after_stat(density) * binwidth_val * n_draws),
                  linewidth = 0.5, bw = "nrd0") +
-    geom_vline(data = summ, aes(xintercept = median, colour = cutpoint_label),
+    geom_vline(data = summ, aes(xintercept = median, colour = cp),
                linewidth = 0.4, show.legend = FALSE) +
-    scale_fill_manual(values = pal, name = NULL) +
-    scale_colour_manual(values = pal, name = NULL) +
+    scale_fill_manual(values = pal, labels = disp, name = NULL) +
+    scale_colour_manual(values = pal, labels = disp, name = NULL) +
     labs(x = "Cutpoint value (latent scale)", y = "Count", title = caption) +
     theme_minimal(base_size = 11) +
     theme(plot.title       = element_text(size = 11, face = "bold", colour = "grey20"),
@@ -152,9 +182,11 @@ shared_legend <- function() {
 make_drug_block <- function(ds) {
   panels <- list()
   for (s in ds$binning_specs) {
+    mic <- read_mic_breakpoints(s$nn, s$run_stub)
     for (model in MODELS) {
       panels[[length(panels) + 1]] <-
-        build_panel(s$binning, model, cache_path(ds$species_dir, s$nn, s$run_stub, model))
+        build_panel(s$binning, model,
+                    cache_path(ds$species_dir, s$nn, s$run_stub, model), mic)
     }
   }
   grid  <- plot_grid(plotlist = panels, ncol = length(MODELS), align = "hv")
@@ -162,7 +194,7 @@ make_drug_block <- function(ds) {
     draw_label(ds$display, x = 0.01, hjust = 0, fontface = "bold", size = 15)
   block <- plot_grid(title, grid, ncol = 1,
                      rel_heights = c(0.35, length(ds$binning_specs)))
-  list(block = block, weight = 0.35 + length(ds$binning_specs))
+  list(block = block, grid = grid, weight = 0.35 + length(ds$binning_specs))
 }
 
 blocks  <- lapply(datasets, make_drug_block)
@@ -171,10 +203,26 @@ body    <- plot_grid(plotlist = lapply(blocks, `[[`, "block"), ncol = 1,
 figure  <- plot_grid(body, shared_legend(), ncol = 1, rel_heights = c(1, 0.045))
 
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
-out_path <- file.path(OUTPUT_DIR, "cutpoints_histogram_faceted_summary.png")
 
+# Combined figure: all drug/species blocks stacked, one shared legend.
+out_path <- file.path(OUTPUT_DIR, "cutpoints_histogram_faceted_summary.png")
 total_rows <- sum(vapply(datasets, function(d) length(d$binning_specs), integer(1)))
 ggsave(out_path, figure,
        width = length(MODELS) * 7, height = total_rows * 2.9 + 2.5,
        dpi = 200, bg = "white", limitsize = FALSE)
 message("wrote ", out_path)
+
+# Per drug/species figure: just the panel grid (no drug title) plus its own
+# shared legend.
+for (i in seq_along(datasets)) {
+  ds      <- datasets[[i]]
+  n_bin   <- length(ds$binning_specs)
+  one     <- plot_grid(blocks[[i]]$grid, shared_legend(), ncol = 1,
+                       rel_heights = c(n_bin, 0.4))
+  one_path <- file.path(OUTPUT_DIR,
+                        paste0("cutpoints_histogram_faceted_", ds$species_dir, ".png"))
+  ggsave(one_path, one,
+         width = length(MODELS) * 7, height = n_bin * 2.9 + 2.0,
+         dpi = 200, bg = "white", limitsize = FALSE)
+  message("wrote ", one_path)
+}
