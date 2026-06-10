@@ -126,19 +126,27 @@ mb_lz_row <- function(lz_dir, genes, metric, legend_rel = 0.18) {
   panels_frac  <- 1 / (1 + legend_rel)   # row width left of the legend
   blank <- ggplot2::ggplot() + ggplot2::theme_void()
 
+  legend_x0 <- NA_real_   # NA => mb_assemble centers the legend in the right gutter
+  lz_inset  <- 0.045      # left room so the A/B/C panel letter clears the panels
   if (n == 1) {
-    # a lone panel is centered at half width so it is not stretched full-bleed
+    # a lone panel sits at the left (inset for the panel letter) with its shared
+    # legend placed immediately to its right rather than out in the gutter
     pw   <- panels_frac / 2
-    left <- (panels_frac - pw) / 2
+    left <- lz_inset
     panel_row <- cowplot::plot_grid(
       blank, panels[[1]]$plot, blank, nrow = 1,
       rel_widths = c(left, pw, panels_frac - left - pw))
-    panel_x <- list(c(left, left + pw))
-    aspect  <- panel_aspect / 2
+    panel_x   <- list(c(left, left + pw))
+    legend_x0 <- left + pw + 0.012
+    aspect    <- panel_aspect / 2
   } else {
-    panel_row <- cowplot::plot_grid(plotlist = lapply(panels, `[[`, "plot"), nrow = 1)
+    avail <- panels_frac - lz_inset
+    multi <- cowplot::plot_grid(plotlist = lapply(panels, `[[`, "plot"), nrow = 1)
+    panel_row <- cowplot::plot_grid(blank, multi, nrow = 1,
+                                    rel_widths = c(lz_inset, avail))
     panel_x <- lapply(seq_len(n),
-                      function(g) c((g - 1) / n * panels_frac, g / n * panels_frac))
+                      function(g) c(lz_inset + (g - 1) / n * avail,
+                                    lz_inset + g / n * avail))
     aspect  <- panel_aspect / n
   }
 
@@ -149,7 +157,7 @@ mb_lz_row <- function(lz_dir, genes, metric, legend_rel = 0.18) {
   li <- magick::image_info(legend_img)
   list(grob = row, aspect = aspect, regions = regions, panel_x = panel_x,
        panels_frac = panels_frac, legend_img = legend_img,
-       legend_aspect = li$height / li$width)
+       legend_aspect = li$height / li$width, legend_x0 = legend_x0)
 }
 
 # Assemble a stacked composite from a list of units, each
@@ -158,7 +166,7 @@ mb_lz_row <- function(lz_dir, genes, metric, legend_rel = 0.18) {
 # spacer + the lz row, and magnifier connectors from the manhattan to that row.
 # Shared legends are overlaid last, all at a single common width so their text
 # size is identical across rows. Returns list(canvas, width, height).
-mb_assemble <- function(units, fig_w = MB_FIG_WIDTH, gap = 0.55,
+mb_assemble <- function(units, fig_w = MB_FIG_WIDTH, gap = 0.22,
                         line_col = "grey45") {
   blank <- ggplot2::ggplot() + ggplot2::theme_void()
   plots <- list(); rels <- numeric(0); labels <- character(0)
@@ -204,7 +212,13 @@ mb_assemble <- function(units, fig_w = MB_FIG_WIDTH, gap = 0.55,
       pf <- cn$row$panels_frac
       w_npc <- leg_w_in / fig_w
       h_npc <- (leg_w_in * cn$row$legend_aspect) / total_h
-      x0 <- pf + ((1 - pf) - w_npc) / 2
+      # a row may pin its legend right next to its panel (lone-panel rows);
+      # otherwise center it in the right-hand gutter
+      x0 <- if (!is.null(cn$row$legend_x0) && !is.na(cn$row$legend_x0)) {
+        cn$row$legend_x0
+      } else {
+        pf + ((1 - pf) - w_npc) / 2
+      }
       y0 <- (band$top + band$bottom) / 2 - h_npc / 2
       canvas <- canvas +
         cowplot::draw_image(cn$row$legend_img, x = x0, y = y0,

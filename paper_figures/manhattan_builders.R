@@ -175,7 +175,7 @@ mb_rightshift_label_layer <- function(p, df, label_df, size = 5,
 
   text_h_in <- size / 25.4                 # geom_text size is in mm
   box_h     <- text_h_in * dpiy
-  gap_y     <- 0.30 * box_h                # small gap above the peak
+  gap_y     <- 0.75 * box_h                # small gap above the peak
 
   # claim space for the tallest peaks first; never push a label past the panel
   ord    <- order(label_df$value, decreasing = TRUE)
