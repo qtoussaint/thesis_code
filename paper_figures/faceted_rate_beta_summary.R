@@ -58,6 +58,10 @@ species_cfgs <- list(
   list(key = "tb_rifampicin", display = "bolditalic('M. tuberculosis')~bold('(rifampicin)')",
        annot = TB_ANNOT, goi = file.path(GOI_DIR, "tb_rifampicin_genesofinterest.txt"),
        logistic = "07_tb_rifampicin_binary_logistic", n_label = 20L,
+       # The POM/PPOM phandango.plot BP column is degenerate (every variant = 11);
+       # take genome coordinates from the logistic run, whose phandango.plot is
+       # correct. Variant row order is identical across this drug's runs.
+       pos_source = "07_tb_rifampicin_binary_logistic",
        binnings = list(
          list(label = "doubling (≥5%)",        nn = "08", stub = "tb_rifampicin_MIC"),
          list(label = "4-fold (≥5%)", nn = "14", stub = "tb_rifampicin_MIC_coarse_dilutions"),
@@ -89,6 +93,16 @@ species_cfgs <- list(
 
 run_dir <- function(key, dir_name) file.path(RES, paste0("gwas_", key), "inference", dir_name)
 
+# Canonical per-variant genome coordinates for a species when its own POM/PPOM
+# phandango BP column is unreliable. Sourced from cfg$pos_source's phandango.plot,
+# applied by row order (variant order is shared across a drug's runs). NULL when no
+# override is configured (the run's own phandango positions are then used).
+canonical_positions <- function(cfg) {
+  if (is.null(cfg$pos_source)) return(NULL)
+  read_positions(file.path(run_dir(cfg$key, cfg$pos_source),
+                           "cppRATE_results", "phandango.plot"))
+}
+
 # -----------------------------------------------------------------------------
 # Single-RATE runs (POM, logistic): one RATE + one median per depruned variant.
 # Row order of phandango.plot / RATE_values_depruned.txt / depruned_variant_effects.csv
@@ -103,8 +117,10 @@ single_has_rate <- function(rdir) {
 
 # median (effect size) only exists once depruned_variant_effects.csv is regenerated for
 # the POM run; absent -> NA, so the beta panel for that binning is simply empty.
-read_single_run <- function(rdir) {
-  pos  <- read_positions(file.path(rdir, "cppRATE_results", "phandango.plot"))
+read_single_run <- function(rdir, pos_override = NULL) {
+  pos  <- if (is.null(pos_override))
+            read_positions(file.path(rdir, "cppRATE_results", "phandango.plot"))
+          else pos_override
   rate <- read_rate(file.path(rdir, "cppRATE_results", "RATE_values_depruned.txt"))
   eff_path <- file.path(rdir, "fitted_model", "depruned_variant_effects.csv")
   med <- if (file.exists(eff_path)) read.csv(eff_path)$median else rep(NA_real_, length(rate))
@@ -148,6 +164,7 @@ repel_layer <- function(label_df) {
 # (A) POM combined: beta row on top, RATE row on bottom, column per binning.
 # -----------------------------------------------------------------------------
 build_pom_combined <- function(cfg, binnings) {
+  pos_override <- canonical_positions(cfg)
   frames <- list()
   for (b in binnings) {
     rdir <- run_dir(cfg$key, paste0(b$nn, "_", b$stub, "_POM"))
@@ -155,7 +172,7 @@ build_pom_combined <- function(cfg, binnings) {
       message("    skip POM binning '", b$label, "' (no RATE output yet): ", basename(rdir))
       next
     }
-    df <- annotate_genes(read_single_run(rdir), cfg$annot, cfg$goi)
+    df <- annotate_genes(read_single_run(rdir, pos_override), cfg$annot, cfg$goi)
     df$binning <- b$label
     frames[[length(frames) + 1]] <- df
   }
