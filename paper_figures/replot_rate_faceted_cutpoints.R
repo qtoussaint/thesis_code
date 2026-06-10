@@ -137,22 +137,14 @@ build_df <- function(run_dir) {
   list(df = df, n = n_cutpoints, legend_title = legend_title)
 }
 
-# Build the faceted RATE plot for one run. Returns a list with the ggplot and the
-# number of cutpoints (for sizing). Reused by the single-run main() and by the
-# combined SPN penicillin figure.
-build_faceted_plot <- function(run_dir, annotations, genes_of_interest = NULL,
-                               ncol = 2L) {
-  built <- build_df(run_dir)
-  df <- built$df
-
-  # POS -> gene from snpEff annotations; unannotated -> "MODIFIER". read.delim
-  # mangles the header so the gene column becomes ANN....GENE.
+# POS -> gene from snpEff annotations (unannotated -> "MODIFIER"), then display-name
+# remapping from the genes-of-interest list (col1 = annotation name, col2 = display
+# label). read.delim mangles the header so the gene column becomes ANN....GENE. Shared
+# by the faceted PPOM plot and the single-run summary figures.
+annotate_genes <- function(df, annotations, genes_of_interest = NULL) {
   ann <- read.delim(annotations, stringsAsFactors = FALSE)
   df$gene <- ann[["ANN....GENE"]][match(df$pos, ann$POS)]
   df$gene[is.na(df$gene)] <- "MODIFIER"
-
-  # Display-name remapping from the genes-of-interest list (col1 = annotation name,
-  # col2 = display label), read exactly as gwas_workflow does.
   goi <- if (!is.null(genes_of_interest)) {
     read.csv(genes_of_interest, header = FALSE,
              col.names = c("gene", "display_name"), stringsAsFactors = FALSE)
@@ -160,22 +152,39 @@ build_faceted_plot <- function(run_dir, annotations, genes_of_interest = NULL,
     NULL
   }
   df$gene <- .apply_gene_display_names(df$gene, goi)
+  df
+}
 
-  # Per-facet top-10-by-RATE labels, placed at the RATE value
+# Build the faceted Manhattan for one run, one facet per cutpoint. metric picks the
+# y-value: "rate" (relative centrality, default) or "abs_beta" (absolute median effect).
+# Returns a list with the ggplot and the number of cutpoints (for sizing). Reused by the
+# single-run main(), the combined SPN penicillin figure, and the PPOM summary figures.
+build_faceted_plot <- function(run_dir, annotations, genes_of_interest = NULL,
+                               ncol = 2L, metric = c("rate", "abs_beta"),
+                               n_label = 10L) {
+  metric <- match.arg(metric)
+  built <- build_df(run_dir)
+  df <- annotate_genes(built$df, annotations, genes_of_interest)
+
+  df$value <- if (metric == "abs_beta") abs(df$median) else df$rate
+  ylab <- if (metric == "abs_beta") expression(group("|", tilde(beta), "|"))
+          else "relative centrality (RATE)"
+
+  # Per-facet top-n-unique-gene labels, ranked on and placed at the plotted value.
   label_df <- do.call(rbind, lapply(split(df, df$cutpoint), function(d) {
-    d[top_label_idx(d$gene, d$rate, n = 10L), ]
+    d[top_label_idx(d$gene, d$value, n = n_label), ]
   }))
   label_df$gene_expr <- .italic_gene_expr(label_df$gene)
 
   single_color <- viridis::viridis(6, option = "plasma")[2]
 
-  p <- ggplot2::ggplot(df, ggplot2::aes(x = pos, y = rate)) +
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = pos, y = value)) +
     ggplot2::geom_point(alpha = 0.4, colour = single_color) +
     ggplot2::facet_wrap(~ cutpoint_label, ncol = ncol,
                         labeller = ggplot2::labeller(cutpoint_label = function(x) x)) +
     ggrepel::geom_text_repel(
       data  = label_df,
-      ggplot2::aes(x = pos, y = rate, label = gene_expr),
+      ggplot2::aes(x = pos, y = value, label = gene_expr),
       parse = TRUE,
       size  = 5.1,
       arrow = grid::arrow(length = grid::unit(0.01, "npc"), type = "open"),
@@ -184,7 +193,7 @@ build_faceted_plot <- function(run_dir, annotations, genes_of_interest = NULL,
       max.overlaps = 30
     ) +
     ggplot2::xlab("genome coordinate (bp)") +
-    ggplot2::ylab("relative centrality (RATE)") +
+    ggplot2::ylab(ylab) +
     ggplot2::theme_minimal(base_size = 20)
 
   list(plot = p, n = built$n)
