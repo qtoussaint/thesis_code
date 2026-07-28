@@ -1,6 +1,79 @@
+# Editor / OS
 .DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+
+# Claude
 .claude/
 .claude-cache/
 .claude.json
 .claude.lock
 claude.log
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Python packaging / distribution
+build/
+dist/
+sdist/
+wheels/
+develop-eggs/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.python-version
+
+# Test / type-check / lint caches
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# R
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+*.Rcheck/
+
+# Stan compiled binaries
+*.stanbin
+
+# Logs and job output
+*.log
+slurm-*.out
+*.out.log
+*.err.log
+core.[0-9]*
