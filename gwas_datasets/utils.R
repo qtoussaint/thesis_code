@@ -1075,9 +1075,12 @@ build_stan_prediction_loso <- function(pheno, geno_mat, lin_mat, sublin_mat,
 #' single R string, so it avoids the 2^31-1 byte character limit that arises
 #' with very large matrices (e.g. TB rifampicin ~11 k samples x 75 k variants).
 #'
-#' @param data  named list (scalars, vectors, matrices)
-#' @param file  output path
-write_stan_json_streaming <- function(data, file) {
+#' @param data   named list (scalars, vectors, matrices)
+#' @param file   output path
+#' @param digits decimal places passed to jsonlite::toJSON. The jsonlite default
+#'        of 4 is fine for the 0/1 genotype matrices, but rounds real-valued
+#'        fields (e.g. a GRM) to 4 dp. Use NA to write full precision.
+write_stan_json_streaming <- function(data, file, digits = 4) {
   stopifnot(is.list(data), !is.null(names(data)))
 
   con <- file(file, open = "wt")
@@ -1100,7 +1103,8 @@ write_stan_json_streaming <- function(data, file) {
       nr <- nrow(val)
       cat("[\n", file = con)
       for (i in seq_len(nr)) {
-        row_json <- jsonlite::toJSON(val[i, , drop = TRUE], auto_unbox = FALSE)
+        row_json <- jsonlite::toJSON(val[i, , drop = TRUE], auto_unbox = FALSE,
+                                     digits = digits)
         cat(row_json, file = con)
         if (i < nr) cat(",\n", file = con)
       }
@@ -1113,12 +1117,12 @@ write_stan_json_streaming <- function(data, file) {
       } else if (is.numeric(val) && val == floor(val)) {
         cat(as.integer(val), file = con)
       } else {
-        cat(jsonlite::toJSON(val, auto_unbox = TRUE), file = con)
+        cat(jsonlite::toJSON(val, auto_unbox = TRUE, digits = digits), file = con)
       }
 
     } else {
       # vector
-      cat(jsonlite::toJSON(val, auto_unbox = FALSE), file = con)
+      cat(jsonlite::toJSON(val, auto_unbox = FALSE, digits = digits), file = con)
     }
   }
 
@@ -1140,15 +1144,19 @@ write_stan_json_streaming <- function(data, file) {
 #' @param variant_positions optional numeric vector (length = variant_names) of genomic
 #'        positions to use for the variant index. When supplied (e.g. unitig coordinates),
 #'        it is used verbatim instead of parsing positions from the variant names.
+#' @param json_digits decimal places for the JSON; passed to
+#'        write_stan_json_streaming(). Use NA for real-valued fields (e.g. a GRM).
 write_dataset <- function(stan_list, sample_ids, variant_names, parent_lin,
                           outdir, dataset_name,
                           test_ids = NULL, test_pheno = NULL,
-                          variant_positions = NULL) {
+                          variant_positions = NULL,
+                          json_digits = 4) {
   dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
   # JSON
   json_path <- file.path(outdir, paste0(dataset_name, ".json"))
-  write_stan_json_streaming(data = stan_list, file = json_path)
+  write_stan_json_streaming(data = stan_list, file = json_path,
+                            digits = json_digits)
   message("  Wrote JSON: ", json_path)
 
   # Variant index

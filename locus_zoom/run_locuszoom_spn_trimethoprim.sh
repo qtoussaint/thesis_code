@@ -54,7 +54,7 @@ GENES="folP,dyr"
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
-OUTPUT_DIR="$SPECIES_OUTPUT_DIR/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2"
+OUTPUT_DIR="$SPECIES_OUTPUT_DIR/plots/05_spn_trimethoprim_MIC_PPOM_genes_top2_composite"
 mkdir -p "$OUTPUT_DIR"
 
 # Comma-separated list of per-cutpoint RATE files
@@ -67,7 +67,7 @@ fi
 # ---------------------------------------------------------------------------
 # One pass per metric
 # ---------------------------------------------------------------------------
-for METRIC in rate abs_median exp_abs_median; do
+for METRIC in rate; do
   echo ""
   echo "============================================================"
   echo "=== Metric: ${METRIC}"
@@ -119,6 +119,7 @@ for METRIC in rate abs_median exp_abs_median; do
         --lead_cutpoint    "$cp" \
         --window           5000 \
         "${Y_FLAG[@]}" \
+        --composite_style \
         --title            "S. pneumoniae trimethoprim PPOM — ${gene} (${METRIC})" \
         --output           "$OUTPUT_DIR/${gene}_${METRIC}.png" \
         --width 10 --height 7
@@ -137,7 +138,7 @@ while IFS=, read -r gff_name display_name; do
   display_clean=$(echo "$display_name" | sed -E 's/[[:space:]]*\([^)]*\)//' | xargs)
   [[ -z "$gff_name" || -z "$display_clean" ]] && continue
   [[ "$gff_name" == "$display_clean" ]] && continue
-  for f in "$OUTPUT_DIR"/"${gff_name}"_*.png; do
+  for f in "$OUTPUT_DIR"/"${gff_name}"_*; do
     [[ -e "$f" ]] || continue
     new="${f/${gff_name}_/${display_clean}_}"
     echo "  rename $(basename "$f") -> $(basename "$new")"

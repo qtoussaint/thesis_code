@@ -184,8 +184,15 @@ star_ordinal_cells <- function(m, csv_path, species_dir, run_dir, model, eval, d
 
 EVALS <- c("PPC", "Random", "Lineage")
 
-# Binary logistic
-BINARY_COLS <- c("sensitivity","specificity","bacc","auc","brier","f1","vme","me")
+# Binary logistic. The upstream prediction_accuracy_metrics.csv computes
+# sensitivity/specificity with SUSCEPTIBLE as the positive class, but the paper
+# reports them resistance-positive (sensitivity = recall of resistant). Since
+# resistance is simply the other class this is exactly a swap, so we read the
+# CSV's specificity into the table's Sensitivity column and its sensitivity into
+# Specificity. bacc/auc/brier are symmetric and vme/me are already defined
+# relative to resistance, so only these two columns move; f1 is already the
+# resistant-class F1.
+BINARY_COLS <- c("specificity","sensitivity","bacc","auc","brier","f1","vme","me")
 binary_specs <- list(
   list(species_dir="spn_penicillin",   org="\\textit{S. pneumoniae}",   amr="PEN", nn="01", base="spn_penicillin_binary",   run="spn_penicillin_binary_logistic"),
   list(species_dir="spn_trimethoprim", org="\\textit{S. pneumoniae}",   amr="TMP", nn="04", base="spn_trimethoprim_binary", run="spn_trimethoprim_binary_logistic"),

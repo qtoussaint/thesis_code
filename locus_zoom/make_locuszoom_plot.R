@@ -36,6 +36,7 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(ggrepel)
   library(patchwork)
+  library(cowplot)
 })
 
 # ---------------------------------------------------------------------------
@@ -139,6 +140,22 @@ option_list <- list(
   make_option("--height",
     type = "double", default = 7.0,
     help = "Plot height in inches [default: 7]"
+  ),
+  make_option("--composite_style",
+    action = "store_true", default = FALSE,
+    help = paste(
+      "Style the unlabeled (_nolabels) output for use inside a multi-panel",
+      "composite: drop the per-plot legend and axis titles, and additionally",
+      "emit <stem>_legend.png (a shared legend at Manhattan text size) and",
+      "<stem>_region.txt (seqname/start/end of the plotted window)."
+    )
+  ),
+  make_option("--text_bump_pt",
+    type = "double", default = 0,
+    help = paste(
+      "Add this many points to every text element on the plot (axis tick",
+      "labels, gene-track gene labels, and the shared legend). [default: 0]"
+    )
   )
 )
 
@@ -151,6 +168,10 @@ valid_metrics <- c("rate", "abs_median", "exp_abs_median")
 if (!opt$y_metric %in% valid_metrics) {
   stop("--y_metric must be one of: ", paste(valid_metrics, collapse = ", "))
 }
+
+# Text-size bump (points for element_text; geom_text `size` is in mm, ~2.845 pt/mm)
+tb_pt <- opt$text_bump_pt
+tb_mm <- opt$text_bump_pt / 2.845
 
 # ---------------------------------------------------------------------------
 # Validate inputs
@@ -631,6 +652,7 @@ p_scatter_base <- ggplot(
     axis.title.x     = element_blank(),
     axis.text.x      = element_blank(),
     axis.ticks.x     = element_blank(),
+    axis.text.y      = element_text(size = 12.8 + tb_pt),  # base ~8.8pt + 4pt
     panel.grid.minor = element_blank(),
     plot.title       = element_text(size = 12, face = "bold"),
     plot.subtitle    = element_text(size = 8.5, colour = "grey40"),
@@ -723,7 +745,7 @@ if (nrow(genes_region) > 0) {
     ) +
     geom_text_repel(
       aes(x = mid, y = ymax, label = name),
-      size           = 2.8,
+      size           = 4.2 + tb_mm,   # ~2.8 (8pt) + 4pt
       vjust          = 0,
       nudge_y        = 0.2,
       fontface       = "italic",
@@ -749,6 +771,7 @@ if (nrow(genes_region) > 0) {
       axis.text.y      = element_blank(),
       axis.ticks.y     = element_blank(),
       axis.title.y     = element_blank(),
+      axis.text.x      = element_text(size = 12.8 + tb_pt),  # base ~8.8pt + 4pt
       panel.grid       = element_blank(),
       legend.position  = "right"
     )
@@ -767,8 +790,20 @@ if (nrow(genes_region) > 0) {
 # ---------------------------------------------------------------------------
 # Step 12: Assemble and save
 # ---------------------------------------------------------------------------
-combined_labeled   <- p_scatter_labeled / p_genes + plot_layout(heights = c(3, 1))
-combined_unlabeled <- p_scatter_base    / p_genes + plot_layout(heights = c(3, 1))
+combined_labeled <- p_scatter_labeled / p_genes + plot_layout(heights = c(3, 1))
+
+# For composite use, strip the per-plot legend and axis titles (a single shared
+# legend is added to the right of the row by the composite). Otherwise keep the
+# standalone styling.
+if (opt$composite_style) {
+  p_scatter_cs <- p_scatter_base +
+    theme(legend.position = "none", axis.title.y = element_blank())
+  p_genes_cs <- p_genes +
+    theme(legend.position = "none", axis.title.x = element_blank())
+  combined_unlabeled <- p_scatter_cs / p_genes_cs + plot_layout(heights = c(3, 1))
+} else {
+  combined_unlabeled <- p_scatter_base / p_genes + plot_layout(heights = c(3, 1))
+}
 
 ext  <- tools::file_ext(opt$output)
 stem <- tools::file_path_sans_ext(opt$output)
@@ -794,5 +829,61 @@ ggsave(
   height   = opt$height,
   dpi      = 300
 )
+
+# ---------------------------------------------------------------------------
+# Composite extras: one shared legend (at Manhattan text size) + region sidecar
+# ---------------------------------------------------------------------------
+if (opt$composite_style) {
+  legend_path <- paste0(stem, "_legend.", if (nzchar(ext)) ext else "png")
+  region_path <- paste0(stem, "_region.txt")
+
+  # Build a throwaway plot carrying every guide the row needs (r², strand, and —
+  # when there is more than one cutpoint — the cutpoint shape), then lift out just
+  # the legend. Text sized to match the Manhattan legend (theme base_size 14).
+  leg_ld <- data.frame(x = seq_along(ld_labels), y = 1,
+                       ld_bin = factor(ld_labels, levels = ld_labels))
+  leg_st <- data.frame(x = 1:2, y = 1,
+                       strand = factor(c("+", "-"), levels = c("+", "-")))
+  pleg <- ggplot() +
+    geom_point(data = leg_ld, aes(x = x, y = y, colour = ld_bin), size = 3) +
+    geom_tile(data = leg_st, aes(x = x, y = y, fill = strand)) +
+    scale_colour_manual(values = setNames(ld_colors, ld_labels),
+                        name = expression(r^2), drop = FALSE) +
+    scale_fill_manual(values = c("+" = "steelblue3", "-" = "tomato3"),
+                      labels = c("+" = "Forward (+)", "-" = "Reverse (-)"),
+                      name = "Strand")
+  if (n_cutpoints > 1) {
+    leg_cp <- data.frame(
+      x = seq_along(cutpoint_levels), y = 1,
+      cutpoint_f = factor(as.character(cutpoint_levels),
+                          levels = as.character(cutpoint_levels)))
+    pleg <- pleg +
+      geom_point(data = leg_cp, aes(x = x, y = y, shape = cutpoint_f), size = 3) +
+      scale_shape_manual(values = shape_values, name = "cutpoint")
+  }
+  pleg <- pleg +
+    theme_bw(base_size = 14 + tb_pt) +
+    theme(legend.title = element_text(size = 12 + tb_pt),
+          legend.text  = element_text(size = 10 + tb_pt),
+          legend.key   = element_blank())
+
+  legend_grob <- cowplot::get_legend(pleg)
+  # height scales with the number of legend rows (r2 bins + cutpoints + strand)
+  # so a many-cutpoint legend is not clipped; the composite trims the slack.
+  n_leg_rows <- length(ld_labels) +
+    (if (n_cutpoints > 1) length(cutpoint_levels) else 0) + 2L
+  legend_h <- 1.2 + 0.55 * n_leg_rows
+  message("Saving shared legend to:  ", legend_path)
+  ggsave(filename = legend_path, plot = cowplot::ggdraw(legend_grob),
+         width = 2.8, height = legend_h, dpi = 300, bg = "white")
+
+  message("Saving region sidecar to: ", region_path)
+  writeLines(
+    c(sprintf("seqname\t%s", seqname),
+      sprintf("region_start\t%d", as.integer(region_start)),
+      sprintf("region_end\t%d", as.integer(region_end))),
+    region_path
+  )
+}
 
 message("Done.")

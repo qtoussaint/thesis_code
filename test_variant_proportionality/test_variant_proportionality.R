@@ -15,17 +15,19 @@ suppressPackageStartupMessages({
   library(data.table)
 })
 
-script_dir <- tryCatch({
-  this_file <- sys.frame(1)$ofile
-  if (is.null(this_file)) {
-    args_cmd <- commandArgs(trailingOnly = FALSE)
-    file_arg <- grep("^--file=", args_cmd, value = TRUE)
-    if (length(file_arg) > 0L) sub("^--file=", "", file_arg[1]) else "."
+script_path <- {
+  # Under Rscript the script path is in the --file= argument; under source()
+  # it is sys.frame(1)$ofile. Prefer --file= and fall back to ofile, then cwd.
+  args_cmd <- commandArgs(trailingOnly = FALSE)
+  file_arg <- grep("^--file=", args_cmd, value = TRUE)
+  if (length(file_arg) > 0L) {
+    sub("^--file=", "", file_arg[1])
   } else {
-    this_file
+    this_file <- tryCatch(sys.frame(1)$ofile, error = function(e) NULL)
+    if (!is.null(this_file)) this_file else "."
   }
-}, error = function(e) ".")
-script_dir <- dirname(normalizePath(script_dir, mustWork = FALSE))
+}
+script_dir <- dirname(normalizePath(script_path, mustWork = FALSE))
 source(file.path(script_dir, "lib", "helpers.R"))
 
 # ---- CLI -------------------------------------------------------------------

@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=400G
-#SBATCH --time=12:00:00
+#SBATCH --time=7-00:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random/logs/09_tb_rifampicin_continuous_continuous_random_%j.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/prediction/09_tb_rifampicin_continuous_continuous_random/logs/09_tb_rifampicin_continuous_continuous_random_%j.out
 
@@ -36,6 +36,8 @@ RESUME="--resume"
 CPPRATE="--cpprate_bin /hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate-0.2.0/build/bin/cpprate"
 NORATE="--norate"
 TRUE_PHENOTYPES="--true_phenotypes /nfs/research/jlees/jacqueline/thesis_results/gwas_datasets/prediction/09_tb_rifampicin_continuous/09_tb_rifampicin_continuous_test_phenotypes.csv"
+VI_SEED="--vi_seed 12345"
+GRAD_SAMPLES="--grad_samples 4"
 Rscript $RSCRIPT_PATH \
 $DATA \
 $STAN_MODEL \
@@ -54,5 +56,7 @@ $GENES_OF_INTEREST \
 $RESUME \
 $CPPRATE \
 $TRUE_PHENOTYPES \
-$NORATE
+$NORATE \
+$VI_SEED \
+$GRAD_SAMPLES
 

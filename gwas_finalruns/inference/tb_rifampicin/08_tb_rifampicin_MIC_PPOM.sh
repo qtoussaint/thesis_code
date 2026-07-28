@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=800G
-#SBATCH --time=24:00:00
+#SBATCH --time=7-00:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_PPOM/logs/08_tb_rifampicin_MIC_PPOM_%j.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/08_tb_rifampicin_MIC_PPOM/logs/08_tb_rifampicin_MIC_PPOM_%j.out
 
@@ -34,6 +34,8 @@ MODEL_TYPE="--model_type ppom"
 GENES_OF_INTEREST="--genes_of_interest /nfs/research/jlees/jacqueline/thesis_code/gwas_genesofinterest/tb_rifampicin_genesofinterest.txt"
 RESUME="--resume"
 CPPRATE="--cpprate_bin /hps/software/users/jlees/jacqueline/manual_installs/bin/cpprate-0.2.0/build/bin/cpprate"
+VI_SEED="--vi_seed 12345"
+GRAD_SAMPLES="--grad_samples 4"
 Rscript $RSCRIPT_PATH \
 $DATA \
 $STAN_MODEL \
@@ -50,5 +52,7 @@ $ANNOTATIONS \
 $MODEL_TYPE \
 $GENES_OF_INTEREST \
 $RESUME \
-$CPPRATE
+$CPPRATE \
+$VI_SEED \
+$GRAD_SAMPLES
 

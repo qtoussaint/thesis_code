@@ -154,8 +154,8 @@ process_run <- function(run) {
   # map gene/impact/label by variant_id, keep the requested genes, then derive
   # |β̃| and |Δβ̃|. Parameterised so the same shared annotation can feed both the
   # 6-gene plots and the all-genes plot without re-reading the effects CSV.
-  make_df <- function(gene_names, display_levels) {
-    display_map <- setNames(display_levels, gene_names)
+  make_df <- function(gene_names, labels, display_levels) {
+    display_map <- setNames(labels, gene_names)   # map by annotation name, not facet order
     d <- eff
     d$position      <- pos[d$variant_id]
     d$gene          <- ann$gene[d$variant_id]
@@ -173,7 +173,7 @@ process_run <- function(run) {
     d
   }
 
-  df <- make_df(GENES_OF_INTEREST[[1]], DISPLAY_LEVELS)
+  df <- make_df(GENES_OF_INTEREST[[1]], GENES_OF_INTEREST[[2]], DISPLAY_LEVELS)
 
   x_axis_title <- expression("MIC breakpoint" ~ (mu * "g·mL"^{-1}))
 
@@ -240,7 +240,8 @@ process_run <- function(run) {
   # spn_penicillin_genesofinterest.txt (core six first, rest after). 4 columns,
   # taller canvas to fit the ~20 facets, wide enough to keep x-axis labels from
   # overlapping.
-  df_all <- make_df(ALL_GENES_OF_INTEREST[[1]], ALL_DISPLAY_LEVELS)
+  df_all <- make_df(ALL_GENES_OF_INTEREST[[1]], ALL_GENES_OF_INTEREST[[2]],
+                    ALL_DISPLAY_LEVELS)
   impact_violin(
     df_all, "abs_median", expression("|" ~ tilde(beta) ~ "|"),
     top_per_group(df_all, "abs_median"),

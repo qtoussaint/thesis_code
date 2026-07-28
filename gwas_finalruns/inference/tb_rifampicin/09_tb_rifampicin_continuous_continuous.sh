@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
 #SBATCH --mem=400G
-#SBATCH --time=12:00:00
+#SBATCH --time=36:00:00
 #SBATCH --error=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/09_tb_rifampicin_continuous_continuous/logs/09_tb_rifampicin_continuous_continuous_%j.err
 #SBATCH --output=/nfs/research/jlees/jacqueline/thesis_results/gwas_tb_rifampicin/inference/09_tb_rifampicin_continuous_continuous/logs/09_tb_rifampicin_continuous_continuous_%j.out
 
