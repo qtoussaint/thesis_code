@@ -50,14 +50,14 @@ penalty_levels <- c("lasso", "ridge")
 center_levels  <- c("centred", "no-center")
 
 DATASETS <- list(
-  list(id = "02_spn_penicillin_MIC",               label = "standard (K=8)", K = 8L),
+  list(id = "02_spn_penicillin_MIC",               label = "doubling dilutions\n(min. ≥5% frequency)", K = 8L),
   list(id = "16_spn_penicillin_MIC_minimabinning", label = "minima (K=5)",   K = 5L)
 )
 dataset_levels <- vapply(DATASETS, `[[`, "", "label")
 
 REF_LABEL <- "prediction PPOM (estimated τ)"
 REF_RUNS  <- list(
-  list(dataset = "standard (K=8)", run = "02_spn_penicillin_MIC_PPOM_random"),
+  list(dataset = "doubling dilutions\n(min. ≥5% frequency)", run = "02_spn_penicillin_MIC_PPOM_random"),
   list(dataset = "minima (K=5)",   run = "16_spn_penicillin_MIC_minimabinning_PPOM_random")
 )
 ACC_METRICS <- c("rpss_uniform", "rpss_frequency", "bacc")
@@ -138,8 +138,7 @@ panel <- ggplot(df, aes(x = value, y = model)) +
   guides(colour = guide_legend(order = 1, override.aes = list(shape = 16)),
          shape  = guide_legend(order = 2),
          linetype = guide_legend(order = 3)) +
-  labs(x = "out-of-sample metric value", y = NULL,
-       caption = "* bACC computed on a reduced category set (categories absent from the test split excluded)") +
+  labs(x = "out-of-sample metric value", y = NULL) +
   base_theme
 
 dir.create(FIG_DIR, showWarnings = FALSE, recursive = TRUE)

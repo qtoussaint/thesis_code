@@ -130,8 +130,7 @@ panel <- ggplot(df_long, aes(x = tau, y = value, colour = series, group = series
   scale_x_log10(breaks = TAUS, labels = tau_labels) +
   scale_colour_manual(values = colour_cols, name = "prior config", limits = colour_levels) +
   coord_cartesian(ylim = c(0.5, 1)) +
-  labs(x = expression("global shrinkage scale " * tau), y = "out-of-sample metric value",
-       caption = "* bACC computed on a reduced category set (categories absent from the test split excluded)") +
+  labs(x = expression("global shrinkage scale " * tau), y = "out-of-sample metric value") +
   base_theme
 
 dir.create(FIG_DIR, showWarnings = FALSE, recursive = TRUE)
